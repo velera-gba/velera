@@ -5,7 +5,7 @@
 // sizes
 const BIOS_SIZE: usize = 0x0004000;
 const WRAM_SIZE: usize = 0x0040000;
-const WIRAM_SIZE: usize = 0x0008000;
+const IWRAM_SIZE: usize = 0x0008000;
 const IO_REGISTERS_SIZE: usize = 0x0000400;
 const PALETTE_RAM_SIZE: usize = 0x0000400;
 const VRAM_SIZE: usize = 0x0018000;
@@ -38,12 +38,37 @@ const CART_SRAM_MIRROR_ADDR: usize = 0xF000000;
 
 struct MMU {
     wram: Box<[u8; WRAM_SIZE]>,
+    iwram: Box<[u8; IWRAM_SIZE]>,
+    bios: Box<[u8; BIOS_SIZE]>,
+    io: Box<[u8; IO_REGISTERS_SIZE]>,
 }
 
 impl MMU {
-    fn new() -> Self {
+    /// Create a new instance of the MMU
+    pub fn new() -> Self {
         Self {
-            wram: [0; WRAM_SIZE],
+            bios: Box::new([0; BIOS_SIZE]),
+            wram: Box::new([0; WRAM_SIZE]),
+            iwram: Box::new([0; IWRAM_SIZE]),
+            io: Box::new([0; IO_REGISTERS_SIZE]),
         }
+    }
+
+    /// Write a byte into memory
+    pub fn wb(&mut self, addr: u32, val: u8) {
+        match addr as usize {
+            0x0..=BIOS_ADDR => self.bios[addr as usize] = val,
+            _ => {}
+        }
+    }
+
+    /// Write an aligned word into memory
+    #[allow(overflowing_literals)]
+    pub fn ww(&mut self, addr: u32, val: u32) {
+        // someone please do this in a better way
+        self.wb(addr, ((val << 24) >> 24) as u8);
+        self.wb(addr + 1, (val >> 8) as u8);
+        self.wb(addr + 2, (val >> 16) as u8);
+        self.wb(addr + 3, (val >> 24) as u8);
     }
 }

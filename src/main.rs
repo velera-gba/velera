@@ -1,3 +1,3 @@
-fn main() {
-    println!("Hello, world!");
-}
+pub mod memory;
+
+fn main() {}
