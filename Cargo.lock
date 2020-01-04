@@ -476,7 +476,7 @@ dependencies = [
 [[package]]
 name = "velera-graphics"
 version = "0.0.1"
-source = "git+https://github.com/velera-gba/velera-graphics#4bb041e40d680846c4b8f098a06718604f6dc5a6"
+source = "git+https://github.com/velera-gba/velera-graphics#8d607ceb77acff663f8debc1dacfd1bb0dfae589"
 dependencies = [
  "sdl2 0.32.2 (registry+https://github.com/rust-lang/crates.io-index)",
  "vulkano 0.16.0 (registry+https://github.com/rust-lang/crates.io-index)",
