@@ -14,6 +14,10 @@ dependencies = [
 ]
 
 [[package]]
+name = "audio"
+version = "0.0.1"
+
+[[package]]
 name = "autocfg"
 version = "0.1.7"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -47,6 +51,13 @@ version = "0.1.42"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 dependencies = [
  "cc 1.0.48 (registry+https://github.com/rust-lang/crates.io-index)",
+]
+
+[[package]]
+name = "cpu"
+version = "0.0.1"
+dependencies = [
+ "memory 0.0.1",
 ]
 
 [[package]]
@@ -160,6 +171,14 @@ version = "0.1.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 
 [[package]]
+name = "graphics"
+version = "0.0.1"
+dependencies = [
+ "sdl2 0.32.2 (registry+https://github.com/rust-lang/crates.io-index)",
+ "vulkano 0.16.0 (registry+https://github.com/rust-lang/crates.io-index)",
+]
+
+[[package]]
 name = "half"
 version = "1.4.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -190,6 +209,13 @@ version = "0.5.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 dependencies = [
  "rustc_version 0.2.3 (registry+https://github.com/rust-lang/crates.io-index)",
+]
+
+[[package]]
+name = "memory"
+version = "0.0.1"
+dependencies = [
+ "graphics 0.0.1",
 ]
 
 [[package]]
@@ -461,26 +487,8 @@ dependencies = [
 ]
 
 [[package]]
-name = "velera-audio"
-version = "0.1.0"
-source = "git+https://github.com/velera-gba/velera-audio#f8955da52450e70e7cc93776ee36739882d7a801"
-
-[[package]]
-name = "velera-core"
-version = "0.1.0"
-dependencies = [
- "velera-audio 0.1.0 (git+https://github.com/velera-gba/velera-audio)",
- "velera-graphics 0.0.1 (git+https://github.com/velera-gba/velera-graphics)",
-]
-
-[[package]]
-name = "velera-graphics"
+name = "velera"
 version = "0.0.1"
-source = "git+https://github.com/velera-gba/velera-graphics#8d607ceb77acff663f8debc1dacfd1bb0dfae589"
-dependencies = [
- "sdl2 0.32.2 (registry+https://github.com/rust-lang/crates.io-index)",
- "vulkano 0.16.0 (registry+https://github.com/rust-lang/crates.io-index)",
-]
 
 [[package]]
 name = "vk-sys"
@@ -585,8 +593,6 @@ dependencies = [
 "checksum tar 0.4.26 (registry+https://github.com/rust-lang/crates.io-index)" = "b3196bfbffbba3e57481b6ea32249fbaf590396a52505a2615adbb79d9d826d3"
 "checksum thread_local 0.3.6 (registry+https://github.com/rust-lang/crates.io-index)" = "c6b53e329000edc2b34dbe8545fd20e55a333362d0a321909685a19bd28c3f1b"
 "checksum unidiff 0.3.2 (registry+https://github.com/rust-lang/crates.io-index)" = "3c152966fd1e11a44da1063caf6ca3c615cf5760603223015441df29a9653ae9"
-"checksum velera-audio 0.1.0 (git+https://github.com/velera-gba/velera-audio)" = "<none>"
-"checksum velera-graphics 0.0.1 (git+https://github.com/velera-gba/velera-graphics)" = "<none>"
 "checksum vk-sys 0.5.0 (registry+https://github.com/rust-lang/crates.io-index)" = "772fce7a89bb15df4881f1c59a00983c335df3be58f94b8efc02cbebbe0b2781"
 "checksum vulkano 0.16.0 (registry+https://github.com/rust-lang/crates.io-index)" = "91d129fe404d71aec3601d26b54d0d7c2af432c1d406d2cf2a280dcbdeb5b391"
 "checksum winapi 0.3.8 (registry+https://github.com/rust-lang/crates.io-index)" = "8093091eeb260906a183e6ae1abdba2ef5ef2257a21801128899c3fc699229c6"

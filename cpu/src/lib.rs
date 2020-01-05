@@ -1,2 +1,2 @@
 #![allow(dead_code)]
-fn main() {}
+pub mod cpu;
