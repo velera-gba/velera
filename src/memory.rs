@@ -71,7 +71,7 @@ impl MMU {
             base_addrs::WORKING_IRAM_ADDR..=0x03007FFF => {
                 self.iwram[addr as usize - base_addrs::WORKING_RAM_ADDR]
             }
-            base_addrs::IO_REGISTERS_ADDR..=0x080000000 => self.gpu_mem.read(addr),
+            base_addrs::IO_REGISTERS_ADDR..=0x08000000 => self.gpu_mem.read(addr),
             base_addrs::CART0_ADDR..=0x0DFFFFFF => self.rom[addr as usize - base_addrs::CART0_ADDR],
             base_addrs::CART_SRAM_ADDR..=0x0E00FFFF => 0, // SRAM unimplemented
             base_addrs::CART_SRAM_MIRROR_ADDR..=0x0F00FFFF => 0, // SRAM unimplemented
