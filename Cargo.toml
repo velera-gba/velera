@@ -9,3 +9,4 @@ edition = "2018"
 [dependencies]
 velera-graphics = { git = "https://github.com/velera-gba/velera-graphics" }
 velera-audio = { git = "https://github.com/velera-gba/velera-audio" }
+velera-memory = { git = "https://github.com/velera-gba/velera-memory" }
