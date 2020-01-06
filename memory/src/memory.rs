@@ -90,7 +90,7 @@ impl MMU {
         x
     }
 
-    /// Reads a byte from memory
+    /// Reads a word from memory
     pub fn load32(&self, addr: u32) -> u32 {
         let mut x = self.load16(addr) as u32;
         x <<= 16;
