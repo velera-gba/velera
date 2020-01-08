@@ -490,6 +490,12 @@ dependencies = [
 [[package]]
 name = "velera"
 version = "0.0.1"
+dependencies = [
+ "audio 0.0.1",
+ "cpu 0.0.1",
+ "graphics 0.0.1",
+ "memory 0.0.1",
+]
 
 [[package]]
 name = "vk-sys"

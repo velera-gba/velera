@@ -2,6 +2,7 @@
 // and https://www.akkit.org/info/gbatek.htm.
 // thank you!
 use graphics::{Display, Memory};
+use std::vec::Vec;
 
 pub mod sizes {
     pub const BIOS_SIZE: usize = 0x000_4000;
@@ -53,10 +54,10 @@ impl MMU {
     pub fn new(display_scale: u32) -> Result<Self, String> {
         let (gpu_mem, gpu) = Display::init(display_scale)?;
         Ok(Self {
-            bios: Box::new([0; sizes::BIOS_SIZE]),
-            wram: Box::new([0; sizes::WRAM_SIZE]),
-            iwram: Box::new([0; sizes::IWRAM_SIZE]),
-            rom: Box::new([0; sizes::CART0_SIZE * 3]),
+            bios: vec![0; sizes::BIOS_SIZE].into_boxed_slice(),
+            wram: vec![0; sizes::WRAM_SIZE].into_boxed_slice(),
+            iwram: vec![0; sizes::IWRAM_SIZE].into_boxed_slice(),
+            rom: vec![0; sizes::CART0_SIZE].into_boxed_slice(),
             gpu,
             gpu_mem,
         })
