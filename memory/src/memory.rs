@@ -2,7 +2,6 @@
 // and https://www.akkit.org/info/gbatek.htm.
 // thank you!
 use graphics::{Display, Memory};
-use std::vec::Vec;
 
 pub mod sizes {
     pub const BIOS_SIZE: usize = 0x000_4000;
