@@ -5,22 +5,50 @@ use std::default::Default;
 mod enums;
 mod constants;
 
-pub struct CPU {
-    mmu: MMU,
+// the GBA has a coprocessor for backwards compatibility with the GameBoy, based off the Sharp LR35902 (original GameBoy CPU)
+// a regular GBA should never switch into this mode, so I'll implement this in case we want backward compatibility
+struct LR35902 {
+
+}
+
+impl Default for LR35902 {
+    fn default() -> Self {
+        Self {
+
+        }
+    }
+}
+
+struct ARM7HDTI {
     registers: [u32; 16],
     cpsr: u32,
-    spsr: u32,
-    rom: Vec<u8>
+    spsr: u32
+}
+
+impl Default for ARM7HDTI {
+    fn default() -> Self {
+        Self {
+            registers: constants::default_cpu::RS,
+            cpsr: constants::default_cpu::CPSR,
+            spsr: constants::default_cpu::SPSR
+        }
+    }
+}
+
+pub struct CPU {
+    mmu: MMU,
+    rom: Vec<u8>,
+    arm: ARM7HDTI,
+    lr: LR35902
 }
 
 impl Default for CPU {
-    fn default() -> CPU {
-        CPU{
+    fn default() -> Self {
+        Self{
             mmu: MMU::new(constants::default_cpu::MMU_DISPLAY).unwrap(),
-            registers: constants::default_cpu::RS,
-            cpsr: constants::default_cpu::CPSR,
-            spsr: constants::default_cpu::SPSR,
-            rom: Vec::new()
+            rom: Vec::new(),
+            arm: Default::default(),
+            lr: Default::default()
         }
     }
 }
@@ -47,10 +75,10 @@ enum InstructionType {
 }
 
 fn fetch(cpu: &mut CPU) -> InstructionType {
-    let program_counter = cpu.registers[constants::registers::PROGRAM_COUNTER] as usize;
+    let program_counter = cpu.arm.registers[constants::registers::PROGRAM_COUNTER] as usize;
     if is_thumb_mode(cpu) != 0 {
         // fetches 16-bit half-word
-        cpu.registers[constants::registers::PROGRAM_COUNTER] += 2;
+        cpu.arm.registers[constants::registers::PROGRAM_COUNTER] += 2;
         return InstructionType::Thumb(
             ((cpu.rom[program_counter] as u16) << 8) |
             (cpu.rom[program_counter + 1] as u16)
@@ -58,18 +86,18 @@ fn fetch(cpu: &mut CPU) -> InstructionType {
     }
     else {
         // fetches 32-bit word
-        cpu.registers[constants::registers::PROGRAM_COUNTER] += 4;
+        cpu.arm.registers[constants::registers::PROGRAM_COUNTER] += 4;
         return InstructionType::ARM(
             ((cpu.rom[program_counter] as u32) << 24) |
             ((cpu.rom[program_counter + 1] as u32) << 16) |
             ((cpu.rom[program_counter + 2] as u32) << 8) |
             (cpu.rom[program_counter + 3] as u32)
-        )
+        );
     }
 }
 
 fn is_thumb_mode(cpu: &CPU) -> u32 {
-    (cpu.cpsr & (1 << constants::cpsr_flags::STATE_BIT))
+    (cpu.arm.cpsr & (1 << constants::cpsr_flags::STATE_BIT))
 }
 
 fn decode_execute(cpu: &mut CPU, instruction: InstructionType) {

@@ -53,6 +53,6 @@ pub mod default_cpu {
     pub const MMU_DISPLAY: u32 = 1;
     pub const RS: [u32; 16] = [0; 16];
     // CPU starts at user mode, with FIQ and IRQ disabled by default
-    pub const CPSR: u32 = 0b11010000;
+    pub const CPSR: u32 = 0b11000000;
     pub const SPSR: u32 = 0x0;
 }
