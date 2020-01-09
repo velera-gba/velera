@@ -56,3 +56,38 @@ pub mod default_cpu {
     pub const CPSR: u32 = 0b11000000;
     pub const SPSR: u32 = 0x0;
 }
+
+////////////// THUMB INSTRUCTION BITMASK CONSTANTS //////////////
+
+pub mod thumb_move_shifted_register {
+    pub const START: u16 = 0b000;
+    pub const SHIFT_TO_START: u16 = 13;
+
+    pub const OPCODE: u16 = 11;
+    pub const OP_SHIFT_LEFT: u16 = 0b00;
+    pub const OP_LOGICAL_SHIFT_RIGHT: u16 = 0b01;
+    pub const OP_ARITHMETIC_SHIFT_RIGHT: u16 = 0b10;
+
+    pub const OFFSET: u16 = 6;
+
+    pub const SOURCE_REGISTER: u16 = 3;
+
+    pub const DESTINATION_REGISTER: u16 = 0;
+}
+
+pub mod thumb_add_sub {
+    pub const START: u16 = 0b00011;
+    pub const SHIFT_TO_START: u16 = 11;
+
+    pub const OPCODE: u16 = 9;
+    pub const ADD_REGISTER: u16 = 0;
+    pub const SUB_REGISTER: u16 = 1;
+    pub const ADD_IMMEDIATE: u16 = 2;
+    pub const SUB_IMMEDIATE: u16 = 3;
+
+    pub const REGISTER_OPERAND_IMMEDIATE_VALUE: u16 = 6;
+
+    pub const SOURCE_REGISTER: u16 = 3;
+
+    pub const DESTINATION_REGISTER: u16 = 0;
+}

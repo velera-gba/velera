@@ -39,7 +39,8 @@ pub struct CPU {
     mmu: MMU,
     rom: Vec<u8>,
     arm: ARM7HDTI,
-    lr: LR35902
+    lr: LR35902,
+    should_exit: bool
 }
 
 impl Default for CPU {
@@ -48,13 +49,18 @@ impl Default for CPU {
             mmu: MMU::new(constants::default_cpu::MMU_DISPLAY).unwrap(),
             rom: Vec::new(),
             arm: Default::default(),
-            lr: Default::default()
+            lr: Default::default(),
+            should_exit: false
         }
     }
 }
 
 pub fn run_rom_max_cycle(cpu: &mut CPU, rom_path: &str) {
     cpu.rom = read_rom_to_memory(rom_path).unwrap();
+    while !cpu.should_exit {
+        let instruction = fetch(cpu);
+        decode_execute(cpu, instruction);
+    }
 }
 
 pub fn cycle(cpu: &mut CPU) {
@@ -75,10 +81,11 @@ enum InstructionType {
 }
 
 fn fetch(cpu: &mut CPU) -> InstructionType {
-    let program_counter = cpu.arm.registers[constants::registers::PROGRAM_COUNTER] as usize;
+    let index = constants::registers::PROGRAM_COUNTER as usize;
+    let program_counter = cpu.arm.registers[index] as usize;
     if is_thumb_mode(cpu) != 0 {
         // fetches 16-bit half-word
-        cpu.arm.registers[constants::registers::PROGRAM_COUNTER] += 2;
+        cpu.arm.registers[index] += 2;
         return InstructionType::Thumb(
             ((cpu.rom[program_counter] as u16) << 8) |
             (cpu.rom[program_counter + 1] as u16)
@@ -86,7 +93,7 @@ fn fetch(cpu: &mut CPU) -> InstructionType {
     }
     else {
         // fetches 32-bit word
-        cpu.arm.registers[constants::registers::PROGRAM_COUNTER] += 4;
+        cpu.arm.registers[index] += 4;
         return InstructionType::ARM(
             ((cpu.rom[program_counter] as u32) << 24) |
             ((cpu.rom[program_counter + 1] as u32) << 16) |

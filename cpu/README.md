@@ -2,9 +2,7 @@
 
 These are the goals and to do's for this module
 
-# Short term:
-
-- Halt program condition
+### Short term:
 
 - bitmask for the ARM CPU instructions
 
@@ -14,14 +12,16 @@ These are the goals and to do's for this module
 
 - constants for each one of the Thumb instructions
 
-# Middle term:
+### Middle term:
 
-- Finish cycle emulation and interface
+- user stack access
 
-- Proper CPU pipeline emulation
+- cycle emulation and interface
 
-- Refactoring of the structures for each CPU module in other files
+- proper CPU pipeline emulation
+
+- refactoring of the structures for each CPU module in other files
 
 # Long term:
 
-- Implementation of the Sharp LR CPU for backward compatibility with the Game Boy.
+- implementation of the Sharp LR CPU for backward compatibility with the Game Boy.
