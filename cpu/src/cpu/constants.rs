@@ -59,35 +59,87 @@ pub mod default_cpu {
 
 ////////////// THUMB INSTRUCTION BITMASK CONSTANTS //////////////
 
-pub mod thumb_move_shifted_register {
-    pub const START: u16 = 0b000;
-    pub const SHIFT_TO_START: u16 = 13;
+pub mod thumb_bitmasks {
+    // thumb 1: move shifted register
+    pub const LSL: u16 = 0b00000;
+    pub const LSR: u16 = 0b00001;
+    pub const ASR: u16 = 0b00010;
+    pub const MOVE_SHIFTED_REG_OP_MASK: u16 = 0b1111100000000000;
+    pub const MOVE_SHIFTED_REG_RD_MASK: u16 = 0b0000000000111000;
+    pub const MOVE_SHIFTED_REG_RS_MASK: u16 = 0b0000000000000111;
+    pub const MOVE_SHIFTED_REG_OFFSET_MASK: u16 = 0b000011111000000;
 
-    pub const OPCODE: u16 = 11;
-    pub const OP_SHIFT_LEFT: u16 = 0b00;
-    pub const OP_LOGICAL_SHIFT_RIGHT: u16 = 0b01;
-    pub const OP_ARITHMETIC_SHIFT_RIGHT: u16 = 0b10;
+    // thumb 2: add/subtract
+    pub const ADD: u16 = 0b0001100;
+    pub const SUB: u16 = 0b0001101;
+    pub const ADDI: u16 = 0b0001110;
+    pub const SUBI: u16 = 0b0001111;
+    pub const ADDSUB_OP_MASK: u16 = 0b1111111000000000;
+    pub const ADDSUB_RN_MASK: u16 = 0b0000000111000000;
+    pub const ADDSUB_RS_MASK: u16 = 0b0000000000111000;
+    pub const ADDSUB_RD_MASK: u16 = 0b0000000000000111;
 
-    pub const OFFSET: u16 = 6;
+    // thumb 3: move/compare/add/subtract immediate
+    pub const MOV: u16 = 0b00100;
+    pub const CMP: u16 = 0b00101;
+    pub const ADDRI: u16 = 0b00110;
+    pub const SUBRI: u16 = 0b00111;
+    pub const IMMEDIATE_OP_MASK: u16 = 0b1111100000000000;
+    pub const IMMEDIATE_RD_MASK: u16 = 0b0000011100000000;
+    pub const IMMEDIATE_NN_MASK: u16 = 0b0000000011111111;
+    
+    // thumb 4: ALU ops
+    pub const ALU_AND: u16 = 0b0100000000;
+    pub const ALU_EOR: u16 = 0b0100000001;
+    pub const ALU_LSL: u16 = 0b0100000010;
+    pub const ALU_LSR: u16 = 0b0100000011;
+    pub const ALU_ASR: u16 = 0b0100000100;
+    pub const ALU_ADC: u16 = 0b0100000101;
+    pub const ALU_SBC: u16 = 0b0100000110;
+    pub const ALU_ROR: u16 = 0b0100000111;
+    pub const ALU_TST: u16 = 0b0100001000;
+    pub const ALU_NEG: u16 = 0b0100001001;
+    pub const ALU_CMP: u16 = 0b0100001010;
+    pub const ALU_CMN: u16 = 0b0100001011;
+    pub const ALU_ORR: u16 = 0b0100001100;
+    pub const ALU_MUL: u16 = 0b0100001101;
+    pub const ALU_BIC: u16 = 0b0100001110;
+    pub const ALU_MVN: u16 = 0b0100001111;
+    pub const ALU_OP_MASK: u16 = 0b1111111111000000;
+    pub const ALU_RS_MASK: u16 = 0b0000000000111000;
+    pub const ALU_RD_MASK: u16 = 0b0000000000000111;
+    
+    // thumb 5: Hi register operations/branch exchange
 
-    pub const SOURCE_REGISTER: u16 = 3;
+    // thumb 6: load PC-relative
 
-    pub const DESTINATION_REGISTER: u16 = 0;
+    // thumb 7: load/store with register offset
+
+    // thumb 8: load/store sign-extended byte/halfword
+
+    // thumb 9: load/store with immediate offset
+
+    // thumb 10: load/store halfword
+
+    // thumb 11: load/store SP-relative
+
+    // thumb 12: get relative address
+
+    // thumb 13: add offset to stack pointer
+
+    // thumb 14: push/pop registers
+
+    // thumb 15: multiple load/store
+
+    // thumb 16: conditional branch
+
+    // thumb 17: software interrupt and breakpoint
+
+    // thumb 18: unconditional branch
+
+    // thumb 19: long branch with link
 }
 
-pub mod thumb_add_sub {
-    pub const START: u16 = 0b00011;
-    pub const SHIFT_TO_START: u16 = 11;
+pub mod arm_bitmasks {
 
-    pub const OPCODE: u16 = 9;
-    pub const ADD_REGISTER: u16 = 0;
-    pub const SUB_REGISTER: u16 = 1;
-    pub const ADD_IMMEDIATE: u16 = 2;
-    pub const SUB_IMMEDIATE: u16 = 3;
-
-    pub const REGISTER_OPERAND_IMMEDIATE_VALUE: u16 = 6;
-
-    pub const SOURCE_REGISTER: u16 = 3;
-
-    pub const DESTINATION_REGISTER: u16 = 0;
 }

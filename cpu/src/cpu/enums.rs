@@ -46,3 +46,16 @@ pub enum MnemonicARM {
     UMULL,
     MAX,
 }
+
+////////////// THUMB INSTRUCTION BITMASK CONSTANTS //////////////
+
+pub enum ThumbFirst3Bits {
+    ShiftAddSub,
+    Immediate,
+    AluHighRegOps,
+    LoadStoreImmediateOffset,
+    LoadStoreHalfwordSP,
+    RelativeAddrStackOps,
+    MultiLoadStoreCondBranchSWI,
+    UncondBranch
+}
