@@ -61,61 +61,92 @@ pub mod default_cpu {
 
 pub mod thumb_bitmasks {
     // thumb 1: move shifted register
-    pub const LSL: u16 = 0b00000;
-    pub const LSR: u16 = 0b00001;
-    pub const ASR: u16 = 0b00010;
+    pub const LSL: u16 = 0b0000000000000000;
+    pub const LSR: u16 = 0b0000100000000000;
+    pub const ASR: u16 = 0b0001000000000000;
     pub const MOVE_SHIFTED_REG_OP_MASK: u16 = 0b1111100000000000;
     pub const MOVE_SHIFTED_REG_RD_MASK: u16 = 0b0000000000111000;
     pub const MOVE_SHIFTED_REG_RS_MASK: u16 = 0b0000000000000111;
     pub const MOVE_SHIFTED_REG_OFFSET_MASK: u16 = 0b000011111000000;
 
     // thumb 2: add/subtract
-    pub const ADD: u16 = 0b0001100;
-    pub const SUB: u16 = 0b0001101;
-    pub const ADDI: u16 = 0b0001110;
-    pub const SUBI: u16 = 0b0001111;
+    pub const ADD: u16 = 0b0001100000000000;
+    pub const SUB: u16 = 0b0001101000000000;
+    pub const ADDI: u16 = 0b0001110000000000;
+    pub const SUBI: u16 = 0b0001111000000000;
     pub const ADDSUB_OP_MASK: u16 = 0b1111111000000000;
     pub const ADDSUB_RN_MASK: u16 = 0b0000000111000000;
     pub const ADDSUB_RS_MASK: u16 = 0b0000000000111000;
     pub const ADDSUB_RD_MASK: u16 = 0b0000000000000111;
 
     // thumb 3: move/compare/add/subtract immediate
-    pub const MOV: u16 = 0b00100;
-    pub const CMP: u16 = 0b00101;
-    pub const ADDRI: u16 = 0b00110;
-    pub const SUBRI: u16 = 0b00111;
+    pub const MOV: u16 = 0b001000000000000;
+    pub const CMP: u16 = 0b001010000000000;
+    pub const ADDRI: u16 = 0b001100000000000;
+    pub const SUBRI: u16 = 0b001110000000000;
     pub const IMMEDIATE_OP_MASK: u16 = 0b1111100000000000;
     pub const IMMEDIATE_RD_MASK: u16 = 0b0000011100000000;
     pub const IMMEDIATE_NN_MASK: u16 = 0b0000000011111111;
     
     // thumb 4: ALU ops
-    pub const ALU_AND: u16 = 0b0100000000;
-    pub const ALU_EOR: u16 = 0b0100000001;
-    pub const ALU_LSL: u16 = 0b0100000010;
-    pub const ALU_LSR: u16 = 0b0100000011;
-    pub const ALU_ASR: u16 = 0b0100000100;
-    pub const ALU_ADC: u16 = 0b0100000101;
-    pub const ALU_SBC: u16 = 0b0100000110;
-    pub const ALU_ROR: u16 = 0b0100000111;
-    pub const ALU_TST: u16 = 0b0100001000;
-    pub const ALU_NEG: u16 = 0b0100001001;
-    pub const ALU_CMP: u16 = 0b0100001010;
-    pub const ALU_CMN: u16 = 0b0100001011;
-    pub const ALU_ORR: u16 = 0b0100001100;
-    pub const ALU_MUL: u16 = 0b0100001101;
-    pub const ALU_BIC: u16 = 0b0100001110;
-    pub const ALU_MVN: u16 = 0b0100001111;
+    pub const ALU_AND: u16 = 0b0100000000000000;
+    pub const ALU_EOR: u16 = 0b0100000001000000;
+    pub const ALU_LSL: u16 = 0b0100000010000000;
+    pub const ALU_LSR: u16 = 0b0100000011000000;
+    pub const ALU_ASR: u16 = 0b0100000100000000;
+    pub const ALU_ADC: u16 = 0b0100000101000000;
+    pub const ALU_SBC: u16 = 0b0100000110000000;
+    pub const ALU_ROR: u16 = 0b0100000111000000;
+    pub const ALU_TST: u16 = 0b0100001000000000;
+    pub const ALU_NEG: u16 = 0b0100001001000000;
+    pub const ALU_CMP: u16 = 0b0100001010000000;
+    pub const ALU_CMN: u16 = 0b0100001011000000;
+    pub const ALU_ORR: u16 = 0b0100001100000000;
+    pub const ALU_MUL: u16 = 0b0100001101000000;
+    pub const ALU_BIC: u16 = 0b0100001110000000;
+    pub const ALU_MVN: u16 = 0b0100001111000000;
     pub const ALU_OP_MASK: u16 = 0b1111111111000000;
     pub const ALU_RS_MASK: u16 = 0b0000000000111000;
     pub const ALU_RD_MASK: u16 = 0b0000000000000111;
     
     // thumb 5: Hi register operations/branch exchange
+    pub const HI_ADD: u16 = 0b0100010000000000;
+    pub const HI_CMP: u16 = 0b0100010100000000;
+    pub const HI_MOV: u16 = 0b0100011000000000;
+    pub const HI_NOP: u16 = 0b0100011011000000;
+    pub const BX: u16 = 0b0100011100000000;
+    pub const BLX: u16 = 0b0100011110000000;
+    pub const HI_OP_MASK: u16 = 0b1111111100000000;
+    pub const HI_MSBD_MASK: u16 = 0b0000000010000000;
+    pub const HI_MSBS_MASK: u16 = 0b0000000001000000;
+    pub const HI_RS: u16 = 0b0000000000111000;
+    pub const HI_RD: u16 = 0b0000000000000111;
 
     // thumb 6: load PC-relative
+    pub const LDPCR: u16 = 0b0100100000000000;
+    pub const LDPCR_MASK: u16 = 0b1111100000000000;
+    pub const LDPCR_RD: u16 = 0b0000011100000000;
+    pub const LDPCR_OFFSET: u16 = 0b0000000011111111;
 
     // thumb 7: load/store with register offset
+    pub const STR: u16 = 0b0101000000000000;
+    pub const STRB: u16 = 0b0101010000000000;
+    pub const LDR: u16 = 0b0101100000000000;
+    pub const LDRB: u16 = 0b0101110000000000;
+    pub const LS_REG_OFFSET_OPCODE_MASK: u16 = 0b1111111000000000;
+    pub const LS_REG_OFFSET_RO_MASK: u16 = 0b0000000111000000;
+    pub const LS_REG_OFFSET_RB_MASK: u16 = 0b0000000000111000;
+    pub const LS_REG_OFFSET_RD_MASK: u16 = 0b0000000000000111;
 
     // thumb 8: load/store sign-extended byte/halfword
+    pub const STRH: u16 = 0b0101001000000000;
+    pub const LDSB: u16 = 0b0101011000000000;
+    pub const LDRH: u16 = 0b0101101000000000;
+    pub const LDSH: u16 = 0b0101111000000000;
+    pub const LS_EBH_OPCODE_MASK: u16 = 0b1111111000000000;
+    pub const LS_EBH_RO_MASK: u16 = 0b0000000111000000;
+    pub const LS_EBH_RB_MASK: u16 = 0b0000000000111000;
+    pub const LS_EBH_RD_MASK: u16 = 0b0000000000000111;
 
     // thumb 9: load/store with immediate offset
 
