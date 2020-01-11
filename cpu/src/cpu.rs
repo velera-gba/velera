@@ -65,13 +65,15 @@ pub fn run_rom_max_cycle(cpu: &mut CPU, rom_path: &str) {
     cpu.rom = read_rom_to_memory(rom_path).unwrap();
     while !cpu.should_exit {
         let instruction = fetch(cpu);
-        decode_execute(cpu, instruction);
+        decode(cpu, &instruction);
+        execute(cpu, &instruction);
     }
 }
 
 pub fn cycle(cpu: &mut CPU) {
     let instruction = fetch(cpu);
-    decode_execute(cpu, instruction);
+    decode(cpu, &instruction);
+    execute(cpu, &instruction);
 }
 
 fn read_rom_to_memory(rom_path: &str) -> Result<Vec<u8>> {
@@ -113,6 +115,37 @@ fn is_thumb_mode(cpu: &CPU) -> u32 {
     (cpu.arm.cpsr & (1 << constants::cpsr_flags::STATE_BIT))
 }
 
-fn decode_execute(cpu: &mut CPU, instruction: InstructionType) {
+fn decode(cpu: &mut CPU, instruction: &InstructionType) {
+    match is_thumb_mode(cpu) {
+        0x0 => {
+            decode_arm(cpu, instruction);
+        }
+        _ => {
+            decode_thumb(cpu, instruction);
+        }
+    }
+}
+
+// DECODE PRODECURES //
+
+fn decode_thumb(cpu: &mut CPU, instruction: &InstructionType) {
+    let mut operation: u16 = 0;
+
+    if operation == 0 {
+        println!("{:#x}: undefinded THUMB instruction exception.", cpu.arm.registers[constants::registers::PROGRAM_COUNTER as usize]);
+    }
+}
+
+fn decode_arm(cpu: &mut CPU, instruction: &InstructionType) {
+    let mut operation: u16 = 0;
+
+    if operation == 0 {
+        println!("{:#x}: undefinded ARM instruction exception.", cpu.arm.registers[constants::registers::PROGRAM_COUNTER as usize]);
+    }
+}
+
+// EXECUTION PROCEDURES //
+
+fn execute(cpu: &mut CPU, instruction: &InstructionType) {
 
 }
