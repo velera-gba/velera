@@ -20,9 +20,12 @@ impl Default for LR35902 {
 }
 
 struct ARM7HDTI {
-    registers: [u32; 16],
+    registers: [i32; 16],
     cpsr: u32,
-    spsr: u32
+    spsr: u32,
+    temp_reg0: i32,
+    temp_reg1: i32,
+    temp_reg2: i32
 }
 
 impl Default for ARM7HDTI {
@@ -30,7 +33,10 @@ impl Default for ARM7HDTI {
         Self {
             registers: constants::default_cpu::RS,
             cpsr: constants::default_cpu::CPSR,
-            spsr: constants::default_cpu::SPSR
+            spsr: constants::default_cpu::SPSR,
+            temp_reg0: 0,
+            temp_reg1: 0,
+            temp_reg2: 0
         }
     }
 }

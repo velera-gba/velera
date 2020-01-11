@@ -51,7 +51,7 @@ pub mod cpu_modes {
 
 pub mod default_cpu {
     pub const MMU_DISPLAY: u32 = 1;
-    pub const RS: [u32; 16] = [0; 16];
+    pub const RS: [i32; 16] = [0; 16];
     // CPU starts at user mode, with FIQ and IRQ disabled by default
     pub const CPSR: u32 = 0b11000000;
     pub const SPSR: u32 = 0x0;
@@ -143,32 +143,86 @@ pub mod thumb_bitmasks {
     pub const LDSB: u16 = 0b0101011000000000;
     pub const LDRH: u16 = 0b0101101000000000;
     pub const LDSH: u16 = 0b0101111000000000;
-    pub const LS_EBH_OPCODE_MASK: u16 = 0b1111111000000000;
+    pub const LS_EBH_OP_MASK: u16 = 0b1111111000000000;
     pub const LS_EBH_RO_MASK: u16 = 0b0000000111000000;
     pub const LS_EBH_RB_MASK: u16 = 0b0000000000111000;
     pub const LS_EBH_RD_MASK: u16 = 0b0000000000000111;
 
     // thumb 9: load/store with immediate offset
+    pub const STRI: u16 = 0b0110000000000000;
+    pub const LDRI: u16 = 0b0110100000000000;
+    pub const STRBI: u16 = 0b0111000000000000;
+    pub const LDRBI: u16 = 0b0111100000000000;
+    pub const LS_NN_OFFSET_OP_MASK: u16 = 0b1111100000000000;
+    pub const LS_NN_OFFSET_NN_MASK: u16 = 0b0000011111000000;
+    pub const LS_NN_OFFSET_RB_MASK: u16 = 0b0000000000111000;
+    pub const LS_NN_OFFSET_RD_MASK: u16 = 0b0000000000000111;
 
     // thumb 10: load/store halfword
+    pub const STRHW: u16 = 0b1000000000000000;
+    pub const LDRHW: u16 = 0b1000100000000000;
+    pub const LS_HW_OP_MASK: u16 = 0b1111100000000000;
+    pub const LS_HW_NN_MASK: u16 = 0b0000011111000000;
+    pub const LS_HW_RB_MASK: u16 = 0b0000000000111000;
+    pub const LS_HW_RD_MASK: u16 = 0b0000000000000111;
 
     // thumb 11: load/store SP-relative
+    pub const SP_STR: u16 = 0b1001000000000000;
+    pub const SP_LDR: u16 = 0b1001100000000000;
+    pub const SP_LS_OP_MASK: u16 = 0b1111100000000000;
+    pub const SP_LS_RD_MASK: u16 = 0b0000011100000000;
+    pub const SP_LS_NN_MASK: u16 = 0b0000000011111111;
 
     // thumb 12: get relative address
+    pub const ADD_PC: u16 = 0b1010000000000000;
+    pub const ADD_SP: u16 = 0b1010100000000000;
+    pub const RELATIVE_ADDR_OP_MASK: u16 = 0b1111100000000000;
+    pub const RELATIVE_ADDR_RD_MASK: u16 = 0b0000011100000000;
+    pub const RELATIVE_ADDR_NN_MASK: u16 = 0b0000000011111111;
 
     // thumb 13: add offset to stack pointer
+    pub const ADD_SP_NN: u16 = 0b1011000000000000;
+    pub const ADD_SP_MINUS_NN: u16 = 0b1011000010000000;
+    pub const SP_OFFSET_OP_MASK: u16 = 0b1111111110000000;
+    pub const SP_OFFSET_NN_MASK: u16 = 0b0000000001111111;
 
     // thumb 14: push/pop registers
+    pub const PUSH: u16 = 0b1011010000000000;
+    pub const POP: u16 = 0b1011100000000000;
+    pub const STACK_OPS_OP_MASK: u16 = 0b1111111000000000;
+    pub const STACK_OPS_PC_LR_BIT_MASK: u16 = 0b0000000100000000;
+    pub const STACK_OPS_RLIST_MASK: u16 = 0b0000000011111111;
 
     // thumb 15: multiple load/store
+    pub const STMIA: u16 = 0b1100000000000000;
+    pub const LDMIA: u16 = 0b1100100000000000;
+    pub const LS_MIA_OP_MASK: u16 = 0b1111100000000000;
+    pub const LS_MIA_RB_MASK: u16 = 0b0000011100000000;
+    pub const LS_MIA_RLIST_MASK: u16 = 0b0000000011111111;
 
     // thumb 16: conditional branch
+    pub const COND_BRANCH_OP: u16 = 0b1101000000000000;
+    pub const COND_GENERAL_OP_MASK: u16 = 0b1111000000000000;
+    pub const COND_FULL_OP_MASK: u16 = 0b1111111100000000;
+    pub const COND_OFFSET_MASK: u16 = 0b0000000011111111;
 
     // thumb 17: software interrupt and breakpoint
+    pub const SWI: u16 = 0b1101111100000000;
+    pub const BKPT: u16 = 0b1101111000000000;
+    pub const SWI_BK_OP_MASK: u16 = 0b1111111100000000;
+    pub const SWI_BK_NN_MASK: u16 = 0b0000000011111111;
 
     // thumb 18: unconditional branch
+    pub const B: u16 = 0b1110000000000000;
+    pub const B_OP_MASK: u16 = 0b1111100000000000;
+    pub const B_OFFSET_MASK: u16 = 0b0000011111111111;
 
     // thumb 19: long branch with link
+    pub const LONG_BRANCH_FIRST_OP: u16 = 0b1111000000000000;
+    pub const BL: u16 = 0b1111100000000000;
+    pub const BLLX: u16 = 0b1111000000000000;
+    pub const LONG_BRANCH_OP_MASK: u16 = 0b1111100000000000;
+    pub const LONG_BRANCH_ADDR_MASK: u16 = 0b0000011111111111;
 }
 
 pub mod arm_bitmasks {
