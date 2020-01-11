@@ -2,6 +2,7 @@ use memory::memory::MMU;
 use std::fs::File;
 use std::io::{Read, Result};
 use std::default::Default;
+use std::mem::discriminant;
 mod enums;
 mod constants;
 
@@ -116,36 +117,61 @@ fn is_thumb_mode(cpu: &CPU) -> u32 {
 }
 
 fn decode(cpu: &mut CPU, instruction: &InstructionType) {
-    match is_thumb_mode(cpu) {
-        0x0 => {
-            decode_arm(cpu, instruction);
+    match instruction {
+        InstructionType::ARM(x) => {
+            decode_arm(cpu, x);
+        }
+        InstructionType::Thumb(x) => {
+            decode_thumb(cpu, x);
         }
         _ => {
-            decode_thumb(cpu, instruction);
+            println!("Unexpected error in instruction decode at {:#x}, aborting.",
+                cpu.arm.registers[constants::registers::PROGRAM_COUNTER as usize]);
         }
     }
 }
 
 // DECODE PRODECURES //
 
-fn decode_thumb(cpu: &mut CPU, instruction: &InstructionType) {
+fn decode_thumb(cpu: &mut CPU, instruction: &u16) {
     let mut operation: u16 = 0;
 
     if operation == 0 {
-        println!("{:#x}: undefinded THUMB instruction exception.", cpu.arm.registers[constants::registers::PROGRAM_COUNTER as usize]);
+        println!("{:#x}: undefinded THUMB instruction exception.",
+            cpu.arm.registers[constants::registers::PROGRAM_COUNTER as usize]);
     }
 }
 
-fn decode_arm(cpu: &mut CPU, instruction: &InstructionType) {
+fn decode_arm(cpu: &mut CPU, instruction: &u32) {
     let mut operation: u16 = 0;
 
     if operation == 0 {
-        println!("{:#x}: undefinded ARM instruction exception.", cpu.arm.registers[constants::registers::PROGRAM_COUNTER as usize]);
+        println!("{:#x}: undefinded ARM instruction exception.",
+            cpu.arm.registers[constants::registers::PROGRAM_COUNTER as usize]);
     }
 }
 
 // EXECUTION PROCEDURES //
 
 fn execute(cpu: &mut CPU, instruction: &InstructionType) {
+    match instruction {
+        InstructionType::ARM(x) => {
+            execute_arm(cpu, x);
+        }
+        InstructionType::Thumb(x) => {
+            execute_thumb(cpu, x);
+        }
+        _ => {
+            println!("Unexpected error in instruction execution at {:#x}, aborting.",
+                cpu.arm.registers[constants::registers::PROGRAM_COUNTER as usize]);
+        }
+    }
+}
+
+fn execute_thumb(cpu: &mut CPU, instruction: &u16) {
+
+}
+
+fn execute_arm(cpu: &mut CPU, instruction: &u32) {
 
 }
