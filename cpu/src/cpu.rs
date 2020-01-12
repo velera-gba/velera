@@ -2,7 +2,6 @@ use memory::memory::MMU;
 use std::fs::File;
 use std::io::{Read, Result};
 use std::default::Default;
-use std::mem::discriminant;
 mod enums;
 mod constants;
 
@@ -24,9 +23,10 @@ struct ARM7HDTI {
     registers: [i32; 16],
     cpsr: u32,
     spsr: u32,
-    temp_reg0: i32,
-    temp_reg1: i32,
-    temp_reg2: i32
+    temp_rd: i32,
+    temp_rs: i32,
+    temp_rn: i32,
+    immediate: i32
 }
 
 impl Default for ARM7HDTI {
@@ -35,9 +35,10 @@ impl Default for ARM7HDTI {
             registers: constants::default_cpu::RS,
             cpsr: constants::default_cpu::CPSR,
             spsr: constants::default_cpu::SPSR,
-            temp_reg0: 0,
-            temp_reg1: 0,
-            temp_reg2: 0
+            temp_rd: 0,
+            temp_rs: 0,
+            temp_rn: 0,
+            immediate: 0
         }
     }
 }
@@ -133,13 +134,31 @@ fn decode(cpu: &mut CPU, instruction: &InstructionType) {
 
 // DECODE PRODECURES //
 
+// THUMB //
+
 fn decode_thumb(cpu: &mut CPU, instruction: &u16) {
     let mut operation: u16 = 0;
+
+    pass_operation(cpu, instruction, &mut operation,
+        &constants::thumb_bitmasks::LSL,
+        &constants::thumb_bitmasks::MOVE_SHIFTED_REG_OP_MASK,
+        &constants::thumb_bitmasks::MOVE_SHIFTED_REG_RD_MASK,
+        &constants::thumb_bitmasks::MOVE_SHIFTED_REG_RS_MASK,
+        &0,
+        &constants::thumb_bitmasks::MOVE_SHIFTED_REG_OFFSET_MASK);
 
     if operation == 0 {
         println!("{:#x}: undefinded THUMB instruction exception.",
             cpu.arm.registers[constants::registers::PROGRAM_COUNTER as usize]);
     }
+}
+
+// ARM //
+fn pass_operation(cpu: &mut CPU,
+    instruction: &u16, operation: &mut u16, op_bitmask: &u16, opcode_bitmask: &u16,
+    rd_bitmask: &u16, rs_bitmask: &u16, rn_bitmask: &u16, immediate_bitmask: &u16) {
+    cpu.arm.temp_rd = (((!(op_bitmask ^ instruction) & opcode_bitmask) == *opcode_bitmask) as u16 *
+        rd_bitmask & instruction) as i32;
 }
 
 fn decode_arm(cpu: &mut CPU, instruction: &u32) {
