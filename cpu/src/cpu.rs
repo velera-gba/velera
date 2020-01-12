@@ -7,14 +7,14 @@ mod constants;
 
 macro_rules! temp_reg_wrap {
     ($cpu: expr,
-        $instruction: expr,
-        $operation: expr,
-        $opcode: expr,
-        $rd: expr,
-        $rs: expr,
-        $rn: expr,
-        $immediate: expr,
-        $x: expr) => {
+    $instruction: expr,
+    $operation: expr,
+    $opcode: expr,
+    $rd: expr,
+    $rs: expr,
+    $rn: expr,
+    $immediate: expr,
+    $x: expr) => {
         pass_operation_thumb($cpu, $instruction, $operation, ThumbOpPack {
             op_bitmask: $x,
             opcode_bitmask: $opcode,
@@ -22,20 +22,22 @@ macro_rules! temp_reg_wrap {
             rs_bitmask: $rs,
             rn_bitmask: $rn,
             immediate_bitmask: $immediate
-        })
+        });
+    };
 
     ($cpu: expr,
-        $instruction: expr,
-        $operation: expr,
-        $opcode: expr,
-        $rd: expr,
-        $rs: expr,
-        $rn: expr,
-        $immediate: expr,
-        $($xs: expr),+) => {
-            temp_reg_wrap! {$instruction, $operation, $opcode, $rd, $rs, $rn, $immediate, $($xs),+}
-        }        
-    };
+    $instruction: expr,
+    $operation: expr,
+    $opcode: expr,
+    $rd: expr,
+    $rs: expr,
+    $rn: expr,
+    $immediate: expr,
+    $x: expr,
+    $($xs: expr),*) => {
+        temp_reg_wrap!($instruction, $operation, $opcode, $rd, $rs, $rn, $immediate, $x);
+        temp_reg_wrap!($instruction, $operation, $opcode, $rd, $rs, $rn, $immediate, $($xs),*)
+    };  
 }
 
 // the GBA has a coprocessor for backwards compatibility with the GameBoy, based off the Sharp LR35902 (original GameBoy CPU)
