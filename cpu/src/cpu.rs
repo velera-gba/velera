@@ -35,8 +35,8 @@ macro_rules! temp_reg_wrap {
     $immediate: expr,
     $x: expr,
     $($xs: expr),*) => {
-        temp_reg_wrap!($instruction, $operation, $opcode, $rd, $rs, $rn, $immediate, $x);
-        temp_reg_wrap!($instruction, $operation, $opcode, $rd, $rs, $rn, $immediate, $($xs),*)
+        temp_reg_wrap!($cpu, $instruction, $operation, $opcode, $rd, $rs, $rn, $immediate, $x);
+        temp_reg_wrap!($cpu, $instruction, $operation, $opcode, $rd, $rs, $rn, $immediate, $($xs),*)
     };  
 }
 
