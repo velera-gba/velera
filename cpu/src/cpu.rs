@@ -5,6 +5,27 @@ use std::default::Default;
 mod enums;
 mod constants;
 
+macro_rules! temp_reg_wrap {
+    ( $cpu: expr,
+        $instruction: expr,
+        $operation: expr,
+        $opcode: expr,
+        $rd: expr,
+        $rs: expr,
+        $rn: expr,
+        $immediate: expr,
+        $($x: expr), * ) => {
+        pass_operation_thumb(cpu, instruction, operation, ThumbOpPack {
+            op_bitmask: x,
+            opcode_bitmask: opcode,
+            rd_bitmask: rd,
+            rs_bitmask: rs,
+            rn_bitmask: rn,
+            immediate_bitmask: immediate
+        })
+    };
+}
+
 // the GBA has a coprocessor for backwards compatibility with the GameBoy, based off the Sharp LR35902 (original GameBoy CPU)
 // a regular GBA should never switch into this mode, so I'll implement this in case we want backward compatibility
 struct LR35902 {
@@ -125,10 +146,6 @@ fn decode(cpu: &mut CPU, instruction: &InstructionType) {
         InstructionType::Thumb(x) => {
             decode_thumb(cpu, x);
         }
-        _ => {
-            println!("Unexpected error in instruction decode at {:#x}, aborting.",
-                cpu.arm.registers[constants::registers::PROGRAM_COUNTER as usize]);
-        }
     }
 }
 
@@ -148,33 +165,42 @@ struct ThumbOpPack {
 fn decode_thumb(cpu: &mut CPU, instruction: &u16) {
     let mut operation: bool = false;
 
-    pass_operation_thumb(cpu, instruction, &mut operation, ThumbOpPack {
-        op_bitmask: constants::thumb_bitmasks::LSL,
-        opcode_bitmask: constants::thumb_bitmasks::MOVE_SHIFTED_REG_OP_MASK,
-        rd_bitmask: constants::thumb_bitmasks::MOVE_SHIFTED_REG_RD_MASK,
-        rs_bitmask: constants::thumb_bitmasks::MOVE_SHIFTED_REG_RS_MASK,
-        rn_bitmask: 0,
-        immediate_bitmask: constants::thumb_bitmasks::MOVE_SHIFTED_REG_OFFSET_MASK
-    });
+    temp_reg_wrap!(cpu, instruction, operation,
+        constants::thumb_bitmasks::MOVE_SHIFTED_REG_OP_MASK,
+        constants::thumb_bitmasks::MOVE_SHIFTED_REG_RD_MASK,
+        constants::thumb_bitmasks::MOVE_SHIFTED_REG_RS_MASK,
+        0,
+        constants::thumb_bitmasks::MOVE_SHIFTED_REG_OFFSET_MASK,
+        constants::thumb_bitmasks::LSR,
+        constants::thumb_bitmasks::LSL,
+        constants::thumb_bitmasks::ASR
+    );
 
-    pass_operation_thumb(cpu, instruction, &mut operation, ThumbOpPack {
-        op_bitmask: constants::thumb_bitmasks::LSR,
-        opcode_bitmask: constants::thumb_bitmasks::MOVE_SHIFTED_REG_OP_MASK,
-        rd_bitmask: constants::thumb_bitmasks::MOVE_SHIFTED_REG_RD_MASK,
-        rs_bitmask: constants::thumb_bitmasks::MOVE_SHIFTED_REG_RS_MASK,
-        rn_bitmask: 0,
-        immediate_bitmask: constants::thumb_bitmasks::MOVE_SHIFTED_REG_OFFSET_MASK
-    });
+    temp_reg_wrap!(cpu, instruction, operation,
+        constants::thumb_bitmasks::ADDSUB_OP_MASK,
+        constants::thumb_bitmasks::ADDSUB_RD_MASK,
+        constants::thumb_bitmasks::ADDSUB_RS_MASK,
+        constants::thumb_bitmasks::ADDSUB_RN_MASK,
+        0,
+        constants::thumb_bitmasks::ADD,
+        constants::thumb_bitmasks::SUB,
+        constants::thumb_bitmasks::ADDI,
+        constants::thumb_bitmasks::SUBI
+    );
 
-    pass_operation_thumb(cpu, instruction, &mut operation, ThumbOpPack {
-        op_bitmask: constants::thumb_bitmasks::ASR,
-        opcode_bitmask: constants::thumb_bitmasks::MOVE_SHIFTED_REG_OP_MASK,
-        rd_bitmask: constants::thumb_bitmasks::MOVE_SHIFTED_REG_RD_MASK,
-        rs_bitmask: constants::thumb_bitmasks::MOVE_SHIFTED_REG_RS_MASK,
-        rn_bitmask: 0,
-        immediate_bitmask: constants::thumb_bitmasks::MOVE_SHIFTED_REG_OFFSET_MASK
-    });
+    temp_reg_wrap!(cpu, instruction, operation,
+        constants::thumb_bitmasks::IMMEDIATE_OP_MASK,
+        constants::thumb_bitmasks::IMMEDIATE_RD_MASK,
+        0,
+        0,
+        constants::thumb_bitmasks::IMMEDIATE_NN_MASK,
+        constants::thumb_bitmasks::MOV,
+        constants::thumb_bitmasks::CMP,
+        constants::thumb_bitmasks::ADDRI,
+        constants::thumb_bitmasks::SUBRI
+    );
 
+    // operation not found error check
     if operation == false {
         println!("{:#x}: undefinded THUMB instruction exception.",
             cpu.arm.registers[constants::registers::PROGRAM_COUNTER as usize]);
@@ -189,6 +215,9 @@ fn pass_operation_thumb(cpu: &mut CPU, instruction: &u16, operation: &mut bool, 
         }
         if pack.rs_bitmask != 0 {
             put_temp_register_thumb(&mut cpu.arm.temp_rs, &pack.rs_bitmask, instruction);
+        }
+        if pack.rn_bitmask != 0 {
+            put_temp_register_thumb(&mut cpu.arm.temp_rn, &pack.rn_bitmask, instruction)
         }
         if pack.immediate_bitmask != 0 {
             put_temp_register_thumb(&mut cpu.arm.immediate, &pack.immediate_bitmask, instruction);
