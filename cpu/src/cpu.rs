@@ -5,6 +5,9 @@ use std::default::Default;
 mod enums;
 mod constants;
 
+// this macro takes a lot of parameters, packages them for the decoding procedures and does this to an arbitrary
+// number of operations. A method with over 4 parameters might kill performance so I used a struct.
+// NOT TESTED!
 macro_rules! temp_reg_wrap {
     ($cpu: expr,
     $instruction: expr,
@@ -58,10 +61,10 @@ struct ARM7HDTI {
     registers: [i32; 16],
     cpsr: u32,
     spsr: u32,
-    temp_rd: i32,
-    temp_rs: i32,
-    temp_rn: i32,
-    immediate: i32
+    temp_rd: i32, // temporary destination register
+    temp_rs: i32, // temporary source register
+    temp_rn: i32, // temporary index register
+    immediate: i32 // temporary immediate
 }
 
 impl Default for ARM7HDTI {
@@ -176,6 +179,7 @@ struct ThumbOpPack {
     immediate_bitmask: u16,
 }
 
+// NOT TESTED!
 fn decode_thumb(cpu: &mut CPU, instruction: &u16) {
     let mut operation: bool = false;
 
@@ -214,6 +218,226 @@ fn decode_thumb(cpu: &mut CPU, instruction: &u16) {
         constants::thumb_bitmasks::SUBRI
     );
 
+    temp_reg_wrap!(cpu, instruction, &mut operation,
+        constants::thumb_bitmasks::ALU_OP_MASK,
+        constants::thumb_bitmasks::ALU_RD_MASK,
+        constants::thumb_bitmasks::ALU_RS_MASK,
+        0,
+        0,
+        constants::thumb_bitmasks::ALU_AND,
+        constants::thumb_bitmasks::ALU_EOR,
+        constants::thumb_bitmasks::ALU_LSL,
+        constants::thumb_bitmasks::ALU_LSR,
+        constants::thumb_bitmasks::ALU_ASR,
+        constants::thumb_bitmasks::ALU_ADC,
+        constants::thumb_bitmasks::ALU_SBC,
+        constants::thumb_bitmasks::ALU_ROR,
+        constants::thumb_bitmasks::ALU_TST,    
+        constants::thumb_bitmasks::ALU_NEG,    
+        constants::thumb_bitmasks::ALU_CMP,    
+        constants::thumb_bitmasks::ALU_CMN,    
+        constants::thumb_bitmasks::ALU_ORR,    
+        constants::thumb_bitmasks::ALU_MUL,    
+        constants::thumb_bitmasks::ALU_BIC,    
+        constants::thumb_bitmasks::ALU_MVN
+    );
+
+    temp_reg_wrap!(cpu, instruction, &mut operation,
+        constants::thumb_bitmasks::HI_OP_MASK,
+        constants::thumb_bitmasks::HI_RD,
+        constants::thumb_bitmasks::HI_RS,
+        constants::thumb_bitmasks::HI_MSBD_MASK,
+        constants::thumb_bitmasks::HI_MSBS_MASK,
+        constants::thumb_bitmasks::HI_ADD,
+        constants::thumb_bitmasks::HI_CMP,
+        constants::thumb_bitmasks::HI_MOV,
+        constants::thumb_bitmasks::HI_NOP,
+        constants::thumb_bitmasks::BX,
+        constants::thumb_bitmasks::BLX
+    );
+
+    temp_reg_wrap!(cpu, instruction, &mut operation,
+        constants::thumb_bitmasks::HI_OP_MASK,
+        constants::thumb_bitmasks::HI_RD,
+        constants::thumb_bitmasks::HI_RS,
+        constants::thumb_bitmasks::HI_MSBD_MASK,
+        constants::thumb_bitmasks::HI_MSBS_MASK,
+        constants::thumb_bitmasks::HI_ADD,
+        constants::thumb_bitmasks::HI_CMP,
+        constants::thumb_bitmasks::HI_MOV,
+        constants::thumb_bitmasks::HI_NOP,
+        constants::thumb_bitmasks::BX,
+        constants::thumb_bitmasks::BLX
+    );
+
+    temp_reg_wrap!(cpu, instruction, &mut operation,
+        constants::thumb_bitmasks::LDPCR_MASK,
+        constants::thumb_bitmasks::LDPCR_RD,
+        0,
+        0,
+        constants::thumb_bitmasks::LDPCR_OFFSET,
+        constants::thumb_bitmasks::LDPCR
+    );
+
+    // here (and in other places) I use the source temporary register as the base register
+    // and the index register as the offset register
+    temp_reg_wrap!(cpu, instruction, &mut operation,
+        constants::thumb_bitmasks::LS_REG_OFFSET_OPCODE_MASK,
+        constants::thumb_bitmasks::LS_REG_OFFSET_RD_MASK,
+        constants::thumb_bitmasks::LS_REG_OFFSET_RB_MASK,
+        constants::thumb_bitmasks::LS_REG_OFFSET_RO_MASK,
+        0,
+        constants::thumb_bitmasks::STR,
+        constants::thumb_bitmasks::STRB,
+        constants::thumb_bitmasks::LDR,
+        constants::thumb_bitmasks::LDRB
+    );
+
+    temp_reg_wrap!(cpu, instruction, &mut operation,
+        constants::thumb_bitmasks::LS_EBH_OP_MASK,
+        constants::thumb_bitmasks::LS_EBH_RD_MASK,
+        constants::thumb_bitmasks::LS_EBH_RB_MASK,
+        constants::thumb_bitmasks::LS_EBH_RO_MASK,
+        0,
+        constants::thumb_bitmasks::STRH,
+        constants::thumb_bitmasks::LDSB,
+        constants::thumb_bitmasks::LDRH,
+        constants::thumb_bitmasks::LDSH
+    );
+
+    temp_reg_wrap!(cpu, instruction, &mut operation,
+        constants::thumb_bitmasks::LS_NN_OFFSET_OP_MASK,
+        constants::thumb_bitmasks::LS_NN_OFFSET_RD_MASK,
+        constants::thumb_bitmasks::LS_NN_OFFSET_RB_MASK,
+        0,
+        constants::thumb_bitmasks::LS_NN_OFFSET_NN_MASK,
+        constants::thumb_bitmasks::STRI,
+        constants::thumb_bitmasks::LDRI,
+        constants::thumb_bitmasks::STRBI,
+        constants::thumb_bitmasks::LDRBI
+    );
+
+    temp_reg_wrap!(cpu, instruction, &mut operation,
+        constants::thumb_bitmasks::LS_HW_OP_MASK,
+        constants::thumb_bitmasks::LS_HW_RD_MASK,
+        constants::thumb_bitmasks::LS_HW_RB_MASK,
+        0,
+        constants::thumb_bitmasks::LS_HW_NN_MASK,
+        constants::thumb_bitmasks::STRHW,
+        constants::thumb_bitmasks::LDRHW
+    );
+
+    temp_reg_wrap!(cpu, instruction, &mut operation,
+        constants::thumb_bitmasks::SP_LS_OP_MASK,
+        constants::thumb_bitmasks::SP_LS_RD_MASK,
+        0,
+        0,
+        constants::thumb_bitmasks::SP_LS_NN_MASK,
+        constants::thumb_bitmasks::SP_STR,
+        constants::thumb_bitmasks::SP_LDR
+    );
+
+    temp_reg_wrap!(cpu, instruction, &mut operation,
+        constants::thumb_bitmasks::RELATIVE_ADDR_OP_MASK,
+        constants::thumb_bitmasks::RELATIVE_ADDR_RD_MASK,
+        0,
+        0,
+        constants::thumb_bitmasks::RELATIVE_ADDR_NN_MASK,
+        constants::thumb_bitmasks::ADD_PC,
+        constants::thumb_bitmasks::ADD_SP
+    );
+
+    temp_reg_wrap!(cpu, instruction, &mut operation,
+        constants::thumb_bitmasks::SP_OFFSET_OP_MASK,
+        0,
+        0,
+        0,
+        constants::thumb_bitmasks::SP_OFFSET_NN_MASK,
+        constants::thumb_bitmasks::ADD_SP_NN,
+        constants::thumb_bitmasks::ADD_SP_MINUS_NN
+    );
+
+    // the immediate here is actually the PC/LR bit
+    // and the index register is contains bits to each one of the general purpose registers
+    temp_reg_wrap!(cpu, instruction, &mut operation,
+        constants::thumb_bitmasks::STACK_OPS_OP_MASK,
+        0,
+        0,
+        constants::thumb_bitmasks::STACK_OPS_RLIST_MASK,
+        constants::thumb_bitmasks::STACK_OPS_PC_LR_BIT_MASK,
+        constants::thumb_bitmasks::PUSH,
+        constants::thumb_bitmasks::POP
+    );
+
+    // same thing here
+    temp_reg_wrap!(cpu, instruction, &mut operation,
+        constants::thumb_bitmasks::LS_MIA_OP_MASK,
+        0,
+        constants::thumb_bitmasks::LS_MIA_RB_MASK,
+        constants::thumb_bitmasks::LS_MIA_RLIST_MASK,
+        0,
+        constants::thumb_bitmasks::STMIA,
+        constants::thumb_bitmasks::LDMIA
+    );
+
+    // the conditional branch is an interesting case, I associated the operation bits with the opcode bitmasks
+    // so I avoided writing too much code
+    let extra_opcode_mask = constants::thumb_bitmasks::COND_GENERAL_OP_MASK ^ constants::thumb_bitmasks::COND_FULL_OP_MASK;
+    let cond_branch_shift = 8;
+    temp_reg_wrap!(cpu, instruction, &mut operation,
+        constants::thumb_bitmasks::COND_FULL_OP_MASK,
+        0,
+        0,
+        0,
+        constants::thumb_bitmasks::COND_OFFSET_MASK,
+        ((constants::cond_arm::ARM_CONDITION_EQ as u16) << cond_branch_shift) & extra_opcode_mask,
+        ((constants::cond_arm::ARM_CONDITION_NE as u16) << cond_branch_shift) & extra_opcode_mask,
+        ((constants::cond_arm::ARM_CONDITION_CS as u16) << cond_branch_shift) & extra_opcode_mask,
+        ((constants::cond_arm::ARM_CONDITION_CC as u16) << cond_branch_shift) & extra_opcode_mask,
+        ((constants::cond_arm::ARM_CONDITION_MI as u16) << cond_branch_shift) & extra_opcode_mask,
+        ((constants::cond_arm::ARM_CONDITION_PL as u16) << cond_branch_shift) & extra_opcode_mask,
+        ((constants::cond_arm::ARM_CONDITION_VS as u16) << cond_branch_shift) & extra_opcode_mask,
+        ((constants::cond_arm::ARM_CONDITION_VC as u16) << cond_branch_shift) & extra_opcode_mask,
+        ((constants::cond_arm::ARM_CONDITION_HI as u16) << cond_branch_shift) & extra_opcode_mask,
+        ((constants::cond_arm::ARM_CONDITION_LS as u16) << cond_branch_shift) & extra_opcode_mask,
+        ((constants::cond_arm::ARM_CONDITION_GE as u16) << cond_branch_shift) & extra_opcode_mask,
+        ((constants::cond_arm::ARM_CONDITION_LT as u16) << cond_branch_shift) & extra_opcode_mask,
+        ((constants::cond_arm::ARM_CONDITION_GT as u16) << cond_branch_shift) & extra_opcode_mask,
+        ((constants::cond_arm::ARM_CONDITION_LE as u16) << cond_branch_shift) & extra_opcode_mask
+    );
+
+    temp_reg_wrap!(cpu, instruction, &mut operation,
+        constants::thumb_bitmasks::SWI_BK_OP_MASK,
+        0,
+        0,
+        0,
+        constants::thumb_bitmasks::SWI_BK_NN_MASK,
+        constants::thumb_bitmasks::SWI,
+        constants::thumb_bitmasks::BKPT
+    );
+
+    temp_reg_wrap!(cpu, instruction, &mut operation,
+        constants::thumb_bitmasks::B_OP_MASK,
+        0,
+        0,
+        0,
+        constants::thumb_bitmasks::B_OFFSET_MASK,
+        constants::thumb_bitmasks::B
+    );
+
+    // I should change this in the future, because this instruction is actually 32 bits with a long branch
+    // but I should find a way to make this work as it is
+    temp_reg_wrap!(cpu, instruction, &mut operation,
+        constants::thumb_bitmasks::LONG_BRANCH_OP_MASK,
+        0,
+        0,
+        0,
+        constants::thumb_bitmasks::LONG_BRANCH_ADDR_MASK,
+        constants::thumb_bitmasks::LONG_BRANCH_FIRST_OP,
+        constants::thumb_bitmasks::BL,
+        constants::thumb_bitmasks::BLLX
+    );
+
     // operation not found error check
     if operation == false {
         println!("{:#x}: undefinded THUMB instruction exception.",
@@ -221,6 +445,7 @@ fn decode_thumb(cpu: &mut CPU, instruction: &u16) {
     }
 }
 
+// NOT TESTED!
 fn pass_operation_thumb(cpu: &mut CPU, instruction: &u16, operation: &mut bool, pack: ThumbOpPack) {
     if (!(pack.op_bitmask ^ instruction) & pack.opcode_bitmask) == pack.opcode_bitmask  {
         *operation = true;
@@ -239,6 +464,7 @@ fn pass_operation_thumb(cpu: &mut CPU, instruction: &u16, operation: &mut bool, 
     }
 }
 
+// NOT TESTED!
 fn put_temp_register_thumb(register: &mut i32, register_bitmask: &u16, instruction: &u16) {
     let mut bitmask_eval = *register_bitmask;
     let mut shift_modifier = 0;
