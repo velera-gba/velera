@@ -136,30 +136,77 @@ fn decode(cpu: &mut CPU, instruction: &InstructionType) {
 
 // THUMB //
 
+struct ThumbOpPack {
+    op_bitmask: u16,
+    opcode_bitmask: u16,
+    rd_bitmask: u16,
+    rs_bitmask: u16,
+    rn_bitmask: u16,
+    immediate_bitmask: u16,
+}
+
 fn decode_thumb(cpu: &mut CPU, instruction: &u16) {
-    let mut operation: u16 = 0;
+    let mut operation: bool = false;
 
-    pass_operation(cpu, instruction, &mut operation,
-        &constants::thumb_bitmasks::LSL,
-        &constants::thumb_bitmasks::MOVE_SHIFTED_REG_OP_MASK,
-        &constants::thumb_bitmasks::MOVE_SHIFTED_REG_RD_MASK,
-        &constants::thumb_bitmasks::MOVE_SHIFTED_REG_RS_MASK,
-        &0,
-        &constants::thumb_bitmasks::MOVE_SHIFTED_REG_OFFSET_MASK);
+    pass_operation_thumb(cpu, instruction, &mut operation, ThumbOpPack {
+        op_bitmask: constants::thumb_bitmasks::LSL,
+        opcode_bitmask: constants::thumb_bitmasks::MOVE_SHIFTED_REG_OP_MASK,
+        rd_bitmask: constants::thumb_bitmasks::MOVE_SHIFTED_REG_RD_MASK,
+        rs_bitmask: constants::thumb_bitmasks::MOVE_SHIFTED_REG_RS_MASK,
+        rn_bitmask: 0,
+        immediate_bitmask: constants::thumb_bitmasks::MOVE_SHIFTED_REG_OFFSET_MASK
+    });
 
-    if operation == 0 {
+    pass_operation_thumb(cpu, instruction, &mut operation, ThumbOpPack {
+        op_bitmask: constants::thumb_bitmasks::LSR,
+        opcode_bitmask: constants::thumb_bitmasks::MOVE_SHIFTED_REG_OP_MASK,
+        rd_bitmask: constants::thumb_bitmasks::MOVE_SHIFTED_REG_RD_MASK,
+        rs_bitmask: constants::thumb_bitmasks::MOVE_SHIFTED_REG_RS_MASK,
+        rn_bitmask: 0,
+        immediate_bitmask: constants::thumb_bitmasks::MOVE_SHIFTED_REG_OFFSET_MASK
+    });
+
+    pass_operation_thumb(cpu, instruction, &mut operation, ThumbOpPack {
+        op_bitmask: constants::thumb_bitmasks::ASR,
+        opcode_bitmask: constants::thumb_bitmasks::MOVE_SHIFTED_REG_OP_MASK,
+        rd_bitmask: constants::thumb_bitmasks::MOVE_SHIFTED_REG_RD_MASK,
+        rs_bitmask: constants::thumb_bitmasks::MOVE_SHIFTED_REG_RS_MASK,
+        rn_bitmask: 0,
+        immediate_bitmask: constants::thumb_bitmasks::MOVE_SHIFTED_REG_OFFSET_MASK
+    });
+
+    if operation == false {
         println!("{:#x}: undefinded THUMB instruction exception.",
             cpu.arm.registers[constants::registers::PROGRAM_COUNTER as usize]);
     }
 }
 
-// ARM //
-fn pass_operation(cpu: &mut CPU,
-    instruction: &u16, operation: &mut u16, op_bitmask: &u16, opcode_bitmask: &u16,
-    rd_bitmask: &u16, rs_bitmask: &u16, rn_bitmask: &u16, immediate_bitmask: &u16) {
-    cpu.arm.temp_rd = (((!(op_bitmask ^ instruction) & opcode_bitmask) == *opcode_bitmask) as u16 *
-        rd_bitmask & instruction) as i32;
+fn pass_operation_thumb(cpu: &mut CPU, instruction: &u16, operation: &mut bool, pack: ThumbOpPack) {
+    if (!(pack.op_bitmask ^ instruction) & pack.opcode_bitmask) == pack.opcode_bitmask  {
+        *operation = true;
+        if pack.rd_bitmask != 0 {
+            put_temp_register_thumb(&mut cpu.arm.temp_rd, &pack.rd_bitmask, instruction);
+        }
+        if pack.rs_bitmask != 0 {
+            put_temp_register_thumb(&mut cpu.arm.temp_rs, &pack.rs_bitmask, instruction);
+        }
+        if pack.immediate_bitmask != 0 {
+            put_temp_register_thumb(&mut cpu.arm.immediate, &pack.immediate_bitmask, instruction);
+        }
+    }
 }
+
+fn put_temp_register_thumb(register: &mut i32, register_bitmask: &u16, instruction: &u16) {
+    let mut bitmask_eval = *register_bitmask;
+    let mut shift_modifier = 0;
+    while bitmask_eval % 2 == 0 {
+        bitmask_eval >>= 1;
+        shift_modifier += 1;
+    }
+    *register = ((register_bitmask & instruction) >> shift_modifier) as i32;
+}
+
+// ARM //
 
 fn decode_arm(cpu: &mut CPU, instruction: &u32) {
     let mut operation: u16 = 0;
@@ -187,9 +234,13 @@ fn execute(cpu: &mut CPU, instruction: &InstructionType) {
     }
 }
 
+// THUMB //
+
 fn execute_thumb(cpu: &mut CPU, instruction: &u16) {
 
 }
+
+// ARM //
 
 fn execute_arm(cpu: &mut CPU, instruction: &u32) {
 
