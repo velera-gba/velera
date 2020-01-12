@@ -6,7 +6,7 @@ mod enums;
 mod constants;
 
 macro_rules! temp_reg_wrap {
-    ( $cpu: expr,
+    ($cpu: expr,
         $instruction: expr,
         $operation: expr,
         $opcode: expr,
@@ -14,15 +14,27 @@ macro_rules! temp_reg_wrap {
         $rs: expr,
         $rn: expr,
         $immediate: expr,
-        $($x: expr), * ) => {
-        pass_operation_thumb(cpu, instruction, operation, ThumbOpPack {
-            op_bitmask: x,
-            opcode_bitmask: opcode,
-            rd_bitmask: rd,
-            rs_bitmask: rs,
-            rn_bitmask: rn,
-            immediate_bitmask: immediate
+        $x: expr) => {
+        pass_operation_thumb($cpu, $instruction, $operation, ThumbOpPack {
+            op_bitmask: $x,
+            opcode_bitmask: $opcode,
+            rd_bitmask: $rd,
+            rs_bitmask: $rs,
+            rn_bitmask: $rn,
+            immediate_bitmask: $immediate
         })
+
+    ($cpu: expr,
+        $instruction: expr,
+        $operation: expr,
+        $opcode: expr,
+        $rd: expr,
+        $rs: expr,
+        $rn: expr,
+        $immediate: expr,
+        $($xs: expr),+) => {
+            temp_reg_wrap! {$instruction, $operation, $opcode, $rd, $rs, $rn, $immediate, $($xs),+}
+        }        
     };
 }
 
@@ -165,7 +177,7 @@ struct ThumbOpPack {
 fn decode_thumb(cpu: &mut CPU, instruction: &u16) {
     let mut operation: bool = false;
 
-    temp_reg_wrap!(cpu, instruction, operation,
+    temp_reg_wrap!(cpu, instruction, &mut operation,
         constants::thumb_bitmasks::MOVE_SHIFTED_REG_OP_MASK,
         constants::thumb_bitmasks::MOVE_SHIFTED_REG_RD_MASK,
         constants::thumb_bitmasks::MOVE_SHIFTED_REG_RS_MASK,
@@ -176,7 +188,7 @@ fn decode_thumb(cpu: &mut CPU, instruction: &u16) {
         constants::thumb_bitmasks::ASR
     );
 
-    temp_reg_wrap!(cpu, instruction, operation,
+    temp_reg_wrap!(cpu, instruction, &mut operation,
         constants::thumb_bitmasks::ADDSUB_OP_MASK,
         constants::thumb_bitmasks::ADDSUB_RD_MASK,
         constants::thumb_bitmasks::ADDSUB_RS_MASK,
@@ -188,7 +200,7 @@ fn decode_thumb(cpu: &mut CPU, instruction: &u16) {
         constants::thumb_bitmasks::SUBI
     );
 
-    temp_reg_wrap!(cpu, instruction, operation,
+    temp_reg_wrap!(cpu, instruction, &mut operation,
         constants::thumb_bitmasks::IMMEDIATE_OP_MASK,
         constants::thumb_bitmasks::IMMEDIATE_RD_MASK,
         0,
