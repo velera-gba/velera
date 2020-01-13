@@ -1,6 +1,6 @@
-pub enum Mode {
-    ARM,
-    Thumb
+pub enum InstructionType {
+    Thumb(u16),
+    ARM(u32),
 }
 
 pub enum MnemonicARM {
@@ -57,5 +57,5 @@ pub enum ThumbFirst3Bits {
     LoadStoreHalfwordSP,
     RelativeAddrStackOps,
     MultiLoadStoreCondBranchSWI,
-    UncondBranch
+    UncondBranch,
 }

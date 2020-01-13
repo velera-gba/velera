@@ -43,7 +43,7 @@ impl Graphics {
         let mut canvas = match window.into_canvas().build() {
             Ok(canvas) => canvas,
             Err(IntegerOverflows(error, integer)) => return Err(format!("{}: Caused by {}", error, integer)),
-            Err(SdlError(error)) => return Err(error.to_owned())
+            Err(SdlError(error)) => return Err(error)
         };
         let event_pump = context.event_pump()?;
 
@@ -72,9 +72,8 @@ impl Graphics {
 
     pub fn drawline<'r>(&mut self, cache_instance: &mut CacheInstance<'r>, y: usize, scanline: &[u8]) -> State {
         for event in self.event_pump.poll_iter() {
-            match event {
-                Event::Quit {..} => return State::Exited,
-                _ => {}
+            if let Event::Quit {..} = event { 
+                return State::Exited;
             }
         }
 
