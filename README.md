@@ -7,7 +7,7 @@
 </a>
 <br><br>
 
-![3D logo](https://imgur.com/eOlmg10.gif)
+<img src="https://imgur.com/jome9cd.gif" align="center" />
 
 **Table of Contents**
 
