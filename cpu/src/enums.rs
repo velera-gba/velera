@@ -1,8 +1,10 @@
+/// Possible ARM processor modes
 pub enum InstructionType {
     Thumb(u16),
     ARM(u32),
 }
 
+/// List of ARM instruction mnemonics
 pub enum MnemonicARM {
     ILL,
     ADC,
@@ -47,8 +49,7 @@ pub enum MnemonicARM {
     MAX,
 }
 
-////////////// THUMB INSTRUCTION BITMASK CONSTANTS //////////////
-
+/// Thumb instruction mode bitmask constants.
 pub enum ThumbFirst3Bits {
     ShiftAddSub,
     Immediate,

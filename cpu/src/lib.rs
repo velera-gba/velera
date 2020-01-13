@@ -4,10 +4,10 @@ pub use memory;
 
 pub mod constants;
 pub mod enums;
+pub mod utils;
 
 #[macro_use]
 pub mod macros;
-pub mod utils;
 
 pub mod cpu;
 

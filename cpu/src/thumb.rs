@@ -1,6 +1,10 @@
 use crate::constants::{cond_arm, registers, thumb_bitmasks};
 use crate::cpu::CPU;
 
+// WARNING!
+// This file contains lots of code that could be in the CPU impl, but in order to decrease cacheing of
+// CPU (and consequently increasing speed when executing a non-cached path), they are separate functions.
+
 /// Thumb bitmasks for decoding.
 struct ThumbOpPack {
     op_bitmask: u16,
@@ -11,7 +15,7 @@ struct ThumbOpPack {
     immediate_bitmask: u16,
 }
 
-/// Decode fetched thumb instruction.
+/// Decodes already-fetched thumb instruction.
 pub fn decode_thumb(cpu: &mut CPU, instruction: u16) {
     let mut operation: bool = false;
 
@@ -370,6 +374,7 @@ fn put_temp_register_thumb(register: &mut i32, register_bitmask: u16, instructio
     *register = ((register_bitmask & instruction) >> shift_modifier) as i32;
 }
 
+/// Execute thumb code.
 pub fn execute_thumb(_cpu: &mut CPU, _instruction: u16) {
     unimplemented!();
 }

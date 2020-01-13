@@ -1,3 +1,4 @@
+/// Conditions used in every ARM instruction and on Thumb's branch instruction.
 pub mod cond_arm {
     pub const ARM_CONDITION_EQ: u8 = 0x0;
     pub const ARM_CONDITION_NE: u8 = 0x1;
@@ -17,12 +18,14 @@ pub mod cond_arm {
     pub const ARM_CONDITION_NV: u8 = 0xF;
 }
 
+/// Non-general pointers.
 pub mod registers {
     pub const STACK_POINTER: usize = 13;
     pub const LINK_REGISTER: usize = 14;
     pub const PROGRAM_COUNTER: usize = 15;
 }
 
+/// Flags of the Current Program Status Register.
 pub mod cpsr_flags {
     pub const SIGNED: u8 = 31;
     pub const ZERO: u8 = 30;
@@ -39,6 +42,7 @@ pub mod cpsr_flags {
     pub const MODE0: u8 = 0;
 }
 
+/// ARM privilege mode
 pub mod cpu_modes {
     pub const USER: u8 = 0b1_0000;
     pub const FIQ: u8 = 0b1_0001;
@@ -49,6 +53,7 @@ pub mod cpu_modes {
     pub const SYSTEM: u8 = 0b11111;
 }
 
+/// Default ARM registers
 pub mod default_cpu {
     pub const MMU_DISPLAY: u32 = 1;
     pub const RS: [i32; 16] = [0; 16];
@@ -57,8 +62,7 @@ pub mod default_cpu {
     pub const SPSR: u32 = 0x0;
 }
 
-////////////// THUMB INSTRUCTION BITMASK CONSTANTS //////////////
-
+/// Thumb instruction mode bitmask constants.
 pub mod thumb_bitmasks {
     // thumb 1: move shifted register
     pub const LSL: u16 = 0b0000_0000_0000_0000;
@@ -224,5 +228,3 @@ pub mod thumb_bitmasks {
     pub const LONG_BRANCH_OP_MASK: u16 = 0b1111_1000_0000_0000;
     pub const LONG_BRANCH_ADDR_MASK: u16 = 0b0000_0111_1111_1111;
 }
-
-pub mod arm_bitmasks {}

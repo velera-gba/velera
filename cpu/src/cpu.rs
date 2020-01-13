@@ -19,6 +19,7 @@ pub struct CPU {
 }
 
 impl Default for CPU {
+    /// Create new instance of CPU
     fn default() -> Self {
         Self {
             mmu: MMU::new(constants::default_cpu::MMU_DISPLAY).unwrap(),
@@ -28,6 +29,12 @@ impl Default for CPU {
             should_exit: false,
         }
     }
+}
+
+/// Check if a function is in thumb mode
+#[inline]
+fn is_thumb_mode(cpu: &CPU) -> u32 {
+    (cpu.arm.cpsr & (1 << constants::cpsr_flags::STATE_BIT))
 }
 
 /// Get next instruction.
@@ -50,11 +57,6 @@ fn fetch(cpu: &mut CPU) -> InstructionType {
                 | (cpu.rom[program_counter + 3] as u32),
         )
     }
-}
-
-/// Check mode of instruction
-fn is_thumb_mode(cpu: &CPU) -> u32 {
-    (cpu.arm.cpsr & (1 << constants::cpsr_flags::STATE_BIT))
 }
 
 fn decode(cpu: &mut CPU, instruction: &InstructionType) {

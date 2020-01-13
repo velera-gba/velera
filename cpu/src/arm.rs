@@ -1,6 +1,7 @@
 use crate::constants;
 use crate::cpu::CPU;
 
+/// Implementation of the ARM cpu.
 pub struct ARM7HDTI {
     pub registers: [i32; 16],
     pub cpsr: u32,
@@ -25,6 +26,7 @@ impl Default for ARM7HDTI {
     }
 }
 
+/// Used for decoding ARM instructions.
 pub fn decode_arm(cpu: &mut CPU, _instruction: u32) {
     let operation: u16 = 0;
 
@@ -36,6 +38,7 @@ pub fn decode_arm(cpu: &mut CPU, _instruction: u32) {
     }
 }
 
+/// Executes the instructions.
 pub fn execute_arm(_cpu: &mut CPU, _instruction: u32) {
     unimplemented!();
 }
