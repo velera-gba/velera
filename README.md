@@ -1,5 +1,3 @@
-https://img.shields.io/badge/Made%20with-GPLv3-orange
-
 <a href="https://www.gnu.org/licenses/gpl-3.0.en.html">
   <img src="https://img.shields.io/badge/Licensed%20with-GPLv3-orange" alt="Join our discord server" align="left">
 </a>
@@ -22,7 +20,7 @@ https://img.shields.io/badge/Made%20with-GPLv3-orange
     - [Contributing](#contributing)
     
 # What is Velera
-<img src="https://imgur.com/Cacaj7a.png" align="right" />
+<img src="https://imgur.com/EI95HIg.png" align="right" />
 
 Velera is a GBA emulator with a focus in being free as in freedom, fast and be
 able to support both low-end and high-end hardware.
