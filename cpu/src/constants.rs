@@ -1,21 +1,41 @@
 /// Conditions used in every ARM instruction and on Thumb's branch instruction.
 pub mod cond_arm {
-    pub const ARM_CONDITION_EQ: u8 = 0x0;
-    pub const ARM_CONDITION_NE: u8 = 0x1;
-    pub const ARM_CONDITION_CS: u8 = 0x2;
-    pub const ARM_CONDITION_CC: u8 = 0x3;
-    pub const ARM_CONDITION_MI: u8 = 0x4;
-    pub const ARM_CONDITION_PL: u8 = 0x5;
-    pub const ARM_CONDITION_VS: u8 = 0x6;
-    pub const ARM_CONDITION_VC: u8 = 0x7;
-    pub const ARM_CONDITION_HI: u8 = 0x8;
-    pub const ARM_CONDITION_LS: u8 = 0x9;
-    pub const ARM_CONDITION_GE: u8 = 0xA;
-    pub const ARM_CONDITION_LT: u8 = 0xB;
-    pub const ARM_CONDITION_GT: u8 = 0xC;
-    pub const ARM_CONDITION_LE: u8 = 0xD;
-    pub const ARM_CONDITION_AL: u8 = 0xE;
-    pub const ARM_CONDITION_NV: u8 = 0xF;
+    pub const EQ: u8 = 0x0;
+    pub const NE: u8 = 0x1;
+    pub const CS: u8 = 0x2;
+    pub const CC: u8 = 0x3;
+    pub const MI: u8 = 0x4;
+    pub const PL: u8 = 0x5;
+    pub const VS: u8 = 0x6;
+    pub const VC: u8 = 0x7;
+    pub const HI: u8 = 0x8;
+    pub const LS: u8 = 0x9;
+    pub const GE: u8 = 0xA;
+    pub const LT: u8 = 0xB;
+    pub const GT: u8 = 0xC;
+    pub const LE: u8 = 0xD;
+    pub const AL: u8 = 0xE;
+    pub const NV: u8 = 0xF;
+}
+
+/// data processing opcodes.
+pub mod dp_opcodes {
+    pub const AND: u8 = 0x0;
+    pub const EOR: u8 = 0x1;
+    pub const SUB: u8 = 0x2;
+    pub const RSB: u8 = 0x3;
+    pub const ADD: u8 = 0x4;
+    pub const ADC: u8 = 0x5;
+    pub const SBC: u8 = 0x6;
+    pub const RSC: u8 = 0x7;
+    pub const TST: u8 = 0x8;
+    pub const TEQ: u8 = 0x9;
+    pub const CMP: u8 = 0xA;
+    pub const CMN: u8 = 0xB;
+    pub const ORR: u8 = 0xC;
+    pub const MOV: u8 = 0xD;
+    pub const BIC: u8 = 0xE;
+    pub const MVN: u8 = 0xF;
 }
 
 /// Non-general pointers.

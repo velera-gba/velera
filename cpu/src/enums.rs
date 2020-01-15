@@ -6,7 +6,7 @@ pub enum InstructionType {
 
 /// List of ARM instruction mnemonics
 pub enum MnemonicARM {
-    ILL,
+    ILL, // illegal
     ADC,
     ADD,
     AND,
