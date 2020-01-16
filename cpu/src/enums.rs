@@ -5,6 +5,7 @@ pub enum InstructionType {
 }
 
 /// List of ARM instruction mnemonics
+#[derive(Debug)]
 pub enum MnemonicARM {
     ILL, // illegal
     ADC,
@@ -47,6 +48,13 @@ pub enum MnemonicARM {
     UMLAL,
     UMULL,
     MAX,
+}
+
+impl Default for MnemonicARM {
+    #[inline]
+    fn default() -> Self {
+        Self::ILL
+    }
 }
 
 /// Thumb instruction mode bitmask constants.

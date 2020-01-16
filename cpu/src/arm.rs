@@ -1,7 +1,8 @@
-use crate::constants::cond_arm;
 use crate::constants::{default_cpu, registers};
 use crate::cpu::CPU;
 use crate::enums::MnemonicARM;
+
+use std::default::Default;
 
 /// Implementation of the ARM cpu.
 pub struct ARM7HDTI {
@@ -28,25 +29,35 @@ impl Default for ARM7HDTI {
     }
 }
 
+/// get bit in a certain position
 #[inline]
-fn u82bool(v: u8) -> bool {
-    if v == 1 {
-        true
-    } else {
-        false
+fn get_bit_at(input: u32, n: u8) -> bool {
+    if n < 32 {
+        return input & (1 << n) != 0;
     }
+    false
 }
 
+/// gets n last bits
+#[inline]
+fn get_last_bits(input: u32, n: u8) -> u32 {
+    if n < 32 {
+        return input & ((1 << n) - 1);
+    }
+    panic!("tried to get >32 last bits");
+}
+
+#[derive(Debug, Default)]
 struct Instruction {
     cond: u8,
     instr: MnemonicARM,
-    rn: Option<u8>,   // index register
-    rm: Option<u8>,   // second index register
-    rd: Option<u8>,   // destination register
-    rs: Option<u8>,   // source register
-    val1: Option<u8>, // multi-purpose value (can be a shift to apply, etc)
-    val2: Option<u8>, // ^
-    offset: Option<u8>,
+    rn: Option<u8>,      // index register
+    rm: Option<u8>,      // second index register
+    rd: Option<u8>,      // destination register
+    rs: Option<u8>,      // source register
+    val1: Option<u8>,    // multi-purpose value (can be a shift to apply, etc)
+    val2: Option<u8>,    // ^
+    offset: Option<u32>, // offset for branching
 
     set_cond: Option<bool>, // choose if should set condition codes
     imm: Option<bool>,      // whether the values come from registers or not
@@ -56,15 +67,16 @@ struct Instruction {
 fn data_processing(instruction: u32) -> Instruction {
     use crate::constants::dp_opcodes::*;
 
-    let cond: u8 = instruction >> 28;
-    let imm: bool = u82bool(instruction >> 20 & 0b0000_0000_0001);
-    let opcode: u8 = instruction >> 21 & 0b000_0000_1111;
-    let set_cond: bool = u8tobool(instruction >> 20 & 0b0000_0000_0001);
-    let rn: u8 = instruction >> 16 & 0b0000_0000_0000_1111;
-    let rd: u8 = instruction >> 12 & 0b0000_0000_0000_0000_1111;
+    let cond = (instruction >> 28) as u8;
+    let imm = get_bit_at(instruction, 25);
+    let set_cond = Some(get_bit_at(instruction, 20));
+
+    let instr = get_last_bits(instruction >> 21, 4) as u8;
+    let rn = Some(get_last_bits(instruction >> 16, 4) as u8);
+    let rd = Some(get_last_bits(instruction >> 12, 4) as u8);
 
     // is it possible to change this to a stringify! statement?
-    let opcode = match opcode {
+    let instr = match instr {
         AND => MnemonicARM::AND,
         EOR => MnemonicARM::EOR,
         SUB => MnemonicARM::SUB,
@@ -81,57 +93,103 @@ fn data_processing(instruction: u32) -> Instruction {
         MOV => MnemonicARM::MOV,
         BIC => MnemonicARM::BIC,
         MVN => MnemonicARM::MVN,
+        _ => unreachable!(),
     };
 
     if imm {
-        let val1 = instruction >> 8 & 0b0000_0000_0000_0000_0000_1111; // shift applied to imm
-        let rm = instruction << 32 & 0b0000_0000_0000_0000_0000_0000_1111_1111;
-        Instruction {
+        let val1 = Some(get_last_bits(instruction >> 8, 4) as u8); // shift applied to imm
+        let val2 = Some(get_last_bits(instruction, 8) as u8); // immediate value
+        return Instruction {
             cond,
-            opcode,
+            instr,
             rn,
-            rm,
             rd,
             val1,
-            val2: None,
-            rs: None,
-            offset: None,
-
-            imm,
+            val2,
             set_cond,
-        }
+            ..Default::default()
+        };
     }
 
-    let val1 = instruction >> 4 & 0b0000_0000_0000_0000_0000_1111_1111;
-    let rm = instruction & 0b0000_0000_0000_0000_0000_0000_0000_1111;
+    let val1 = Some(get_last_bits(instruction >> 4, 8) as u8); // shift applied to rm
+    let rm = Some(get_last_bits(instruction, 4) as u8);
 
-    return Instruction {
+    // if val2 is none/rm is not none, the instruction is immediate
+    Instruction {
         cond,
-        opcode,
+        instr,
         rn,
         rm,
         rd,
         val1,
-        val2: None,
-        rs: None,
-        offset: None,
-
-        imm,
         set_cond,
-    };
+        ..Default::default()
+    }
+}
+
+/// decodes BX, BLX instructions.
+fn branch_exchange(instruction: u32) -> Instruction {
+    let cond = (instruction >> 28) as u8;
+    let rn = Some(get_last_bits(instruction, 4) as u8);
+
+    Instruction {
+        cond,
+        rn,
+        instr: MnemonicARM::BX,
+        ..Default::default()
+    }
+}
+
+/// decodes B, BL instructions.
+fn branch(instruction: u32) -> Instruction {
+    let cond = (instruction >> 28) as u8;
+    let val1 = Some((instruction >> 24 & 1) as u8); // to link or not to link, that is the question...
+    let offset = Some(get_last_bits(instruction, 24));
+
+    Instruction {
+        cond,
+        val1,
+        offset,
+        ..Default::default()
+    }
 }
 
 /// Reads multiply/mul long/mul half statements.
-fn multiply(instruction: u32) {
-    let cond: u8 = instruction >> 28;
-    let rd: u8 = instruction >> 16 & 0b0000_0000_0000_1111;
-    let rn: u8 = instruction >> 12 & 0b0000_0000_0000_0000_1111;
+fn multiply(instruction: u32) -> Instruction {
+    let cond = (instruction >> 28) as u8;
+    let rd = Some(get_last_bits(instruction >> 16, 4) as u8);
+    let rn = Some(get_last_bits(instruction >> 12, 4) as u8);
+    let rs = Some(get_last_bits(instruction >> 8, 4) as u8);
+    let rm = Some(get_last_bits(instruction, 4) as u8);
+
+    let acc = get_bit_at(instruction, 21);
+    let set_cond = Some(get_bit_at(instruction, 20));
+
+    let instr = if acc {
+        MnemonicARM::MLA
+    } else {
+        MnemonicARM::MUL
+    };
+
+    Instruction {
+        cond,
+        instr,
+        rd,
+        rn,
+        rs,
+        rm,
+        set_cond,
+        ..Default::default()
+    }
 }
 
 /// Used for decoding ARM instructions.
 pub fn decode_arm(cpu: &mut CPU, instruction: u32) {
     match instruction {
-        _ => eprintln!(cpu.arm.registers[registers::PROGRAM_COUNTER as usize]),
+        _ => eprintln!(
+            "unknown instruction: {}",
+            cpu.arm.registers[registers::PROGRAM_COUNTER as usize]
+        ),
     }
 }
 
