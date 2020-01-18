@@ -378,3 +378,7 @@ fn put_temp_register_thumb(register: &mut i32, register_bitmask: u16, instructio
 pub fn execute_thumb(_cpu: &mut CPU, _instruction: u16) {
     unimplemented!();
 }
+
+// TESTS //
+
+pub mod tests;
