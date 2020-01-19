@@ -4,23 +4,17 @@ These are the goals and to do's for this module
 
 ### Short term:
 
-- bitmask for the ARM CPU instructions
+- tests for the **thumb** module (partially done)
 
-- constants for each one of the ARM CPU instructions
+- proper CPU pipeline emulation
 
-- bitmask for the Thumb instructions
-
-- constants for each one of the Thumb instructions
+- **thumb** module execution
 
 ### Middle term:
 
 - user stack access
 
 - cycle emulation and interface
-
-- proper CPU pipeline emulation
-
-- refactoring of the structures for each CPU module in other files
 
 # Long term:
 

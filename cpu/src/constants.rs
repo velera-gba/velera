@@ -104,10 +104,10 @@ pub mod thumb_bitmasks {
     pub const ADDSUB_RD_MASK: u16 = 0b0000_0000_0000_0111;
 
     // thumb 3: move/compare/add/subtract immediate
-    pub const MOV: u16 = 0b0001_0000_0000_0000;
-    pub const CMP: u16 = 0b0001_0100_0000_0000;
-    pub const ADDRI: u16 = 0b0001_1000_0000_0000;
-    pub const SUBRI: u16 = 0b0001_1100_0000_0000;
+    pub const MOV: u16 = 0b0010_0000_0000_0000;
+    pub const CMP: u16 = 0b0010_1100_0000_0000;
+    pub const ADDRI: u16 = 0b0011_0000_0000_0000;
+    pub const SUBRI: u16 = 0b0011_1000_0000_0000;
     pub const IMMEDIATE_OP_MASK: u16 = 0b1111_1000_0000_0000;
     pub const IMMEDIATE_RD_MASK: u16 = 0b0000_0111_0000_0000;
     pub const IMMEDIATE_NN_MASK: u16 = 0b0000_0000_1111_1111;
