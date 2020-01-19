@@ -14,7 +14,7 @@ mod tests {
 
     const THUMB_TEST_OPS_ADDSUB: [u16; TEST_OPS_SIZE] = [
         0b0001_1001_0010_0100,
-        0b0001_1101_0010_0100
+        0b0001_1011_0010_0100
     ];
 
     const THUMB_TEST_MASKS_ADDSUB: [u16; TEST_OPS_SIZE] = [
@@ -44,19 +44,19 @@ mod tests {
                 THUMB_TEST_OPS_ADDSUB[i],
                 &mut operation,
                 ThumbOpPack{
-                    immediate_bitmask: 0,
                     op_bitmask: THUMB_TEST_MASKS_ADDSUB[i],
                     opcode_bitmask: thumb_bitmasks::ADDSUB_OP_MASK,
                     rd_bitmask: thumb_bitmasks::ADDSUB_RD_MASK,
+                    rs_bitmask: thumb_bitmasks::ADDSUB_RS_MASK,
                     rn_bitmask: thumb_bitmasks::ADDSUB_RN_MASK,
-                    rs_bitmask: thumb_bitmasks::ADDSUB_RS_MASK
+                    immediate_bitmask: 0
                 }
             );
+            assert_eq!(operation, true);
             assert_eq!(test_cpu.arm.temp_rd, 4);
             assert_eq!(test_cpu.arm.temp_rs, 4);
             assert_eq!(test_cpu.arm.temp_rn, 4);
             assert_eq!(test_cpu.arm.immediate, 0);
-            assert_eq!(operation, true);
         }
     }
 

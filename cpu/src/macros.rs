@@ -16,6 +16,9 @@ macro_rules! temp_reg_wrap {
             rn_bitmask: $rn,
             immediate_bitmask: $immediate
         });
+        if *$operation {
+            return;
+        }
     };
 
     ($cpu: expr,
