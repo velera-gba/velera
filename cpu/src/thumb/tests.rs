@@ -17,6 +17,11 @@ mod tests {
         0b0001_1011_0010_0100
     ];
 
+    const THUMB_TEST_OPS_ADDSUBI: [u16; TEST_OPS_SIZE] = [
+        0b0011_0100_0000_0100,
+        0b0011_1100_0000_0100
+    ];
+
     const THUMB_TEST_MASKS_ADDSUB: [u16; TEST_OPS_SIZE] = [
         thumb_bitmasks::ADD,
         thumb_bitmasks::SUB
@@ -31,6 +36,18 @@ mod tests {
             assert_eq!(test_cpu.arm.temp_rn, 4);
             assert_eq!(test_cpu.arm.temp_rs, 4);
             assert_eq!(test_cpu.arm.immediate, 0);
+        }
+    }
+
+    #[test]
+    fn test_thumb_decode_addsubi() {
+        let mut test_cpu: CPU = Default::default();
+        for i in 0..TEST_OPS_SIZE {
+            decode_thumb(&mut test_cpu, THUMB_TEST_OPS_ADDSUBI[i]);
+            assert_eq!(test_cpu.arm.temp_rd, 4);
+            assert_eq!(test_cpu.arm.temp_rn, 0);
+            assert_eq!(test_cpu.arm.temp_rs, 0);
+            assert_eq!(test_cpu.arm.immediate, 4);
         }
     }
 
