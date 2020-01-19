@@ -53,8 +53,8 @@ mod tests {
                 }
             );
             assert_eq!(test_cpu.arm.temp_rd, 4);
-            assert_eq!(test_cpu.arm.temp_rd, 4);
-            assert_eq!(test_cpu.arm.temp_rd, 4);
+            assert_eq!(test_cpu.arm.temp_rs, 4);
+            assert_eq!(test_cpu.arm.temp_rn, 4);
             assert_eq!(test_cpu.arm.immediate, 0);
             assert_eq!(operation, true);
         }

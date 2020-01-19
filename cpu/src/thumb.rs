@@ -346,7 +346,7 @@ pub fn decode_thumb(cpu: &mut CPU, instruction: u16) {
 }
 
 fn pass_operation_thumb(cpu: &mut CPU, instruction: u16, operation: &mut bool, pack: ThumbOpPack) {
-    if (!(pack.op_bitmask ^ instruction) & pack.opcode_bitmask) == pack.opcode_bitmask {
+    if !(pack.op_bitmask ^ (instruction & pack.opcode_bitmask)) == pack.opcode_bitmask {
         *operation = true;
         if pack.rd_bitmask != 0 {
             put_temp_register_thumb(&mut cpu.arm.temp_rd, pack.rd_bitmask, instruction);
@@ -355,7 +355,7 @@ fn pass_operation_thumb(cpu: &mut CPU, instruction: u16, operation: &mut bool, p
             put_temp_register_thumb(&mut cpu.arm.temp_rs, pack.rs_bitmask, instruction);
         }
         if pack.rn_bitmask != 0 {
-            put_temp_register_thumb(&mut cpu.arm.temp_rn, pack.rn_bitmask, instruction)
+            put_temp_register_thumb(&mut cpu.arm.temp_rn, pack.rn_bitmask, instruction);
         }
         if pack.immediate_bitmask != 0 {
             put_temp_register_thumb(&mut cpu.arm.immediate, pack.immediate_bitmask, instruction);
