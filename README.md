@@ -14,6 +14,7 @@
 - [What is Velera](#what-is-velera)
     - [Velera's objectives](#objectives)
     - [Features](#features)
+    - [Long-term Features](#long-term features)
 - [Getting Help](#getting-help)
     - [Community](#community)
     - [Troubleshooting](#troubleshooting)
@@ -25,6 +26,12 @@
 Velera is a GBA emulator with a focus in being free as in freedom, fast and be
 able to support both low-end and high-end hardware.
 
+## Objectives
+
+## Long-term features
+  - Support the following platforms: Linux, Windows, Android and WASM.
+  
+  - Support cycles and memory latency
 # Getting Help
 
 ## Community

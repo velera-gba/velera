@@ -83,7 +83,7 @@ impl Display {
         self.graphics.graphics_cache()
     }
 
-    pub fn instanciate_cache<'r>(cache: &'r CacheObject) -> CacheInstance<'r> {
+    pub fn instanciate_cache(cache: &CacheObject) -> CacheInstance {
         Graphics::instanciate_cache(cache)
     }
 
