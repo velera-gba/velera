@@ -1,3 +1,4 @@
+// wrap temporary register operations for THUMB decoding
 macro_rules! temp_reg_wrap {
     ($cpu: expr,
     $instruction: expr,
@@ -33,5 +34,14 @@ macro_rules! temp_reg_wrap {
     $($xs: expr),*) => {
         temp_reg_wrap!($cpu, $instruction, $operation, $opcode, $rd, $rs, $rn, $immediate, $x);
         temp_reg_wrap!($cpu, $instruction, $operation, $opcode, $rd, $rs, $rn, $immediate, $($xs),*)
+    };
+}
+
+// statement, returns (), best used in an IF or MATCH statement
+macro_rules! compare_opcodes_stmt {
+    ($instruction: expr,
+    $op_bitmask: expr,
+    $opcode_bitmask: expr) => {
+        $instruction & $opcode_bitmask == $opcode_bitmask
     };
 }

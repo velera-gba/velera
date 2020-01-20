@@ -338,6 +338,7 @@ pub fn decode_thumb(cpu: &mut CPU, instruction: u16) {
 
     // operation not found error check
     if !operation {
+        // to do: switch to ARM state, deal with exception
         println!(
             "{:#x}: undefinded THUMB instruction exception.",
             cpu.arm.registers[registers::PROGRAM_COUNTER as usize]
@@ -375,8 +376,109 @@ fn put_temp_register_thumb(register: &mut i32, register_bitmask: u16, instructio
 }
 
 /// Execute thumb code.
-pub fn execute_thumb(_cpu: &mut CPU, _instruction: u16) {
-    unimplemented!();
+pub fn execute_thumb(cpu: &mut CPU, instruction: u16) {
+    match () {
+        // thumb 1: move shifted register
+        _ if compare_opcodes_stmt!(instruction, thumb_bitmasks::LSL, thumb_bitmasks::MOVE_SHIFTED_REG_OP_MASK) => {
+            
+        }
+        _ if compare_opcodes_stmt!(instruction, thumb_bitmasks::LSR, thumb_bitmasks::MOVE_SHIFTED_REG_OP_MASK) => {
+            
+        }
+        _ if compare_opcodes_stmt!(instruction, thumb_bitmasks::ASR, thumb_bitmasks::MOVE_SHIFTED_REG_OP_MASK) => {
+            
+        }
+
+        // thumb 2: add/subtract
+        _ if compare_opcodes_stmt!(instruction, thumb_bitmasks::ADD, thumb_bitmasks::ADDSUB_OP_MASK) => {
+            
+        }
+        _ if compare_opcodes_stmt!(instruction, thumb_bitmasks::SUB, thumb_bitmasks::ADDSUB_OP_MASK) => {
+            
+        }
+        _ if compare_opcodes_stmt!(instruction, thumb_bitmasks::ADDI, thumb_bitmasks::ADDSUB_OP_MASK) => {
+            
+        }
+        _ if compare_opcodes_stmt!(instruction, thumb_bitmasks::SUBI, thumb_bitmasks::ADDSUB_OP_MASK) => {
+            
+        }
+
+        // thumb 3: move/compare/add/subtract immediate
+        _ if compare_opcodes_stmt!(instruction, thumb_bitmasks::MOV, thumb_bitmasks::IMMEDIATE_OP_MASK) => {
+            
+        }
+        _ if compare_opcodes_stmt!(instruction, thumb_bitmasks::CMP, thumb_bitmasks::IMMEDIATE_OP_MASK) => {
+            
+        }
+        _ if compare_opcodes_stmt!(instruction, thumb_bitmasks::ADDRI, thumb_bitmasks::IMMEDIATE_OP_MASK) => {
+            
+        }
+        _ if compare_opcodes_stmt!(instruction, thumb_bitmasks::SUBRI, thumb_bitmasks::IMMEDIATE_OP_MASK) => {
+            
+        }
+
+        // thumb 4: ALU ops
+        _ if compare_opcodes_stmt!(instruction, thumb_bitmasks::ALU_AND, thumb_bitmasks::ALU_OP_MASK) => {
+            
+        }
+        _ if compare_opcodes_stmt!(instruction, thumb_bitmasks::ALU_EOR, thumb_bitmasks::ALU_OP_MASK) => {
+            
+        }
+        _ if compare_opcodes_stmt!(instruction, thumb_bitmasks::ALU_LSL, thumb_bitmasks::ALU_OP_MASK) => {
+            
+        }
+        _ if compare_opcodes_stmt!(instruction, thumb_bitmasks::ALU_LSR, thumb_bitmasks::ALU_OP_MASK) => {
+            
+        }
+        _ if compare_opcodes_stmt!(instruction, thumb_bitmasks::ALU_ASR, thumb_bitmasks::ALU_OP_MASK) => {
+            
+        }
+        _ if compare_opcodes_stmt!(instruction, thumb_bitmasks::ALU_ADC, thumb_bitmasks::ALU_OP_MASK) => {
+            
+        }
+        _ if compare_opcodes_stmt!(instruction, thumb_bitmasks::ALU_SBC, thumb_bitmasks::ALU_OP_MASK) => {
+            
+        }
+        _ if compare_opcodes_stmt!(instruction, thumb_bitmasks::ALU_ROR, thumb_bitmasks::ALU_OP_MASK) => {
+            
+        }
+        _ if compare_opcodes_stmt!(instruction, thumb_bitmasks::ALU_TST, thumb_bitmasks::ALU_OP_MASK) => {
+            
+        }
+        _ if compare_opcodes_stmt!(instruction, thumb_bitmasks::ALU_NEG, thumb_bitmasks::ALU_OP_MASK) => {
+            
+        }
+        _ if compare_opcodes_stmt!(instruction, thumb_bitmasks::ALU_CMP, thumb_bitmasks::ALU_OP_MASK) => {
+            
+        }
+        _ if compare_opcodes_stmt!(instruction, thumb_bitmasks::ALU_CMN, thumb_bitmasks::ALU_OP_MASK) => {
+            
+        }
+        _ if compare_opcodes_stmt!(instruction, thumb_bitmasks::ALU_ORR, thumb_bitmasks::ALU_OP_MASK) => {
+            
+        }
+        _ if compare_opcodes_stmt!(instruction, thumb_bitmasks::ALU_MUL, thumb_bitmasks::ALU_OP_MASK) => {
+            
+        }
+        _ if compare_opcodes_stmt!(instruction, thumb_bitmasks::ALU_BIC, thumb_bitmasks::ALU_OP_MASK) => {
+            
+        }
+        _ if compare_opcodes_stmt!(instruction, thumb_bitmasks::ALU_MVN, thumb_bitmasks::ALU_OP_MASK) => {
+            
+        }
+
+        // thumb 5: Hi register operations/branch exchange
+
+        // unrecognized operation
+        _ => {
+            // the code probably shouldn't get to this stage in runtime
+            // but just in case, switch to ARM state and handle the exception
+            println!(
+                "{:#x}: undefinded THUMB instruction exception in execution process.",
+                cpu.arm.registers[registers::PROGRAM_COUNTER as usize]
+            );
+        }
+    }
 }
 
 // TESTS //
