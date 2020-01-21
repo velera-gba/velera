@@ -111,23 +111,6 @@ pub fn decode_thumb(cpu: &mut CPU, instruction: u16) {
         cpu,
         instruction,
         &mut operation,
-        thumb_bitmasks::HI_OP_MASK,
-        thumb_bitmasks::HI_RD,
-        thumb_bitmasks::HI_RS,
-        thumb_bitmasks::HI_MSBD_MASK,
-        thumb_bitmasks::HI_MSBS_MASK,
-        thumb_bitmasks::HI_ADD,
-        thumb_bitmasks::HI_CMP,
-        thumb_bitmasks::HI_MOV,
-        thumb_bitmasks::HI_NOP,
-        thumb_bitmasks::BX,
-        thumb_bitmasks::BLX
-    );
-
-    temp_reg_wrap!(
-        cpu,
-        instruction,
-        &mut operation,
         thumb_bitmasks::LDPCR_MASK,
         thumb_bitmasks::LDPCR_RD,
         0,
@@ -377,108 +360,417 @@ fn put_temp_register_thumb(register: &mut i32, register_bitmask: u16, instructio
 
 /// Execute thumb code.
 pub fn execute_thumb(cpu: &mut CPU, instruction: u16) {
-    match () {
-        // thumb 1: move shifted register
-        _ if compare_opcodes_stmt!(instruction, thumb_bitmasks::LSL, thumb_bitmasks::MOVE_SHIFTED_REG_OP_MASK) => {
+    // thumb 1: move shifted register
+    thumb_execute_wrap!(cpu,
+        instruction,
+        thumb_bitmasks::MOVE_SHIFTED_REG_OP_MASK,
+        thumb_bitmasks::LSL,
+        |_cpu: &mut CPU| {
             
-        }
-        _ if compare_opcodes_stmt!(instruction, thumb_bitmasks::LSR, thumb_bitmasks::MOVE_SHIFTED_REG_OP_MASK) => {
+        },
+        thumb_bitmasks::LSR,
+        |_cpu: &mut CPU| {
             
-        }
-        _ if compare_opcodes_stmt!(instruction, thumb_bitmasks::ASR, thumb_bitmasks::MOVE_SHIFTED_REG_OP_MASK) => {
+        },
+        thumb_bitmasks::ASR,
+        |_cpu: &mut CPU| {
             
-        }
+        });
 
-        // thumb 2: add/subtract
-        _ if compare_opcodes_stmt!(instruction, thumb_bitmasks::ADD, thumb_bitmasks::ADDSUB_OP_MASK) => {
+    // thumb 2: add/subtract
+    thumb_execute_wrap!(cpu,
+        instruction,
+        thumb_bitmasks::ADDSUB_OP_MASK,
+        thumb_bitmasks::ADD,
+        |_cpu: &mut CPU| {
             
-        }
-        _ if compare_opcodes_stmt!(instruction, thumb_bitmasks::SUB, thumb_bitmasks::ADDSUB_OP_MASK) => {
+        },
+        thumb_bitmasks::SUB,
+        |_cpu: &mut CPU| {
             
-        }
-        _ if compare_opcodes_stmt!(instruction, thumb_bitmasks::ADDI, thumb_bitmasks::ADDSUB_OP_MASK) => {
+        },
+        thumb_bitmasks::ADDI,
+        |_cpu: &mut CPU| {
             
-        }
-        _ if compare_opcodes_stmt!(instruction, thumb_bitmasks::SUBI, thumb_bitmasks::ADDSUB_OP_MASK) => {
+        },
+        thumb_bitmasks::SUBI,
+        |_cpu: &mut CPU| {
             
-        }
+        });
 
-        // thumb 3: move/compare/add/subtract immediate
-        _ if compare_opcodes_stmt!(instruction, thumb_bitmasks::MOV, thumb_bitmasks::IMMEDIATE_OP_MASK) => {
+    // thumb 3: move/compare/add/subtract immediate
+    thumb_execute_wrap!(cpu,
+        instruction,
+        thumb_bitmasks::IMMEDIATE_OP_MASK,
+        thumb_bitmasks::MOV,
+        |_cpu: &mut CPU| {
             
-        }
-        _ if compare_opcodes_stmt!(instruction, thumb_bitmasks::CMP, thumb_bitmasks::IMMEDIATE_OP_MASK) => {
+        },
+        thumb_bitmasks::CMP,
+        |_cpu: &mut CPU| {
             
-        }
-        _ if compare_opcodes_stmt!(instruction, thumb_bitmasks::ADDRI, thumb_bitmasks::IMMEDIATE_OP_MASK) => {
+        },
+        thumb_bitmasks::ADDRI,
+        |_cpu: &mut CPU| {
             
-        }
-        _ if compare_opcodes_stmt!(instruction, thumb_bitmasks::SUBRI, thumb_bitmasks::IMMEDIATE_OP_MASK) => {
+        },
+        thumb_bitmasks::SUBRI,
+        |_cpu: &mut CPU| {
             
-        }
+        });
 
-        // thumb 4: ALU ops
-        _ if compare_opcodes_stmt!(instruction, thumb_bitmasks::ALU_AND, thumb_bitmasks::ALU_OP_MASK) => {
+    // thumb 4: ALU ops
+    thumb_execute_wrap!(cpu,
+        instruction,
+        thumb_bitmasks::ALU_OP_MASK,
+        thumb_bitmasks::ALU_AND,
+        |_cpu: &mut CPU| {
             
-        }
-        _ if compare_opcodes_stmt!(instruction, thumb_bitmasks::ALU_EOR, thumb_bitmasks::ALU_OP_MASK) => {
+        },
+        thumb_bitmasks::ALU_EOR,
+        |_cpu: &mut CPU| {
             
-        }
-        _ if compare_opcodes_stmt!(instruction, thumb_bitmasks::ALU_LSL, thumb_bitmasks::ALU_OP_MASK) => {
+        },
+        thumb_bitmasks::ALU_LSL,
+        |_cpu: &mut CPU| {
             
-        }
-        _ if compare_opcodes_stmt!(instruction, thumb_bitmasks::ALU_LSR, thumb_bitmasks::ALU_OP_MASK) => {
+        },
+        thumb_bitmasks::ALU_LSR,
+        |_cpu: &mut CPU| {
             
-        }
-        _ if compare_opcodes_stmt!(instruction, thumb_bitmasks::ALU_ASR, thumb_bitmasks::ALU_OP_MASK) => {
+        },
+        thumb_bitmasks::ALU_ASR,
+        |_cpu: &mut CPU| {
             
-        }
-        _ if compare_opcodes_stmt!(instruction, thumb_bitmasks::ALU_ADC, thumb_bitmasks::ALU_OP_MASK) => {
+        },
+        thumb_bitmasks::ALU_ADC,
+        |_cpu: &mut CPU| {
             
-        }
-        _ if compare_opcodes_stmt!(instruction, thumb_bitmasks::ALU_SBC, thumb_bitmasks::ALU_OP_MASK) => {
+        },
+        thumb_bitmasks::ALU_SBC,
+        |_cpu: &mut CPU| {
             
-        }
-        _ if compare_opcodes_stmt!(instruction, thumb_bitmasks::ALU_ROR, thumb_bitmasks::ALU_OP_MASK) => {
+        },
+        thumb_bitmasks::ALU_ROR,
+        |_cpu: &mut CPU| {
             
-        }
-        _ if compare_opcodes_stmt!(instruction, thumb_bitmasks::ALU_TST, thumb_bitmasks::ALU_OP_MASK) => {
+        },
+        thumb_bitmasks::ALU_TST,
+        |_cpu: &mut CPU| {
             
-        }
-        _ if compare_opcodes_stmt!(instruction, thumb_bitmasks::ALU_NEG, thumb_bitmasks::ALU_OP_MASK) => {
+        },
+        thumb_bitmasks::ALU_NEG,
+        |_cpu: &mut CPU| {
             
-        }
-        _ if compare_opcodes_stmt!(instruction, thumb_bitmasks::ALU_CMP, thumb_bitmasks::ALU_OP_MASK) => {
+        },
+        thumb_bitmasks::ALU_CMP,
+        |_cpu: &mut CPU| {
             
-        }
-        _ if compare_opcodes_stmt!(instruction, thumb_bitmasks::ALU_CMN, thumb_bitmasks::ALU_OP_MASK) => {
+        },
+        thumb_bitmasks::ALU_CMN,
+        |_cpu: &mut CPU| {
             
-        }
-        _ if compare_opcodes_stmt!(instruction, thumb_bitmasks::ALU_ORR, thumb_bitmasks::ALU_OP_MASK) => {
+        },
+        thumb_bitmasks::ALU_ORR,
+        |_cpu: &mut CPU| {
             
-        }
-        _ if compare_opcodes_stmt!(instruction, thumb_bitmasks::ALU_MUL, thumb_bitmasks::ALU_OP_MASK) => {
+        },
+        thumb_bitmasks::ALU_MUL,
+        |_cpu: &mut CPU| {
             
-        }
-        _ if compare_opcodes_stmt!(instruction, thumb_bitmasks::ALU_BIC, thumb_bitmasks::ALU_OP_MASK) => {
+        },
+        thumb_bitmasks::ALU_BIC,
+        |_cpu: &mut CPU| {
             
-        }
-        _ if compare_opcodes_stmt!(instruction, thumb_bitmasks::ALU_MVN, thumb_bitmasks::ALU_OP_MASK) => {
+        },
+        thumb_bitmasks::ALU_MVN,
+        |_cpu: &mut CPU| {
             
-        }
+        });
 
-        // thumb 5: Hi register operations/branch exchange
+    // thumb 5: Hi register operations/branch exchange
+    thumb_execute_wrap!(cpu,
+        instruction,
+        thumb_bitmasks::HI_OP_MASK,
+        thumb_bitmasks::HI_ADD,
+        |_cpu: &mut CPU| {
+            
+        },
+        thumb_bitmasks::HI_CMP,
+        |_cpu: &mut CPU| {
+            
+        },
+        thumb_bitmasks::HI_MOV,
+        |_cpu: &mut CPU| {
+            
+        },
+        thumb_bitmasks::HI_NOP,
+        |_cpu: &mut CPU| {
+            
+        },
+        thumb_bitmasks::BX,
+        |_cpu: &mut CPU| {
+            
+        },
+        thumb_bitmasks::BLX,
+        |_cpu: &mut CPU| {
+            
+        });
 
-        // unrecognized operation
-        _ => {
-            // the code probably shouldn't get to this stage in runtime
-            // but just in case, switch to ARM state and handle the exception
-            println!(
-                "{:#x}: undefinded THUMB instruction exception in execution process.",
-                cpu.arm.registers[registers::PROGRAM_COUNTER as usize]
-            );
-        }
-    }
+    // thumb 6: load PC-relative
+    thumb_execute_wrap!(cpu,
+        instruction,
+        thumb_bitmasks::LDPCR_MASK,
+        thumb_bitmasks::LDPCR,
+        |_cpu: &mut CPU| {
+
+        });
+
+    // thumb 7: load/store with register offset
+    thumb_execute_wrap!(cpu,
+        instruction,
+        thumb_bitmasks::LS_REG_OFFSET_OPCODE_MASK,
+        thumb_bitmasks::STR,
+        |_cpu: &mut CPU| {
+            
+        },
+        thumb_bitmasks::STRB,
+        |_cpu: &mut CPU| {
+            
+        },
+        thumb_bitmasks::LDR,
+        |_cpu: &mut CPU| {
+            
+        },
+        thumb_bitmasks::LDRB,
+        |_cpu: &mut CPU| {
+            
+        });
+
+    // thumb 8: load/store sign-extended byte/halfword
+    thumb_execute_wrap!(cpu,
+        instruction,
+        thumb_bitmasks::LS_EBH_OP_MASK,
+        thumb_bitmasks::STRH,
+        |_cpu: &mut CPU| {
+            
+        },
+        thumb_bitmasks::LDSB,
+        |_cpu: &mut CPU| {
+            
+        },
+        thumb_bitmasks::LDRH,
+        |_cpu: &mut CPU| {
+            
+        },
+        thumb_bitmasks::LDSH,
+        |_cpu: &mut CPU| {
+            
+        });
+
+    // thumb 9: load/store with immediate offset
+    thumb_execute_wrap!(cpu,
+        instruction,
+        thumb_bitmasks::LS_NN_OFFSET_OP_MASK,
+        thumb_bitmasks::STRI,
+        |_cpu: &mut CPU| {
+            
+        },
+        thumb_bitmasks::LDRI,
+        |_cpu: &mut CPU| {
+            
+        },
+        thumb_bitmasks::STRBI,
+        |_cpu: &mut CPU| {
+            
+        },
+        thumb_bitmasks::LDRBI,
+        |_cpu: &mut CPU| {
+            
+        });
+
+    // thumb 10: load/store halfword
+    thumb_execute_wrap!(cpu,
+        instruction,
+        thumb_bitmasks::LS_HW_OP_MASK,
+        thumb_bitmasks::STRHW,
+        |_cpu: &mut CPU| {
+            
+        },
+        thumb_bitmasks::LDRHW,
+        |_cpu: &mut CPU| {
+            
+        });
+
+    // thumb 11: load/store SP-relative
+    thumb_execute_wrap!(cpu,
+        instruction,
+        thumb_bitmasks::SP_LS_OP_MASK,
+        thumb_bitmasks::SP_STR,
+        |_cpu: &mut CPU| {
+            
+        },
+        thumb_bitmasks::SP_LDR,
+        |_cpu: &mut CPU| {
+            
+        });
+
+    // thumb 12: get relative address
+    thumb_execute_wrap!(cpu,
+        instruction,
+        thumb_bitmasks::RELATIVE_ADDR_OP_MASK,
+        thumb_bitmasks::ADD_PC,
+        |_cpu: &mut CPU| {
+            
+        },
+        thumb_bitmasks::ADD_SP,
+        |_cpu: &mut CPU| {
+            
+        });
+
+    // thumb 13: add offset to stack pointer
+    thumb_execute_wrap!(cpu,
+        instruction,
+        thumb_bitmasks::SP_OFFSET_OP_MASK,
+        thumb_bitmasks::ADD_SP_NN,
+        |_cpu: &mut CPU| {
+            
+        },
+        thumb_bitmasks::ADD_SP_MINUS_NN,
+        |_cpu: &mut CPU| {
+            
+        });
+
+    // thumb 14: push/pop registers
+    thumb_execute_wrap!(cpu,
+        instruction,
+        thumb_bitmasks::STACK_OPS_OP_MASK,
+        thumb_bitmasks::PUSH,
+        |_cpu: &mut CPU| {
+            
+        },
+        thumb_bitmasks::POP,
+        |_cpu: &mut CPU| {
+            
+        });
+
+    // thumb 15: multiple load/store
+    thumb_execute_wrap!(cpu,
+        instruction,
+        thumb_bitmasks::LS_MIA_OP_MASK,
+        thumb_bitmasks::STMIA,
+        |_cpu: &mut CPU| {
+            
+        },
+        thumb_bitmasks::LDMIA,
+        |_cpu: &mut CPU| {
+            
+        });
+
+    let extra_opcode_mask =
+        thumb_bitmasks::COND_GENERAL_OP_MASK ^ thumb_bitmasks::COND_FULL_OP_MASK;
+
+    let cond_branch_shift = 8;
+
+    // thumb 16: conditional branch
+    thumb_execute_wrap!(cpu,
+        instruction,
+        thumb_bitmasks::COND_FULL_OP_MASK,
+        ((cond_arm::EQ as u16) << cond_branch_shift) & extra_opcode_mask,
+        |_cpu: &mut CPU| {
+            
+        },
+        ((cond_arm::NE as u16) << cond_branch_shift) & extra_opcode_mask,
+        |_cpu: &mut CPU| {
+            
+        },
+        ((cond_arm::CS as u16) << cond_branch_shift) & extra_opcode_mask,
+        |_cpu: &mut CPU| {
+            
+        },
+        ((cond_arm::CC as u16) << cond_branch_shift) & extra_opcode_mask,
+        |_cpu: &mut CPU| {
+            
+        },
+        ((cond_arm::MI as u16) << cond_branch_shift) & extra_opcode_mask,
+        |_cpu: &mut CPU| {
+            
+        },
+        ((cond_arm::PL as u16) << cond_branch_shift) & extra_opcode_mask,
+        |_cpu: &mut CPU| {
+            
+        },
+        ((cond_arm::VS as u16) << cond_branch_shift) & extra_opcode_mask,
+        |_cpu: &mut CPU| {
+            
+        },
+        ((cond_arm::VC as u16) << cond_branch_shift) & extra_opcode_mask,
+        |_cpu: &mut CPU| {
+            
+        },
+        ((cond_arm::HI as u16) << cond_branch_shift) & extra_opcode_mask,
+        |_cpu: &mut CPU| {
+            
+        },
+        ((cond_arm::LS as u16) << cond_branch_shift) & extra_opcode_mask,
+        |_cpu: &mut CPU| {
+            
+        },
+        ((cond_arm::GE as u16) << cond_branch_shift) & extra_opcode_mask,
+        |_cpu: &mut CPU| {
+            
+        },
+        ((cond_arm::LT as u16) << cond_branch_shift) & extra_opcode_mask,
+        |_cpu: &mut CPU| {
+            
+        },
+        ((cond_arm::GT as u16) << cond_branch_shift) & extra_opcode_mask,
+        |_cpu: &mut CPU| {
+            
+        },
+        ((cond_arm::LE as u16) << cond_branch_shift) & extra_opcode_mask,
+        |_cpu: &mut CPU| {
+            
+        });
+
+    // thumb 17: software interrupt and breakpoint
+    thumb_execute_wrap!(cpu,
+        instruction,
+        thumb_bitmasks::SWI_BK_OP_MASK,
+        thumb_bitmasks::SWI,
+        |_cpu: &mut CPU| {
+            
+        },
+        thumb_bitmasks::BKPT,
+        |_cpu: &mut CPU| {
+            
+        });
+
+    // thumb 18: unconditional branch
+    thumb_execute_wrap!(cpu,
+        instruction,
+        thumb_bitmasks::B_OP_MASK,
+        thumb_bitmasks::B,
+        |_cpu: &mut CPU| {
+            
+        });
+
+    // thumb 19: long branch with link
+    thumb_execute_wrap!(cpu,
+        instruction,
+        thumb_bitmasks::LONG_BRANCH_OP_MASK,
+        thumb_bitmasks::LONG_BRANCH_FIRST_OP,
+        |_cpu: &mut CPU| {
+            
+        },
+        thumb_bitmasks::BL,
+        |_cpu: &mut CPU| {
+            
+        },
+        thumb_bitmasks::BLLX,
+        |_cpu: &mut CPU| {
+            
+        });
 }
 
 // TESTS //

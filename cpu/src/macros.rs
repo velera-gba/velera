@@ -17,9 +17,6 @@ macro_rules! temp_reg_wrap {
             rn_bitmask: $rn,
             immediate_bitmask: $immediate
         });
-        // if *$operation {
-        //     return;
-        // }
     };
 
     ($cpu: expr,
@@ -37,11 +34,24 @@ macro_rules! temp_reg_wrap {
     };
 }
 
-// statement, returns (), best used in an IF or MATCH statement
-macro_rules! compare_opcodes_stmt {
-    ($instruction: expr,
-    $op_bitmask: expr,
-    $opcode_bitmask: expr) => {
-        $instruction & $opcode_bitmask == $opcode_bitmask
+macro_rules! thumb_execute_wrap {
+    ($cpu: expr,
+    $instruction: expr,
+    $opcode_bitmask: expr,
+    $x: expr,
+    $execution: expr) => {
+        if $instruction & $opcode_bitmask == $x {
+            $execution($cpu);
+        }
     };
+
+    ($cpu: expr,
+    $instruction: expr,
+    $opcode_bitmask: expr,
+    $x: expr,
+    $execution: expr,
+    $($xs: expr, $exs: expr),*) => {
+        thumb_execute_wrap!($cpu, $instruction, $opcode_bitmask, $x, $execution);
+        thumb_execute_wrap!($cpu, $instruction, $opcode_bitmask, $($xs, $exs),*)
+    }
 }
