@@ -10,6 +10,19 @@ use crate::enums::InstructionType;
 
 use crate::utils;
 
+/// This struct will handle all the memory operations, fetching, decoding and execution of
+/// instructions.
+///
+/// ```
+/// let cpu = CPU::default();
+/// cpu.fetch();
+///
+/// // finds out the mode of the function (either thumb or 32-bit arm) and decodes it
+/// // through a bit mask or otherwise a DecodedInstruction struct.
+/// cpu.decode();
+///
+/// cpu.execute();
+/// ```
 pub struct CPU {
     pub mmu: MMU,
     pub rom: Vec<u8>,

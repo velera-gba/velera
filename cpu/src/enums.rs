@@ -5,7 +5,7 @@ pub enum InstructionType {
 }
 
 /// List of ARM instruction mnemonics
-#[derive(Debug)]
+#[derive(Debug, PartialEq)]
 pub enum MnemonicARM {
     ILL, // illegal
     ADC,

@@ -4,7 +4,7 @@ use std::default::Default;
 
 mod decode;
 
-/// Implementation of the ARM cpu.
+/// Handles ARM decoding and execution.
 pub struct ARM7HDTI {
     pub registers: [i32; 16],
     pub cpsr: u32,
@@ -50,3 +50,5 @@ pub fn execute_arm(_cpu: &mut CPU, instruction: u32) {
     let _cond = (instruction >> 28) as u8;
     unimplemented!();
 }
+
+pub mod tests;
