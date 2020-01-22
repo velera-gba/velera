@@ -34,6 +34,25 @@ impl Default for CPU {
     }
 }
 
+/// Cycle through memory until it gets signalized to exit.
+/// MUST FIX FOR CYCLE ACCURACY!!!
+pub fn run_rom_max_cycle(cpu: &mut CPU, rom_path: &str) {
+    cpu.rom = utils::read_rom_to_memory(rom_path).unwrap();
+    while !cpu.should_exit {
+        let instruction = fetch(cpu);
+        decode(cpu, &instruction);
+        execute(cpu, &instruction);
+    }
+}
+
+/// Run F->D->E cycle.
+/// MUST FIX FOR CYCLE ACCURACY!!!
+pub fn cycle(cpu: &mut CPU) {
+    let instruction = fetch(cpu);
+    decode(cpu, &instruction);
+    execute(cpu, &instruction);
+}
+
 /// Check if a function is in thumb mode
 #[inline]
 fn is_thumb_mode(cpu: &CPU) -> u32 {
@@ -97,21 +116,4 @@ fn pop_micro_operation(cpu: &mut CPU) {
                 cpu.arm.registers[constants::registers::PROGRAM_COUNTER as usize])
         }
     }
-}
-
-/// Cycle through memory until it gets signalized to exit.
-pub fn run_rom_max_cycle(cpu: &mut CPU, rom_path: &str) {
-    cpu.rom = utils::read_rom_to_memory(rom_path).unwrap();
-    while !cpu.should_exit {
-        let instruction = fetch(cpu);
-        decode(cpu, &instruction);
-        execute(cpu, &instruction);
-    }
-}
-
-/// Run F->D->E cycle.
-pub fn cycle(cpu: &mut CPU) {
-    let instruction = fetch(cpu);
-    decode(cpu, &instruction);
-    execute(cpu, &instruction);
 }

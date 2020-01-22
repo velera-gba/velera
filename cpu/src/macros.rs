@@ -11,16 +11,16 @@ macro_rules! temp_reg_wrap {
     $x: expr => $func: block) => {
         // saves temporary data for execution
         if $cpu.execution_queue.is_empty() {
-            pass_operation_thumb($cpu, $instruction, $operation, ThumbOpPack {
-                op_bitmask: $x,
-                opcode_bitmask: $opcode,
-                rd_bitmask: $rd,
-                rs_bitmask: $rs,
-                rn_bitmask: $rn,
-                immediate_bitmask: $immediate
-            });
-
-            // todo: enqueue functions for next execution
+            if pass_operation_thumb($cpu, $instruction, $operation, ThumbOpPack {
+            op_bitmask: $x,
+            opcode_bitmask: $opcode,
+            rd_bitmask: $rd,
+            rs_bitmask: $rs,
+            rn_bitmask: $rn,
+            immediate_bitmask: $immediate}) {
+                // enqueue functions for next execution
+                enqueue_operation!($cpu, $func);
+            }
         }
     };
 
@@ -39,26 +39,16 @@ macro_rules! temp_reg_wrap {
     };
 }
 
-/*
-macro_rules! thumb_execute_wrap {
+macro_rules! enqueue_operation {
     ($cpu: expr,
-    $instruction: expr,
-    $opcode_bitmask: expr,
-    $x: expr,
-    $execution: expr) => {
-        if $instruction & $opcode_bitmask == $x {
-            $execution($cpu);
-        }
+    $func: expr) => {
+        $cpu.execution_queue.push_back($func)
     };
 
     ($cpu: expr,
-    $instruction: expr,
-    $opcode_bitmask: expr,
-    $x: expr,
-    $execution: expr,
-    $($xs: expr, $exs: expr),*) => {
-        thumb_execute_wrap!($cpu, $instruction, $opcode_bitmask, $x, $execution);
-        thumb_execute_wrap!($cpu, $instruction, $opcode_bitmask, $($xs, $exs),*)
+    $func: expr,
+    $($funcs: expr),*) => {
+        enqueue_operation!($cpu, $func);
+        enqueue_operation!($cpu, $($funcs),*)
     }
 }
-*/
