@@ -73,12 +73,7 @@ impl Graphics {
             .unwrap()
     }
 
-    pub fn drawline<'r>(
-        &mut self,
-        cache_instance: &mut CacheInstance<'r>,
-        y: usize,
-        scanline: &[u8],
-    ) -> State {
+    pub fn drawline<'r>(&mut self, cache_instance: &mut CacheInstance<'r>, y: usize, scanline: &[u8]) -> State {
         for event in self.event_pump.poll_iter() {
             if let Event::Quit { .. } = event {
                 return State::Exited;
@@ -99,29 +94,35 @@ impl Graphics {
 }
 
 pub struct Interrupt {
-    pub vblank: bool,
-    pub hblank: bool,
+    pub vblank:     bool,
+    pub vcounter:   bool,
+    pub hblank:     bool,
 }
 
 impl Interrupt {
     pub const fn none() -> Self {
         Self {
-            vblank: false,
-            hblank: false,
+            vblank:     false,
+            vcounter:   false,
+            hblank:     false,
         }
     }
+
+    pub fn vblank   (&mut self) { self.vblank   = true }
+    pub fn vcounter (&mut self) { self.vcounter = true }
+    pub fn hblank   (&mut self) { self.hblank   = true }
 }
 
 pub enum State {
     Exited,
-    Interrupted(Interrupt),
     Running,
+    Blanking
 }
 
 #[cfg(test)]
 mod tests {
     #[test]
-    fn graphics_test() -> Result<(), String> {
+    fn drawline_test() -> Result<(), String> {
         let mut video = super::Graphics::setup(4)?;
         let cache = video.graphics_cache();
         let mut texture = super::Graphics::instanciate_cache(&cache);
@@ -130,8 +131,7 @@ mod tests {
         loop {
             match video.drawline(&mut texture, 10, &[0xFF; 240 * 2]) {
                 State::Exited => break Ok(()),
-                State::Running => continue,
-                State::Interrupted(interrupts) => continue,
+                _ => continue,
             }
         }
     }

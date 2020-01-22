@@ -1,6 +1,6 @@
 mod graphics;
-use graphics::Graphics;
-pub use graphics::{CacheInstance, CacheObject, Interrupt, State};
+use self::graphics::Graphics;
+pub use self::graphics::{CacheInstance, CacheObject, Interrupt, State};
 
 pub struct Memory {
     pub palette: Box<[u8]>,
@@ -41,17 +41,21 @@ impl Memory {
 ///
 /// Usage:
 /// ```rust
+/// use graphics::{ Display, State };
+/// const SCREEN_SCALE: u32 = 2;
+/// 
 /// // Initialise the graphics backend and SDL
-/// let (mut memory, mut display) = Display::init(SCREEN_SCALE);
+/// let (mut memory, mut display) = Display::init(SCREEN_SCALE).unwrap();
 /// // These 2 structures cannot be owned by Display and as such exist here
 /// let cache = display.graphics_cache();
 /// let mut cache_instance = Display::instanciate_cache(&cache);
 ///
 /// loop {
 ///     // To be called when a new scanline is to be drawn
-///     memory = match display.cycle(cache_instance, memory) {
-///         (State::Exitted, _) => panic("Window closed!"),
-///         _ => continue
+///     
+///     memory = match display.cycle(&mut cache_instance, memory) {
+///         (State::Exited, _, _) => break (),
+///         (_, _, memory) => memory,
 ///     }
 /// }
 /// ```
@@ -87,66 +91,47 @@ impl Display {
     }
 
     /// Draw a the next scan line
-    pub fn cycle<'r>(
-        &mut self,
-        cache_instance: &mut CacheInstance<'r>,
-        mut memory: Memory,
-    ) -> (State, Memory) {
+    pub fn cycle<'r>(&mut self, cache_instance: &mut CacheInstance<'r>, mut memory: Memory) -> (State, Interrupt, Memory) {
+        let mut interrupts = Interrupt::none();
+
         // Only bits 0-7 are used of this register
-        let vcount = memory.lcd[registers::local(registers::VCOUNT)] as usize;
+        let vcount = memory.read(registers::VCOUNT) as usize;
+        let vblank = if vcount > 160 { true } else { false };
 
-        // Generate draw closure based on video mode
-        let scanline = match memory.lcd[registers::local(registers::DISPCNT)] & 0b111 {
-            0 => unimplemented!(),
-            1 => unimplemented!(),
-            2 => unimplemented!(),
-            3 => {
-                if vcount > 160 {
-                    // Increment the VCOUNT register
-                    memory.lcd[registers::local(registers::VCOUNT)] = if vcount < 227 {
-                        // Set vblank
-                        memory.lcd[registers::local(registers::DISPSTAT)] =
-                            memory.lcd[registers::local(registers::DISPSTAT)] | 0b1u8;
-                        vcount as u8 + 1
-                    } else {
-                        // Unet vblank
-                        memory.lcd[registers::local(registers::DISPSTAT)] =
-                            memory.lcd[registers::local(registers::DISPSTAT)] & !0b1u8;
-                        0
-                    };
-                    return (
-                        State::Interrupted(Interrupt {
-                            vblank: true,
-                            ..Interrupt::none()
-                        }),
-                        memory,
-                    );
-                } else {
-                    &memory.vram[240 * 2 * vcount..(vcount + 1) * 240 * 2]
-                }
-            }
-            4 => unimplemented!(),
-            5 => unimplemented!(),
-            6 | 7 => panic!("Program attempted to use undefined video mode"),
-            _ => unreachable!(),
-        };
-
-        // Increment the VCOUNT register
-        memory.lcd[registers::local(registers::VCOUNT)] = if vcount < 227 {
-            // Set vblank
-            memory.lcd[registers::local(registers::DISPSTAT)] =
-                memory.lcd[registers::local(registers::DISPSTAT)] | 0b1u8;
-            vcount as u8 + 1
+        let state = if !vblank {
+            // Generate draw closure based on video mode
+            let scanline = match memory.lcd[registers::local(registers::DISPCNT)] & 0b111 {
+                0 => unimplemented!(),
+                1 => unimplemented!(),
+                2 => unimplemented!(),
+                3 => &memory.vram[240 * 2 * vcount..(vcount + 1) * 240 * 2],
+                4 => unimplemented!(),
+                5 => unimplemented!(),
+                6 | 7 => panic!("Program attempted to use undefined video mode"),
+                _ => unreachable!(),
+            };
+    
+            self.graphics.drawline(cache_instance, vcount, scanline)
         } else {
-            // Unet vblank
-            memory.lcd[registers::local(registers::DISPSTAT)] =
-                memory.lcd[registers::local(registers::DISPSTAT)] & !0b1u8;
-            0
+            State::Blanking
         };
 
-        match self.graphics.drawline(cache_instance, vcount, scanline) {
-            state => (state, memory),
-        }
+        // Increment or reset the VCOUNT register
+        let vcount =
+            if vcount < 227 {
+                // Set vblank flag
+                memory.write(registers::DISPSTAT, memory.read(registers::DISPSTAT) | 0b1u8);
+                // Check if vblank IRQ is set
+                if memory.read(registers::DISPSTAT) | 0b1000u8 != 0 { interrupts.vblank() };
+                vcount + 1
+            } else {
+                // Unset vblank flag
+                memory.write(registers::DISPSTAT, memory.read(registers::DISPSTAT) & !0b1u8);
+                0
+            };
+        memory.write(registers::VCOUNT, vcount as u8);
+
+        (state, interrupts, memory)
     }
 }
 
@@ -215,9 +200,8 @@ mod tests {
         use super::State;
         loop {
             memory = match display.cycle(&mut cache_instance, memory) {
-                (State::Exited, memory) => break Ok(()),
-                (State::Running, memory) => memory,
-                (State::Interrupted(interupts), memory) => memory,
+                (State::Exited, _, _) => break Ok(()),
+                (_, _, memory) => memory,
             }
         }
     }
