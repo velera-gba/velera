@@ -1,5 +1,6 @@
 use memory::memory::MMU;
 use std::default::Default;
+use std::collections::VecDeque;
 
 use crate::arm::{decode_arm, execute_arm};
 use crate::thumb::{decode_thumb, execute_thumb};
@@ -16,6 +17,7 @@ pub struct CPU {
     pub arm: arm::ARM7HDTI,
     pub lr: gb::LR35902,
     pub should_exit: bool,
+    pub execution_queue: VecDeque<fn(&mut CPU)>
 }
 
 impl Default for CPU {
@@ -27,6 +29,7 @@ impl Default for CPU {
             arm: Default::default(),
             lr: Default::default(),
             should_exit: false,
+            execution_queue: VecDeque::new()
         }
     }
 }
@@ -76,8 +79,22 @@ fn execute(cpu: &mut CPU, instruction: &InstructionType) {
         InstructionType::ARM(x) => {
             execute_arm(cpu, *x);
         }
-        InstructionType::Thumb(x) => {
-            execute_thumb(cpu, *x);
+        InstructionType::Thumb(_) => {
+            execute_thumb(cpu);
+        }
+    }
+}
+
+// Executes the next micro operation in the queue of execution
+fn pop_micro_operation(cpu: &mut CPU) {
+    let result = cpu.execution_queue.pop_front();
+    match result {
+        Some(function) => {
+            function(cpu);
+        },
+        None => {
+            println!("{:#x}: execution queue got to unexpected end, skipping cycle",
+                cpu.arm.registers[constants::registers::PROGRAM_COUNTER as usize])
         }
     }
 }
