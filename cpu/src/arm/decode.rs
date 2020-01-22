@@ -440,7 +440,7 @@ impl BaseInstruction {
     // TODO: fucking do something about this lmao
     /// This function will get an instruction without the condition field (upper 4 bits of the 32).
     /// This function exists only to feed the decode functions, that will transform it into a decoded instruction
-    pub fn get_instr(instruction: u32) -> BaseInstruction {
+    fn get_instr(instruction: u32) -> BaseInstruction {
         use BaseInstruction::*;
 
         let instr: BaseInstruction;
@@ -486,9 +486,12 @@ impl BaseInstruction {
         instr
     }
 
-    pub fn base_to_decoded(base: BaseInstruction, instr: u32, cond: u8) -> DecodedInstruction {
+    pub fn base_to_decoded(instr: u32) -> DecodedInstruction {
         use BaseInstruction::*;
-        return match base {
+        let cond = (instr >> 28) as u8;
+        let instr = get_last_bits(instr, 28);
+
+        return match Self::get_instr(instr) {
             BranchAndExchange => branch_exchange(instr, cond),
             Interrupt => interrupt(instr, cond),
             Branch => branch(instr, cond),
