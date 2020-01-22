@@ -4,7 +4,7 @@ use std::default::Default;
 
 mod decode;
 
-/// Implementation of the ARM cpu.
+/// Handles ARM decoding and execution.
 pub struct ARM7HDTI {
     pub registers: [i32; 16],
     pub cpsr: u32,
@@ -29,24 +29,15 @@ impl Default for ARM7HDTI {
     }
 }
 
-/// Used for decoding ARM instructions.
+/// Finds out which instruction the numbers represent and separates its values
+#[inline]
 pub fn decode_arm(_: &mut CPU, instruction: u32) -> decode::DecodedInstruction {
-    use crate::arm::decode::BaseInstruction;
-
-    let cond = (instruction >> 28) as u8;
-    let instruction = decode::get_last_bits(instruction, 28);
-
-    let instr = BaseInstruction::base_to_decoded(
-        BaseInstruction::get_instr(instruction),
-        instruction,
-        cond,
-    );
-
-    instr
+    decode::BaseInstruction::base_to_decoded(instruction)
 }
 
-/// Executes the instructions.
 pub fn execute_arm(_cpu: &mut CPU, instruction: u32) {
     let _cond = (instruction >> 28) as u8;
     unimplemented!();
 }
+
+pub mod tests;
