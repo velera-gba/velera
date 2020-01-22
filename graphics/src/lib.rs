@@ -1,4 +1,3 @@
-#![allow(dead_code)]
 mod graphics;
 use graphics::Graphics;
 pub use graphics::{CacheInstance, CacheObject, Interrupt, State};
