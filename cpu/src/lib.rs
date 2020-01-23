@@ -11,6 +11,8 @@ pub mod macros;
 
 pub mod cpu;
 
+pub mod micro_ops;
+
 pub mod arm;
 pub mod gb;
 pub mod thumb;

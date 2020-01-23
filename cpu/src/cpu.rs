@@ -1,5 +1,6 @@
 use memory::memory::MMU;
 use std::default::Default;
+use std::collections::VecDeque;
 
 use crate::arm::{decode_arm, execute_arm};
 use crate::thumb::{decode_thumb, execute_thumb};
@@ -29,6 +30,7 @@ pub struct CPU {
     pub arm: arm::ARM7HDTI,
     pub lr: gb::LR35902,
     pub should_exit: bool,
+    pub execution_queue: VecDeque<fn(&mut CPU)>
 }
 
 impl Default for CPU {
@@ -40,8 +42,28 @@ impl Default for CPU {
             arm: Default::default(),
             lr: Default::default(),
             should_exit: false,
+            execution_queue: VecDeque::new()
         }
     }
+}
+
+/// Cycle through memory until it gets signalized to exit.
+/// MUST FIX FOR CYCLE ACCURACY!!!
+pub fn run_rom_max_cycle(cpu: &mut CPU, rom_path: &str) {
+    cpu.rom = utils::read_rom_to_memory(rom_path).unwrap();
+    while !cpu.should_exit {
+        let instruction = fetch(cpu);
+        decode(cpu, &instruction);
+        execute(cpu, &instruction);
+    }
+}
+
+/// Run F->D->E cycle.
+/// MUST FIX FOR CYCLE ACCURACY!!!
+pub fn cycle(cpu: &mut CPU) {
+    let instruction = fetch(cpu);
+    decode(cpu, &instruction);
+    execute(cpu, &instruction);
 }
 
 /// Check if a function is in thumb mode
@@ -89,25 +111,22 @@ fn execute(cpu: &mut CPU, instruction: &InstructionType) {
         InstructionType::ARM(x) => {
             execute_arm(cpu, *x);
         }
-        InstructionType::Thumb(x) => {
-            execute_thumb(cpu, *x);
+        InstructionType::Thumb(_) => {
+            execute_thumb(cpu);
         }
     }
 }
 
-/// Cycle through memory until it gets signalized to exit.
-pub fn run_rom_max_cycle(cpu: &mut CPU, rom_path: &str) {
-    cpu.rom = utils::read_rom_to_memory(rom_path).unwrap();
-    while !cpu.should_exit {
-        let instruction = fetch(cpu);
-        decode(cpu, &instruction);
-        execute(cpu, &instruction);
+// Executes the next micro operation in the queue of execution
+fn pop_micro_operation(cpu: &mut CPU) {
+    let result = cpu.execution_queue.pop_front();
+    match result {
+        Some(function) => {
+            function(cpu);
+        },
+        None => {
+            println!("{:#x}: execution queue got to unexpected end, skipping cycle",
+                cpu.arm.registers[constants::registers::PROGRAM_COUNTER as usize])
+        }
     }
-}
-
-/// Run F->D->E cycle.
-pub fn cycle(cpu: &mut CPU) {
-    let instruction = fetch(cpu);
-    decode(cpu, &instruction);
-    execute(cpu, &instruction);
 }
