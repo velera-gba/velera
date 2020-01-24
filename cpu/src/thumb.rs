@@ -486,7 +486,12 @@ pub fn decode_thumb(cpu: &mut CPU, instruction: u16) {
     }
 }
 
-fn pass_operation_thumb(cpu: &mut CPU, instruction: u16, operation: &mut bool, pack: ThumbOpPack) -> bool {
+fn pass_operation_thumb(
+    cpu: &mut CPU,
+    instruction: u16,
+    operation: &mut bool,
+    pack: ThumbOpPack,
+) -> bool {
     if pack.op_bitmask ^ (instruction & pack.opcode_bitmask) == 0 {
         *operation = true;
         if pack.rd_bitmask != 0 {
@@ -518,10 +523,6 @@ fn put_temp_register_thumb(register: &mut i32, register_bitmask: u16, instructio
 }
 
 /// Execute thumb code.
-pub fn execute_thumb(_cpu: &mut CPU) {
-
-}
-
-// TESTS //
+pub fn execute_thumb(_cpu: &mut CPU) {}
 
 pub mod tests;
