@@ -6,7 +6,7 @@ use std::collections::VecDeque;
 use std::default::Default;
 
 /// Implementation of the ARM cpu.
-pub struct ARM7HDTI {
+pub struct ARM7TDMI {
     pub registers: [i32; 16],
     pub cpsr: u32,
     pub spsr: u32,
@@ -16,7 +16,7 @@ pub struct ARM7HDTI {
     pub immediate: i32, // temporary immediate
 }
 
-impl Default for ARM7HDTI {
+impl Default for ARM7TDMI {
     fn default() -> Self {
         Self {
             registers: default_cpu::RS,

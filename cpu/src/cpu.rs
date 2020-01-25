@@ -14,7 +14,7 @@ use crate::utils;
 pub struct CPU {
     pub mmu: MMU,
     pub rom: Vec<u8>,
-    pub arm: arm::ARM7HDTI,
+    pub arm: arm::ARM7TDMI,
     pub lr: gb::LR35902,
     pub should_exit: bool,
     pub fetched_instruction: InstructionType,
