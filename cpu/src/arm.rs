@@ -1,11 +1,54 @@
-use crate::constants::{default_cpu, registers};
-use crate::cpu::CPU;
-use crate::enums::MnemonicARM;
-use std::collections::VecDeque;
+use crate::{constants::default_cpu, cpu::CPU, enums::MnemonicARM};
 
-use std::default::Default;
+use std::{
+    collections::VecDeque,
+    default::Default,
+};
 
-/// Implementation of the ARM cpu.
+mod decode;
+
+/// Holds a temporary instruction to be executed
+#[derive(Debug, Default, PartialEq, Clone)]
+pub struct DecodedInstruction {
+    pub cond: u8,
+    pub instr: MnemonicARM,
+    pub rn: Option<u8>,   // index register
+    pub rm: Option<u8>,   // second index register
+    pub rd: Option<u8>,   // destination register
+    pub rs: Option<u8>,   // source register
+    pub val1: Option<u8>, // multi-purpose value (can be a shift to apply, etc)
+    pub val2: Option<u8>, // ^
+    pub val3: Option<u8>,
+    pub offset: Option<u32>, // offset for branching
+
+    pub set_cond: Option<bool>, // choose if should set condition codes
+    pub imm: Option<bool>,      // whether the values come from registers or not
+    pub acc: Option<bool>,      // whether the values should accumulate
+}
+
+#[derive(Clone)]
+pub struct ARMInstruction {
+    pub fetched_instruction: Option<u32>,
+    pub decoded_instruction: Option<DecodedInstruction>,
+}
+
+impl ARMInstruction {
+    pub fn new_decoded(decoded_instr: DecodedInstruction) -> Self {
+        Self {
+            fetched_instruction: None,
+            decoded_instruction: Some(decoded_instr),
+        }
+    }
+
+    pub fn new_fetched(fetched_instr: u32) -> Self {
+        Self {
+            fetched_instruction: Some(fetched_instr),
+            decoded_instruction: None,
+        }
+    }
+}
+
+/// Handles ARM decoding and execution.
 pub struct ARM7TDMI {
     pub registers: [i32; 16],
     pub cpsr: u32,
@@ -30,173 +73,11 @@ impl Default for ARM7TDMI {
     }
 }
 
-/// get bit in a certain position
-#[inline]
-fn get_bit_at(input: u32, n: u8) -> bool {
-    if n < 32 {
-        return input & (1 << n) != 0;
-    }
-    false
-}
-
-/// gets n last bits
-#[inline]
-fn get_last_bits(input: u32, n: u8) -> u32 {
-    if n < 32 {
-        return input & ((1 << n) - 1);
-    }
-    panic!("tried to get >32 last bits");
-}
-
-#[derive(Debug, Default)]
-struct Instruction {
-    cond: u8,
-    instr: MnemonicARM,
-    rn: Option<u8>,      // index register
-    rm: Option<u8>,      // second index register
-    rd: Option<u8>,      // destination register
-    rs: Option<u8>,      // source register
-    val1: Option<u8>,    // multi-purpose value (can be a shift to apply, etc)
-    val2: Option<u8>,    // ^
-    offset: Option<u32>, // offset for branching
-
-    set_cond: Option<bool>, // choose if should set condition codes
-    imm: Option<bool>,      // whether the values come from registers or not
-    acc: Option<bool>,      // whether the values should accumulate
-}
-
-fn data_processing(instruction: u32) -> Instruction {
-    use crate::constants::dp_opcodes::*;
-
-    let cond = (instruction >> 28) as u8;
-    let imm = get_bit_at(instruction, 25);
-    let set_cond = Some(get_bit_at(instruction, 20));
-
-    let instr = get_last_bits(instruction >> 21, 4) as u8;
-    let rn = Some(get_last_bits(instruction >> 16, 4) as u8);
-    let rd = Some(get_last_bits(instruction >> 12, 4) as u8);
-
-    // is it possible to change this to a stringify! statement?
-    let instr = match instr {
-        AND => MnemonicARM::AND,
-        EOR => MnemonicARM::EOR,
-        SUB => MnemonicARM::SUB,
-        RSB => MnemonicARM::RSB,
-        ADD => MnemonicARM::ADD,
-        ADC => MnemonicARM::ADC,
-        SBC => MnemonicARM::SBC,
-        RSC => MnemonicARM::RSC,
-        TST => MnemonicARM::TST,
-        TEQ => MnemonicARM::TEQ,
-        CMP => MnemonicARM::CMP,
-        CMN => MnemonicARM::CMN,
-        ORR => MnemonicARM::ORR,
-        MOV => MnemonicARM::MOV,
-        BIC => MnemonicARM::BIC,
-        MVN => MnemonicARM::MVN,
-        _ => unreachable!(),
-    };
-
-    if imm {
-        let val1 = Some(get_last_bits(instruction >> 8, 4) as u8); // shift applied to imm
-        let val2 = Some(get_last_bits(instruction, 8) as u8); // immediate value
-        return Instruction {
-            cond,
-            instr,
-            rn,
-            rd,
-            val1,
-            val2,
-            set_cond,
-            ..Default::default()
-        };
-    }
-
-    let val1 = Some(get_last_bits(instruction >> 4, 8) as u8); // shift applied to rm
-    let rm = Some(get_last_bits(instruction, 4) as u8);
-
-    // if val2 is none/rm is not none, the instruction is immediate
-    Instruction {
-        cond,
-        instr,
-        rn,
-        rm,
-        rd,
-        val1,
-        set_cond,
-        ..Default::default()
-    }
-}
-
-/// decodes BX, BLX instructions.
-fn branch_exchange(instruction: u32) -> Instruction {
-    let cond = (instruction >> 28) as u8;
-    let rn = Some(get_last_bits(instruction, 4) as u8);
-
-    Instruction {
-        cond,
-        rn,
-        instr: MnemonicARM::BX,
-        ..Default::default()
-    }
-}
-
-/// decodes B, BL instructions.
-fn branch(instruction: u32) -> Instruction {
-    let cond = (instruction >> 28) as u8;
-    let val1 = Some((instruction >> 24 & 1) as u8); // to link or not to link, that is the question...
-    let offset = Some(get_last_bits(instruction, 24));
-
-    Instruction {
-        cond,
-        val1,
-        offset,
-        ..Default::default()
-    }
-}
-
-/// Reads multiply/mul long/mul half statements.
-fn multiply(instruction: u32) -> Instruction {
-    let cond = (instruction >> 28) as u8;
-    let rd = Some(get_last_bits(instruction >> 16, 4) as u8);
-    let rn = Some(get_last_bits(instruction >> 12, 4) as u8);
-    let rs = Some(get_last_bits(instruction >> 8, 4) as u8);
-    let rm = Some(get_last_bits(instruction, 4) as u8);
-
-    let acc = get_bit_at(instruction, 21);
-    let set_cond = Some(get_bit_at(instruction, 20));
-
-    let instr = if acc {
-        MnemonicARM::MLA
-    } else {
-        MnemonicARM::MUL
-    };
-
-    Instruction {
-        cond,
-        instr,
-        rd,
-        rn,
-        rs,
-        rm,
-        set_cond,
-        ..Default::default()
-    }
-}
-
-/// Used for decoding ARM instructions.
-pub fn decode_arm(cpu: &mut CPU, instruction: u32) -> VecDeque<fn(&mut CPU)> {
-    match instruction {
-        _ => {
-            eprintln!(
-            "unknown instruction: {}",
-            cpu.arm.registers[registers::PROGRAM_COUNTER as usize]);
-            return VecDeque::new();
-        }
-    }
-}
-
-/// Executes the instructions.
-pub fn execute_arm(_cpu: &mut CPU, _instruction: u32) {
+/// Finds out which instruction the numbers represent and separates its values
+pub fn decode_arm(_: &mut CPU, instruction: u32) -> VecDeque<fn(&mut CPU)> {
+    let _decoded = decode::BaseInstruction::base_to_decoded(instruction);
+    // digest decoded into a series of single-cycle instructions...
     unimplemented!();
 }
+
+pub mod tests;

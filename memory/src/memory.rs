@@ -1,7 +1,6 @@
 // this section would not be possible without the help of mGBA's source
 // and https://www.akkit.org/info/gbatek.htm.
 // thank you!
-use graphics::{Display, Memory};
 
 pub mod sizes {
     pub const BIOS_SIZE: usize = 0x000_4000;
@@ -44,14 +43,14 @@ pub struct MMU {
     iwram: Box<[u8]>,
     bios: Box<[u8]>,
     rom: Box<[u8]>,
-    gpu_mem: Memory,
-    gpu: Display,
+    gpu_mem: graphics::Memory,
+    gpu: graphics::Display,
 }
 
 impl MMU {
     /// Create a new instance of the MMU
     pub fn new(display_scale: u32) -> Result<Self, String> {
-        let (gpu_mem, gpu) = Display::init(display_scale)?;
+        let (gpu_mem, gpu) = graphics::Display::init(display_scale)?;
         Ok(Self {
             bios: vec![0; sizes::BIOS_SIZE].into_boxed_slice(),
             wram: vec![0; sizes::WRAM_SIZE].into_boxed_slice(),

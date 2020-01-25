@@ -1,11 +1,14 @@
+use crate::arm;
+
 /// Possible ARM processor modes
+#[derive(Clone)]
 pub enum InstructionType {
     Thumb(u16),
-    ARM(u32),
+    ARM(arm::ARMInstruction),
 }
 
 /// List of ARM instruction mnemonics
-#[derive(Debug)]
+#[derive(Debug, PartialEq, Clone)]
 pub enum MnemonicARM {
     ILL, // illegal
     ADC,
@@ -24,6 +27,9 @@ pub enum MnemonicARM {
     LDR,
     LSL,
     LSR,
+    LDRH,
+    LDRSB,
+    LDRSH,
     MLA,
     MOV,
     MRS,
@@ -40,6 +46,7 @@ pub enum MnemonicARM {
     SMULL,
     STM,
     STR,
+    STRH,
     SUB,
     SWI,
     SWP,
