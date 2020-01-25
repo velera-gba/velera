@@ -422,7 +422,7 @@ impl BaseInstruction {
     // TODO: fucking do something about this lmao
     /// This function will get an instruction without the condition field (upper 4 bits of the 32).
     /// This function exists only to feed the decode functions, that will transform it into a decoded instruction
-    fn get_instr(instruction: u32) -> BaseInstruction {
+    pub fn get_instr(instruction: u32) -> BaseInstruction {
         use BaseInstruction::*;
 
         let instr: BaseInstruction;

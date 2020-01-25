@@ -1,6 +1,9 @@
 use crate::{constants::default_cpu, cpu::CPU, enums::MnemonicARM};
 
-use std::default::Default;
+use std::{
+    collections::VecDeque,
+    default::Default,
+};
 
 mod decode;
 
@@ -46,7 +49,7 @@ impl ARMInstruction {
 }
 
 /// Handles ARM decoding and execution.
-pub struct ARM7HDTI {
+pub struct ARM7TDMI {
     pub registers: [i32; 16],
     pub cpsr: u32,
     pub spsr: u32,
@@ -56,7 +59,7 @@ pub struct ARM7HDTI {
     pub immediate: i32, // temporary immediate
 }
 
-impl Default for ARM7HDTI {
+impl Default for ARM7TDMI {
     fn default() -> Self {
         Self {
             registers: default_cpu::RS,
@@ -71,12 +74,9 @@ impl Default for ARM7HDTI {
 }
 
 /// Finds out which instruction the numbers represent and separates its values
-#[inline]
-pub fn decode_arm(_: &mut CPU, instruction: u32) -> DecodedInstruction {
-    decode::BaseInstruction::base_to_decoded(instruction)
-}
-
-pub fn execute_arm(_cpu: &mut CPU, _instruction: DecodedInstruction) {
+pub fn decode_arm(_: &mut CPU, instruction: u32) -> VecDeque<fn(&mut CPU)> {
+    let decoded = decode::BaseInstruction::base_to_decoded(instruction);
+    // digest decoded into a series of single-cycle instructions...
     unimplemented!();
 }
 
