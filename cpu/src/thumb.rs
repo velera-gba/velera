@@ -1,6 +1,7 @@
 use crate::constants::{cond_arm, registers, thumb_bitmasks};
 use crate::cpu::CPU;
 use crate::micro_ops::*;
+use std::collections::VecDeque;
 
 // WARNING!
 // This file contains lots of code that could be in the CPU impl, but in order to decrease cacheing of
@@ -17,13 +18,15 @@ struct ThumbOpPack {
 }
 
 /// Decodes already-fetched thumb instruction.
-pub fn decode_thumb(cpu: &mut CPU, instruction: u16) {
+pub fn decode_thumb(cpu: &mut CPU, instruction: u16) -> VecDeque<fn(&mut CPU)> {
     let mut operation: bool = false;
+    let mut queue: VecDeque<fn(&mut CPU)>= VecDeque::new();
 
     temp_reg_wrap!(
         cpu,
         instruction,
         &mut operation,
+        queue,
         thumb_bitmasks::MOVE_SHIFTED_REG_OP_MASK,
         thumb_bitmasks::MOVE_SHIFTED_REG_RD_MASK,
         thumb_bitmasks::MOVE_SHIFTED_REG_RS_MASK,
@@ -44,6 +47,7 @@ pub fn decode_thumb(cpu: &mut CPU, instruction: u16) {
         cpu,
         instruction,
         &mut operation,
+        queue,
         thumb_bitmasks::ADDSUB_OP_MASK,
         thumb_bitmasks::ADDSUB_RD_MASK,
         thumb_bitmasks::ADDSUB_RS_MASK,
@@ -67,6 +71,7 @@ pub fn decode_thumb(cpu: &mut CPU, instruction: u16) {
         cpu,
         instruction,
         &mut operation,
+        queue,
         thumb_bitmasks::IMMEDIATE_OP_MASK,
         thumb_bitmasks::IMMEDIATE_RD_MASK,
         0,
@@ -90,6 +95,7 @@ pub fn decode_thumb(cpu: &mut CPU, instruction: u16) {
         cpu,
         instruction,
         &mut operation,
+        queue,
         thumb_bitmasks::ALU_OP_MASK,
         thumb_bitmasks::ALU_RD_MASK,
         thumb_bitmasks::ALU_RS_MASK,
@@ -149,6 +155,7 @@ pub fn decode_thumb(cpu: &mut CPU, instruction: u16) {
         cpu,
         instruction,
         &mut operation,
+        queue,
         thumb_bitmasks::HI_OP_MASK,
         thumb_bitmasks::HI_RD,
         thumb_bitmasks::HI_RS,
@@ -178,6 +185,7 @@ pub fn decode_thumb(cpu: &mut CPU, instruction: u16) {
         cpu,
         instruction,
         &mut operation,
+        queue,
         thumb_bitmasks::LDPCR_MASK,
         thumb_bitmasks::LDPCR_RD,
         0,
@@ -194,6 +202,7 @@ pub fn decode_thumb(cpu: &mut CPU, instruction: u16) {
         cpu,
         instruction,
         &mut operation,
+        queue,
         thumb_bitmasks::LS_REG_OFFSET_OPCODE_MASK,
         thumb_bitmasks::LS_REG_OFFSET_RD_MASK,
         thumb_bitmasks::LS_REG_OFFSET_RB_MASK,
@@ -217,6 +226,7 @@ pub fn decode_thumb(cpu: &mut CPU, instruction: u16) {
         cpu,
         instruction,
         &mut operation,
+        queue,
         thumb_bitmasks::LS_EBH_OP_MASK,
         thumb_bitmasks::LS_EBH_RD_MASK,
         thumb_bitmasks::LS_EBH_RB_MASK,
@@ -240,6 +250,7 @@ pub fn decode_thumb(cpu: &mut CPU, instruction: u16) {
         cpu,
         instruction,
         &mut operation,
+        queue,
         thumb_bitmasks::LS_NN_OFFSET_OP_MASK,
         thumb_bitmasks::LS_NN_OFFSET_RD_MASK,
         thumb_bitmasks::LS_NN_OFFSET_RB_MASK,
@@ -263,6 +274,7 @@ pub fn decode_thumb(cpu: &mut CPU, instruction: u16) {
         cpu,
         instruction,
         &mut operation,
+        queue,
         thumb_bitmasks::LS_HW_OP_MASK,
         thumb_bitmasks::LS_HW_RD_MASK,
         thumb_bitmasks::LS_HW_RB_MASK,
@@ -280,6 +292,7 @@ pub fn decode_thumb(cpu: &mut CPU, instruction: u16) {
         cpu,
         instruction,
         &mut operation,
+        queue,
         thumb_bitmasks::SP_LS_OP_MASK,
         thumb_bitmasks::SP_LS_RD_MASK,
         0,
@@ -297,6 +310,7 @@ pub fn decode_thumb(cpu: &mut CPU, instruction: u16) {
         cpu,
         instruction,
         &mut operation,
+        queue,
         thumb_bitmasks::RELATIVE_ADDR_OP_MASK,
         thumb_bitmasks::RELATIVE_ADDR_RD_MASK,
         0,
@@ -314,6 +328,7 @@ pub fn decode_thumb(cpu: &mut CPU, instruction: u16) {
         cpu,
         instruction,
         &mut operation,
+        queue,
         thumb_bitmasks::SP_OFFSET_OP_MASK,
         0,
         0,
@@ -333,6 +348,7 @@ pub fn decode_thumb(cpu: &mut CPU, instruction: u16) {
         cpu,
         instruction,
         &mut operation,
+        queue,
         thumb_bitmasks::STACK_OPS_OP_MASK,
         0,
         0,
@@ -351,6 +367,7 @@ pub fn decode_thumb(cpu: &mut CPU, instruction: u16) {
         cpu,
         instruction,
         &mut operation,
+        queue,
         thumb_bitmasks::LS_MIA_OP_MASK,
         0,
         thumb_bitmasks::LS_MIA_RB_MASK,
@@ -374,6 +391,7 @@ pub fn decode_thumb(cpu: &mut CPU, instruction: u16) {
         cpu,
         instruction,
         &mut operation,
+        queue,
         thumb_bitmasks::COND_FULL_OP_MASK,
         0,
         0,
@@ -427,6 +445,7 @@ pub fn decode_thumb(cpu: &mut CPU, instruction: u16) {
         cpu,
         instruction,
         &mut operation,
+        queue,
         thumb_bitmasks::SWI_BK_OP_MASK,
         0,
         0,
@@ -444,6 +463,7 @@ pub fn decode_thumb(cpu: &mut CPU, instruction: u16) {
         cpu,
         instruction,
         &mut operation,
+        queue,
         thumb_bitmasks::B_OP_MASK,
         0,
         0,
@@ -460,6 +480,7 @@ pub fn decode_thumb(cpu: &mut CPU, instruction: u16) {
         cpu,
         instruction,
         &mut operation,
+        queue,
         thumb_bitmasks::LONG_BRANCH_OP_MASK,
         0,
         0,
@@ -483,15 +504,19 @@ pub fn decode_thumb(cpu: &mut CPU, instruction: u16) {
             "{:#x}: undefinded THUMB instruction exception.",
             cpu.arm.registers[registers::PROGRAM_COUNTER as usize]
         );
+
+        return VecDeque::new();
+    }
+    else {
+        println!(
+            "{:#x}: unknown error in decode.",
+            cpu.arm.registers[registers::PROGRAM_COUNTER as usize]
+        );
+        return VecDeque::new();
     }
 }
 
-fn pass_operation_thumb(
-    cpu: &mut CPU,
-    instruction: u16,
-    operation: &mut bool,
-    pack: ThumbOpPack,
-) -> bool {
+fn pass_operation_thumb(cpu: &mut CPU, instruction: u16, operation: &mut bool, pack: ThumbOpPack) -> bool {
     if pack.op_bitmask ^ (instruction & pack.opcode_bitmask) == 0 {
         *operation = true;
         if pack.rd_bitmask != 0 {
@@ -522,7 +547,6 @@ fn put_temp_register_thumb(register: &mut i32, register_bitmask: u16, instructio
     *register = ((register_bitmask & instruction) >> shift_modifier) as i32;
 }
 
-/// Execute thumb code.
-pub fn execute_thumb(_cpu: &mut CPU) {}
+// TESTS //
 
 pub mod tests;

@@ -2,8 +2,8 @@ use memory::memory::MMU;
 use std::collections::VecDeque;
 use std::default::Default;
 
-use crate::arm::{decode_arm, execute_arm};
-use crate::thumb::{decode_thumb, execute_thumb};
+use crate::arm::decode_arm;
+use crate::thumb::decode_thumb;
 use crate::{arm, gb};
 
 use crate::constants;
@@ -27,9 +27,10 @@ use crate::utils;
 pub struct CPU {
     pub mmu: MMU,
     pub rom: Vec<u8>,
-    pub arm: arm::ARM7HDTI,
+    pub arm: arm::ARM7TDMI,
     pub lr: gb::LR35902,
     pub should_exit: bool,
+    pub fetched_instruction: InstructionType,
     pub execution_queue: VecDeque<fn(&mut CPU)>,
 }
 
@@ -42,6 +43,7 @@ impl Default for CPU {
             arm: Default::default(),
             lr: Default::default(),
             should_exit: false,
+            fetched_instruction: InstructionType::ARM(arm::ARMInstruction::new_fetched(0)),
             execution_queue: VecDeque::new(),
         }
     }
@@ -94,26 +96,21 @@ fn fetch(cpu: &mut CPU) -> InstructionType {
     }
 }
 
-fn decode(cpu: &mut CPU, instruction: &InstructionType) {
+fn decode(cpu: &mut CPU, instruction: &InstructionType) -> VecDeque<fn(&mut CPU)> {
     match instruction {
         InstructionType::ARM(instr) => {
-            decode_arm(cpu, instr.fetched_instruction.unwrap());
+            return decode_arm(cpu, instr.fetched_instruction.unwrap());
         }
         InstructionType::Thumb(instr) => {
-            decode_thumb(cpu, *instr);
+            return decode_thumb(cpu, *instr);
         }
     }
 }
 
 /// Execute the instruction according to its type
-fn execute(cpu: &mut CPU, instruction: &InstructionType) {
-    match instruction {
-        InstructionType::ARM(instr) => {
-            execute_arm(cpu, instr.decoded_instruction.clone().unwrap());
-        }
-        InstructionType::Thumb(_) => {
-            execute_thumb(cpu);
-        }
+fn execute(cpu: &mut CPU, _instruction: &InstructionType) {
+    if !cpu.execution_queue.is_empty() {
+        pop_micro_operation(cpu)
     }
 }
 
