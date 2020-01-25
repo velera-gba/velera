@@ -3,6 +3,7 @@ macro_rules! temp_reg_wrap {
     ($cpu: expr,
     $instruction: expr,
     $operation: expr,
+    $queue: expr,
     $opcode: expr,
     $rd: expr,
     $rs: expr,
@@ -19,14 +20,19 @@ macro_rules! temp_reg_wrap {
             rn_bitmask: $rn,
             immediate_bitmask: $immediate}) {
                 // enqueue functions for next execution
-                enqueue_operation!($cpu, $func);
+                enqueue_operation!($queue, $func);
             }
+        }
+
+        if *$operation {
+            return $queue;
         }
     };
 
     ($cpu: expr,
     $instruction: expr,
     $operation: expr,
+    $queue: expr,
     $opcode: expr,
     $rd: expr,
     $rs: expr,
@@ -34,21 +40,21 @@ macro_rules! temp_reg_wrap {
     $immediate: expr,
     $x: expr => $func: block,
     $($xs: expr => $funcs: block),*) => {
-        temp_reg_wrap!($cpu, $instruction, $operation, $opcode, $rd, $rs, $rn, $immediate, $x => $func);
-        temp_reg_wrap!($cpu, $instruction, $operation, $opcode, $rd, $rs, $rn, $immediate, $($xs => $funcs),*)
+        temp_reg_wrap!($cpu, $instruction, $operation, $queue, $opcode, $rd, $rs, $rn, $immediate, $x => $func);
+        temp_reg_wrap!($cpu, $instruction, $operation, $queue, $opcode, $rd, $rs, $rn, $immediate, $($xs => $funcs),*)
     };
 }
 
 macro_rules! enqueue_operation {
-    ($cpu: expr,
+    ($queue: expr,
     $func: expr) => {
-        $cpu.execution_queue.push_back($func)
+        $queue.push_back($func)
     };
 
-    ($cpu: expr,
+    ($queue: expr,
     $func: expr,
     $($funcs: expr),*) => {
-        enqueue_operation!($cpu, $func);
-        enqueue_operation!($cpu, $($funcs),*)
+        enqueue_operation!($queue, $func);
+        enqueue_operation!($queue, $($funcs),*)
     }
 }

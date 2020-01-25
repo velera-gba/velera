@@ -1,6 +1,7 @@
 use crate::constants::{default_cpu, registers};
 use crate::cpu::CPU;
 use crate::enums::MnemonicARM;
+use std::collections::VecDeque;
 
 use std::default::Default;
 
@@ -184,12 +185,14 @@ fn multiply(instruction: u32) -> Instruction {
 }
 
 /// Used for decoding ARM instructions.
-pub fn decode_arm(cpu: &mut CPU, instruction: u32) {
+pub fn decode_arm(cpu: &mut CPU, instruction: u32) -> VecDeque<fn(&mut CPU)> {
     match instruction {
-        _ => eprintln!(
+        _ => {
+            eprintln!(
             "unknown instruction: {}",
-            cpu.arm.registers[registers::PROGRAM_COUNTER as usize]
-        ),
+            cpu.arm.registers[registers::PROGRAM_COUNTER as usize]);
+            return VecDeque::new();
+        }
     }
 }
 

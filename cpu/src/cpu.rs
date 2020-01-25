@@ -2,8 +2,8 @@ use memory::memory::MMU;
 use std::default::Default;
 use std::collections::VecDeque;
 
-use crate::arm::{decode_arm, execute_arm};
-use crate::thumb::{decode_thumb, execute_thumb};
+use crate::arm::{decode_arm};
+use crate::thumb::{decode_thumb};
 use crate::{arm, gb};
 
 use crate::constants;
@@ -17,6 +17,7 @@ pub struct CPU {
     pub arm: arm::ARM7HDTI,
     pub lr: gb::LR35902,
     pub should_exit: bool,
+    pub fetched_instruction: InstructionType,
     pub execution_queue: VecDeque<fn(&mut CPU)>
 }
 
@@ -29,28 +30,29 @@ impl Default for CPU {
             arm: Default::default(),
             lr: Default::default(),
             should_exit: false,
+            fetched_instruction: InstructionType::ARM(0), // change the initial value to a NOP! very important
             execution_queue: VecDeque::new()
         }
     }
 }
 
 /// Cycle through memory until it gets signalized to exit.
-/// MUST FIX FOR CYCLE ACCURACY!!!
 pub fn run_rom_max_cycle(cpu: &mut CPU, rom_path: &str) {
     cpu.rom = utils::read_rom_to_memory(rom_path).unwrap();
     while !cpu.should_exit {
-        let instruction = fetch(cpu);
-        decode(cpu, &instruction);
-        execute(cpu, &instruction);
+        cycle(cpu);
     }
 }
 
 /// Run F->D->E cycle.
-/// MUST FIX FOR CYCLE ACCURACY!!!
 pub fn cycle(cpu: &mut CPU) {
-    let instruction = fetch(cpu);
-    decode(cpu, &instruction);
-    execute(cpu, &instruction);
+    execute(cpu);
+    if cpu.execution_queue.is_empty() {
+        let queue = decode(cpu);
+        cpu.execution_queue = queue;
+        cpu.fetched_instruction = fetch(cpu);
+    }
+
 }
 
 /// Check if a function is in thumb mode
@@ -81,26 +83,21 @@ fn fetch(cpu: &mut CPU) -> InstructionType {
     }
 }
 
-fn decode(cpu: &mut CPU, instruction: &InstructionType) {
-    match instruction {
+fn decode(cpu: &mut CPU) -> VecDeque<fn(&mut CPU)> {
+    match cpu.fetched_instruction {
         InstructionType::ARM(x) => {
-            decode_arm(cpu, *x);
+            return decode_arm(cpu, x);
         }
         InstructionType::Thumb(x) => {
-            decode_thumb(cpu, *x);
+            return decode_thumb(cpu, x);
         }
     }
 }
 
 /// Execute the instruction according to its type
-fn execute(cpu: &mut CPU, instruction: &InstructionType) {
-    match instruction {
-        InstructionType::ARM(x) => {
-            execute_arm(cpu, *x);
-        }
-        InstructionType::Thumb(_) => {
-            execute_thumb(cpu);
-        }
+fn execute(cpu: &mut CPU) {
+    if !cpu.execution_queue.is_empty() {
+        pop_micro_operation(cpu)
     }
 }
 
