@@ -1,4 +1,4 @@
-use memory::memory::MMU;
+use memory::MMU;
 use std::collections::VecDeque;
 use std::default::Default;
 
