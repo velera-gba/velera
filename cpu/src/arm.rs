@@ -75,7 +75,7 @@ impl Default for ARM7TDMI {
 
 /// Finds out which instruction the numbers represent and separates its values
 pub fn decode_arm(_: &mut CPU, instruction: u32) -> VecDeque<fn(&mut CPU)> {
-    let decoded = decode::BaseInstruction::base_to_decoded(instruction);
+    let _decoded = decode::BaseInstruction::base_to_decoded(instruction);
     // digest decoded into a series of single-cycle instructions...
     unimplemented!();
 }

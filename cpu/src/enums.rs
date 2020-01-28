@@ -1,6 +1,7 @@
 use crate::arm;
 
 /// Possible ARM processor modes
+#[derive(Clone)]
 pub enum InstructionType {
     Thumb(u16),
     ARM(arm::ARMInstruction),

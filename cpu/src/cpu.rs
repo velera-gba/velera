@@ -1,4 +1,4 @@
-use memory::memory::MMU;
+use memory::MMU;
 use std::collections::VecDeque;
 use std::default::Default;
 
@@ -38,7 +38,7 @@ impl Default for CPU {
     /// Create new instance of CPU
     fn default() -> Self {
         Self {
-            mmu: MMU::new(constants::default_cpu::MMU_DISPLAY).unwrap(),
+            mmu: MMU::new(),
             rom: Vec::new(),
             arm: Default::default(),
             lr: Default::default(),
@@ -54,18 +54,20 @@ impl Default for CPU {
 pub fn run_rom_max_cycle(cpu: &mut CPU, rom_path: &str) {
     cpu.rom = utils::read_rom_to_memory(rom_path).unwrap();
     while !cpu.should_exit {
-        let instruction = fetch(cpu);
-        decode(cpu, &instruction);
-        execute(cpu, &instruction);
+        cycle(cpu);
     }
 }
 
 // MUST FIX FOR CYCLE ACCURACY!!!
 /// Run F->D->E cycle.
 pub fn cycle(cpu: &mut CPU) {
-    let instruction = fetch(cpu);
-    decode(cpu, &instruction);
-    execute(cpu, &instruction);
+    execute(cpu);
+    if cpu.execution_queue.is_empty() {
+        let queue = decode(cpu);
+        cpu.execution_queue = queue;
+        cpu.fetched_instruction = fetch(cpu);
+    }
+
 }
 
 /// Check if a function is in thumb mode
@@ -96,19 +98,19 @@ fn fetch(cpu: &mut CPU) -> InstructionType {
     }
 }
 
-fn decode(cpu: &mut CPU, instruction: &InstructionType) -> VecDeque<fn(&mut CPU)> {
-    match instruction {
+fn decode(cpu: &mut CPU) -> VecDeque<fn(&mut CPU)> {
+    match cpu.fetched_instruction.clone() {
         InstructionType::ARM(instr) => {
             return decode_arm(cpu, instr.fetched_instruction.unwrap());
         }
         InstructionType::Thumb(instr) => {
-            return decode_thumb(cpu, *instr);
+            return decode_thumb(cpu, instr);
         }
     }
 }
 
 /// Execute the instruction according to its type
-fn execute(cpu: &mut CPU, _instruction: &InstructionType) {
+fn execute(cpu: &mut CPU) {
     if !cpu.execution_queue.is_empty() {
         pop_micro_operation(cpu)
     }
