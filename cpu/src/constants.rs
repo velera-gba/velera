@@ -140,7 +140,7 @@ pub mod thumb_bitmasks {
     pub const HI_NOP: u16 = 0b0100_0110_1100_0000;
     pub const BX: u16 = 0b0100_0111_0000_0000;
     pub const BLX: u16 = 0b0100_0111_1000_0000;
-    pub const HI_OP_MASK: u16 = 0b1111_1111_0000_0000;
+    pub const HI_OP_MASK: u16 = 0b1111_1111_1100_0000;
     pub const HI_MSBD_MASK: u16 = 0b0000_0000_1000_0000;
     pub const HI_MSBS_MASK: u16 = 0b0000_0000_0100_0000;
     pub const HI_RS: u16 = 0b0000_0000_0011_1000;
@@ -241,7 +241,7 @@ pub mod thumb_bitmasks {
     pub const B_OP_MASK: u16 = 0b1111_1000_0000_0000;
     pub const B_OFFSET_MASK: u16 = 0b0000_0111_1111_1111;
 
-    // thumb 19: long bra_nch _with_ link
+    // thumb 19: long branch with link
     pub const LONG_BRANCH_FIRST_OP: u16 = 0b1111_0000_0000_0000;
     pub const BL: u16 = 0b1111_1000_0000_0000;
     pub const BLLX: u16 = 0b1111_0000_0000_0000;

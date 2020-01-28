@@ -1,5 +1,6 @@
 use crate::constants::{cond_arm, registers, thumb_bitmasks};
 use crate::cpu::CPU;
+use crate::micro_ops::*;
 
 // WARNING!
 // This file contains lots of code that could be in the CPU impl, but in order to decrease cacheing of
@@ -28,9 +29,15 @@ pub fn decode_thumb(cpu: &mut CPU, instruction: u16) {
         thumb_bitmasks::MOVE_SHIFTED_REG_RS_MASK,
         0,
         thumb_bitmasks::MOVE_SHIFTED_REG_OFFSET_MASK,
-        thumb_bitmasks::LSR,
-        thumb_bitmasks::LSL,
-        thumb_bitmasks::ASR
+        thumb_bitmasks::LSR => {
+            dummy_cycle
+        },
+        thumb_bitmasks::LSL => {
+            dummy_cycle
+        },
+        thumb_bitmasks::ASR => {
+            dummy_cycle
+        }
     );
 
     temp_reg_wrap!(
@@ -42,10 +49,18 @@ pub fn decode_thumb(cpu: &mut CPU, instruction: u16) {
         thumb_bitmasks::ADDSUB_RS_MASK,
         thumb_bitmasks::ADDSUB_RN_MASK,
         0,
-        thumb_bitmasks::ADD,
-        thumb_bitmasks::SUB,
-        thumb_bitmasks::ADDI,
-        thumb_bitmasks::SUBI
+        thumb_bitmasks::ADD => {
+            dummy_cycle
+        },
+        thumb_bitmasks::SUB => {
+            dummy_cycle
+        },
+        thumb_bitmasks::ADDI => {
+            dummy_cycle
+        },
+        thumb_bitmasks::SUBI => {
+            dummy_cycle
+        }
     );
 
     temp_reg_wrap!(
@@ -57,10 +72,18 @@ pub fn decode_thumb(cpu: &mut CPU, instruction: u16) {
         0,
         0,
         thumb_bitmasks::IMMEDIATE_NN_MASK,
-        thumb_bitmasks::MOV,
-        thumb_bitmasks::CMP,
-        thumb_bitmasks::ADDRI,
-        thumb_bitmasks::SUBRI
+        thumb_bitmasks::MOV => {
+            dummy_cycle
+        },
+        thumb_bitmasks::CMP => {
+            dummy_cycle
+        },
+        thumb_bitmasks::ADDRI => {
+            dummy_cycle
+        },
+        thumb_bitmasks::SUBRI => {
+            dummy_cycle
+        }
     );
 
     temp_reg_wrap!(
@@ -72,22 +95,54 @@ pub fn decode_thumb(cpu: &mut CPU, instruction: u16) {
         thumb_bitmasks::ALU_RS_MASK,
         0,
         0,
-        thumb_bitmasks::ALU_AND,
-        thumb_bitmasks::ALU_EOR,
-        thumb_bitmasks::ALU_LSL,
-        thumb_bitmasks::ALU_LSR,
-        thumb_bitmasks::ALU_ASR,
-        thumb_bitmasks::ALU_ADC,
-        thumb_bitmasks::ALU_SBC,
-        thumb_bitmasks::ALU_ROR,
-        thumb_bitmasks::ALU_TST,
-        thumb_bitmasks::ALU_NEG,
-        thumb_bitmasks::ALU_CMP,
-        thumb_bitmasks::ALU_CMN,
-        thumb_bitmasks::ALU_ORR,
-        thumb_bitmasks::ALU_MUL,
-        thumb_bitmasks::ALU_BIC,
-        thumb_bitmasks::ALU_MVN
+        thumb_bitmasks::ALU_AND => {
+            dummy_cycle
+        },
+        thumb_bitmasks::ALU_EOR => {
+            dummy_cycle
+        },
+        thumb_bitmasks::ALU_LSL => {
+            dummy_cycle
+        },
+        thumb_bitmasks::ALU_LSR => {
+            dummy_cycle
+        },
+        thumb_bitmasks::ALU_ASR => {
+            dummy_cycle
+        },
+        thumb_bitmasks::ALU_ADC => {
+            dummy_cycle
+        },
+        thumb_bitmasks::ALU_SBC => {
+            dummy_cycle
+        },
+        thumb_bitmasks::ALU_ROR => {
+            dummy_cycle
+        },
+        thumb_bitmasks::ALU_TST => {
+            dummy_cycle
+        },
+        thumb_bitmasks::ALU_NEG => {
+            dummy_cycle
+        },
+        thumb_bitmasks::ALU_CMP => {
+            dummy_cycle
+        },
+        thumb_bitmasks::ALU_CMN => {
+            dummy_cycle
+        },
+        thumb_bitmasks::ALU_ORR => {
+            dummy_cycle
+        },
+        thumb_bitmasks::ALU_MUL => {
+            dummy_cycle
+        },
+        thumb_bitmasks::ALU_BIC => {
+            dummy_cycle
+        },
+        thumb_bitmasks::ALU_MVN => {
+            dummy_cycle
+        }
     );
 
     temp_reg_wrap!(
@@ -99,29 +154,24 @@ pub fn decode_thumb(cpu: &mut CPU, instruction: u16) {
         thumb_bitmasks::HI_RS,
         thumb_bitmasks::HI_MSBD_MASK,
         thumb_bitmasks::HI_MSBS_MASK,
-        thumb_bitmasks::HI_ADD,
-        thumb_bitmasks::HI_CMP,
-        thumb_bitmasks::HI_MOV,
-        thumb_bitmasks::HI_NOP,
-        thumb_bitmasks::BX,
-        thumb_bitmasks::BLX
-    );
-
-    temp_reg_wrap!(
-        cpu,
-        instruction,
-        &mut operation,
-        thumb_bitmasks::HI_OP_MASK,
-        thumb_bitmasks::HI_RD,
-        thumb_bitmasks::HI_RS,
-        thumb_bitmasks::HI_MSBD_MASK,
-        thumb_bitmasks::HI_MSBS_MASK,
-        thumb_bitmasks::HI_ADD,
-        thumb_bitmasks::HI_CMP,
-        thumb_bitmasks::HI_MOV,
-        thumb_bitmasks::HI_NOP,
-        thumb_bitmasks::BX,
-        thumb_bitmasks::BLX
+        thumb_bitmasks::HI_ADD => {
+            dummy_cycle
+        },
+        thumb_bitmasks::HI_CMP => {
+            dummy_cycle
+        },
+        thumb_bitmasks::HI_MOV => {
+            dummy_cycle
+        },
+        thumb_bitmasks::HI_NOP => {
+            dummy_cycle
+        },
+        thumb_bitmasks::BX => {
+            dummy_cycle
+        },
+        thumb_bitmasks::BLX => {
+            dummy_cycle
+        }
     );
 
     temp_reg_wrap!(
@@ -133,7 +183,9 @@ pub fn decode_thumb(cpu: &mut CPU, instruction: u16) {
         0,
         0,
         thumb_bitmasks::LDPCR_OFFSET,
-        thumb_bitmasks::LDPCR
+        thumb_bitmasks::LDPCR => {
+            dummy_cycle
+        }
     );
 
     // here (and in other places) I use the source temporary register as the base register
@@ -147,10 +199,18 @@ pub fn decode_thumb(cpu: &mut CPU, instruction: u16) {
         thumb_bitmasks::LS_REG_OFFSET_RB_MASK,
         thumb_bitmasks::LS_REG_OFFSET_RO_MASK,
         0,
-        thumb_bitmasks::STR,
-        thumb_bitmasks::STRB,
-        thumb_bitmasks::LDR,
-        thumb_bitmasks::LDRB
+        thumb_bitmasks::STR => {
+            dummy_cycle
+        },
+        thumb_bitmasks::STRB => {
+            dummy_cycle
+        },
+        thumb_bitmasks::LDR => {
+            dummy_cycle
+        },
+        thumb_bitmasks::LDRB => {
+            dummy_cycle
+        }
     );
 
     temp_reg_wrap!(
@@ -162,10 +222,18 @@ pub fn decode_thumb(cpu: &mut CPU, instruction: u16) {
         thumb_bitmasks::LS_EBH_RB_MASK,
         thumb_bitmasks::LS_EBH_RO_MASK,
         0,
-        thumb_bitmasks::STRH,
-        thumb_bitmasks::LDSB,
-        thumb_bitmasks::LDRH,
-        thumb_bitmasks::LDSH
+        thumb_bitmasks::STRH => {
+            dummy_cycle
+        },
+        thumb_bitmasks::LDSB => {
+            dummy_cycle
+        },
+        thumb_bitmasks::LDRH => {
+            dummy_cycle
+        },
+        thumb_bitmasks::LDSH => {
+            dummy_cycle
+        }
     );
 
     temp_reg_wrap!(
@@ -177,10 +245,18 @@ pub fn decode_thumb(cpu: &mut CPU, instruction: u16) {
         thumb_bitmasks::LS_NN_OFFSET_RB_MASK,
         0,
         thumb_bitmasks::LS_NN_OFFSET_NN_MASK,
-        thumb_bitmasks::STRI,
-        thumb_bitmasks::LDRI,
-        thumb_bitmasks::STRBI,
-        thumb_bitmasks::LDRBI
+        thumb_bitmasks::STRI => {
+            dummy_cycle
+        },
+        thumb_bitmasks::LDRI => {
+            dummy_cycle
+        },
+        thumb_bitmasks::STRBI => {
+            dummy_cycle
+        },
+        thumb_bitmasks::LDRBI => {
+            dummy_cycle
+        }
     );
 
     temp_reg_wrap!(
@@ -192,8 +268,12 @@ pub fn decode_thumb(cpu: &mut CPU, instruction: u16) {
         thumb_bitmasks::LS_HW_RB_MASK,
         0,
         thumb_bitmasks::LS_HW_NN_MASK,
-        thumb_bitmasks::STRHW,
-        thumb_bitmasks::LDRHW
+        thumb_bitmasks::STRHW => {
+            dummy_cycle
+        },
+        thumb_bitmasks::LDRHW => {
+            dummy_cycle
+        }
     );
 
     temp_reg_wrap!(
@@ -205,8 +285,12 @@ pub fn decode_thumb(cpu: &mut CPU, instruction: u16) {
         0,
         0,
         thumb_bitmasks::SP_LS_NN_MASK,
-        thumb_bitmasks::SP_STR,
-        thumb_bitmasks::SP_LDR
+        thumb_bitmasks::SP_STR => {
+            dummy_cycle
+        },
+        thumb_bitmasks::SP_LDR => {
+            dummy_cycle
+        }
     );
 
     temp_reg_wrap!(
@@ -218,8 +302,12 @@ pub fn decode_thumb(cpu: &mut CPU, instruction: u16) {
         0,
         0,
         thumb_bitmasks::RELATIVE_ADDR_NN_MASK,
-        thumb_bitmasks::ADD_PC,
-        thumb_bitmasks::ADD_SP
+        thumb_bitmasks::ADD_PC => {
+            dummy_cycle
+        },
+        thumb_bitmasks::ADD_SP => {
+            dummy_cycle
+        }
     );
 
     temp_reg_wrap!(
@@ -231,8 +319,12 @@ pub fn decode_thumb(cpu: &mut CPU, instruction: u16) {
         0,
         0,
         thumb_bitmasks::SP_OFFSET_NN_MASK,
-        thumb_bitmasks::ADD_SP_NN,
-        thumb_bitmasks::ADD_SP_MINUS_NN
+        thumb_bitmasks::ADD_SP_NN => {
+            dummy_cycle
+        },
+        thumb_bitmasks::ADD_SP_MINUS_NN => {
+            dummy_cycle
+        }
     );
 
     // the immediate here is actually the PC/LR bit
@@ -246,8 +338,12 @@ pub fn decode_thumb(cpu: &mut CPU, instruction: u16) {
         0,
         thumb_bitmasks::STACK_OPS_RLIST_MASK,
         thumb_bitmasks::STACK_OPS_PC_LR_BIT_MASK,
-        thumb_bitmasks::PUSH,
-        thumb_bitmasks::POP
+        thumb_bitmasks::PUSH => {
+            dummy_cycle
+        },
+        thumb_bitmasks::POP => {
+            dummy_cycle
+        }
     );
 
     // same thing here
@@ -260,8 +356,12 @@ pub fn decode_thumb(cpu: &mut CPU, instruction: u16) {
         thumb_bitmasks::LS_MIA_RB_MASK,
         thumb_bitmasks::LS_MIA_RLIST_MASK,
         0,
-        thumb_bitmasks::STMIA,
-        thumb_bitmasks::LDMIA
+        thumb_bitmasks::STMIA => {
+            dummy_cycle
+        },
+        thumb_bitmasks::LDMIA => {
+            dummy_cycle
+        }
     );
 
     // the conditional branch is an interesting case, I associated the operation bits with the opcode bitmasks
@@ -279,20 +379,48 @@ pub fn decode_thumb(cpu: &mut CPU, instruction: u16) {
         0,
         0,
         thumb_bitmasks::COND_OFFSET_MASK,
-        ((cond_arm::EQ as u16) << cond_branch_shift) & extra_opcode_mask,
-        ((cond_arm::NE as u16) << cond_branch_shift) & extra_opcode_mask,
-        ((cond_arm::CS as u16) << cond_branch_shift) & extra_opcode_mask,
-        ((cond_arm::CC as u16) << cond_branch_shift) & extra_opcode_mask,
-        ((cond_arm::MI as u16) << cond_branch_shift) & extra_opcode_mask,
-        ((cond_arm::PL as u16) << cond_branch_shift) & extra_opcode_mask,
-        ((cond_arm::VS as u16) << cond_branch_shift) & extra_opcode_mask,
-        ((cond_arm::VC as u16) << cond_branch_shift) & extra_opcode_mask,
-        ((cond_arm::HI as u16) << cond_branch_shift) & extra_opcode_mask,
-        ((cond_arm::LS as u16) << cond_branch_shift) & extra_opcode_mask,
-        ((cond_arm::GE as u16) << cond_branch_shift) & extra_opcode_mask,
-        ((cond_arm::LT as u16) << cond_branch_shift) & extra_opcode_mask,
-        ((cond_arm::GT as u16) << cond_branch_shift) & extra_opcode_mask,
-        ((cond_arm::LE as u16) << cond_branch_shift) & extra_opcode_mask
+        ((cond_arm::EQ as u16) << cond_branch_shift) & extra_opcode_mask => {
+            dummy_cycle
+        },
+        ((cond_arm::NE as u16) << cond_branch_shift) & extra_opcode_mask => {
+            dummy_cycle
+        },
+        ((cond_arm::CS as u16) << cond_branch_shift) & extra_opcode_mask => {
+            dummy_cycle
+        },
+        ((cond_arm::CC as u16) << cond_branch_shift) & extra_opcode_mask => {
+            dummy_cycle
+        },
+        ((cond_arm::MI as u16) << cond_branch_shift) & extra_opcode_mask => {
+            dummy_cycle
+        },
+        ((cond_arm::PL as u16) << cond_branch_shift) & extra_opcode_mask => {
+            dummy_cycle
+        },
+        ((cond_arm::VS as u16) << cond_branch_shift) & extra_opcode_mask => {
+            dummy_cycle
+        },
+        ((cond_arm::VC as u16) << cond_branch_shift) & extra_opcode_mask => {
+            dummy_cycle
+        },
+        ((cond_arm::HI as u16) << cond_branch_shift) & extra_opcode_mask => {
+            dummy_cycle
+        },
+        ((cond_arm::LS as u16) << cond_branch_shift) & extra_opcode_mask => {
+            dummy_cycle
+        },
+        ((cond_arm::GE as u16) << cond_branch_shift) & extra_opcode_mask => {
+            dummy_cycle
+        },
+        ((cond_arm::LT as u16) << cond_branch_shift) & extra_opcode_mask => {
+            dummy_cycle
+        },
+        ((cond_arm::GT as u16) << cond_branch_shift) & extra_opcode_mask => {
+            dummy_cycle
+        },
+        ((cond_arm::LE as u16) << cond_branch_shift) & extra_opcode_mask => {
+            dummy_cycle
+        }
     );
 
     temp_reg_wrap!(
@@ -304,8 +432,12 @@ pub fn decode_thumb(cpu: &mut CPU, instruction: u16) {
         0,
         0,
         thumb_bitmasks::SWI_BK_NN_MASK,
-        thumb_bitmasks::SWI,
-        thumb_bitmasks::BKPT
+        thumb_bitmasks::SWI => {
+            dummy_cycle
+        },
+        thumb_bitmasks::BKPT => {
+            dummy_cycle
+        }
     );
 
     temp_reg_wrap!(
@@ -317,7 +449,9 @@ pub fn decode_thumb(cpu: &mut CPU, instruction: u16) {
         0,
         0,
         thumb_bitmasks::B_OFFSET_MASK,
-        thumb_bitmasks::B
+        thumb_bitmasks::B => {
+            dummy_cycle
+        }
     );
 
     // I should change this in the future, because this instruction is actually 32 bits with a long branch
@@ -331,13 +465,20 @@ pub fn decode_thumb(cpu: &mut CPU, instruction: u16) {
         0,
         0,
         thumb_bitmasks::LONG_BRANCH_ADDR_MASK,
-        thumb_bitmasks::LONG_BRANCH_FIRST_OP,
-        thumb_bitmasks::BL,
-        thumb_bitmasks::BLLX
+        thumb_bitmasks::LONG_BRANCH_FIRST_OP => {
+            dummy_cycle
+        },
+        thumb_bitmasks::BL => {
+            dummy_cycle
+        },
+        thumb_bitmasks::BLLX => {
+            dummy_cycle
+        }
     );
 
     // operation not found error check
     if !operation {
+        // to do: switch to ARM state, deal with exception
         println!(
             "{:#x}: undefinded THUMB instruction exception.",
             cpu.arm.registers[registers::PROGRAM_COUNTER as usize]
@@ -345,7 +486,7 @@ pub fn decode_thumb(cpu: &mut CPU, instruction: u16) {
     }
 }
 
-fn pass_operation_thumb(cpu: &mut CPU, instruction: u16, operation: &mut bool, pack: ThumbOpPack) {
+fn pass_operation_thumb(cpu: &mut CPU, instruction: u16, operation: &mut bool, pack: ThumbOpPack) -> bool {
     if pack.op_bitmask ^ (instruction & pack.opcode_bitmask) == 0 {
         *operation = true;
         if pack.rd_bitmask != 0 {
@@ -360,7 +501,9 @@ fn pass_operation_thumb(cpu: &mut CPU, instruction: u16, operation: &mut bool, p
         if pack.immediate_bitmask != 0 {
             put_temp_register_thumb(&mut cpu.arm.immediate, pack.immediate_bitmask, instruction);
         }
+        return true;
     }
+    return false;
 }
 
 fn put_temp_register_thumb(register: &mut i32, register_bitmask: u16, instruction: u16) {
@@ -375,8 +518,8 @@ fn put_temp_register_thumb(register: &mut i32, register_bitmask: u16, instructio
 }
 
 /// Execute thumb code.
-pub fn execute_thumb(_cpu: &mut CPU, _instruction: u16) {
-    unimplemented!();
+pub fn execute_thumb(_cpu: &mut CPU) {
+
 }
 
 // TESTS //
