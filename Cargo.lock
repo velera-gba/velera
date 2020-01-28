@@ -175,6 +175,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 name = "graphics"
 version = "0.0.1"
 dependencies = [
+ "memory 0.0.1",
  "sdl2 0.32.2 (registry+https://github.com/rust-lang/crates.io-index)",
  "vulkano 0.16.0 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
@@ -215,9 +216,6 @@ dependencies = [
 [[package]]
 name = "memory"
 version = "0.0.1"
-dependencies = [
- "graphics 0.0.1",
-]
 
 [[package]]
 name = "miniz_oxide"
