@@ -3,28 +3,24 @@ use sdl2::IntegerOrSdlError::*;
 
 use sdl2::{
     event::Event,
-    pixels::{Color, PixelFormatEnum},
-    rect::Rect,
-    render::{Texture, TextureAccess, TextureCreator, WindowCanvas},
-    video::WindowContext,
+    pixels::Color,
+    render::WindowCanvas,
     EventPump, Sdl, VideoSubsystem,
 };
 
 #[cfg(feature = "vulkan")]
 extern crate vulkano;
 
-// Hide the SDL2 structures from the callee
-pub type CacheObject = TextureCreator<WindowContext>;
-pub type CacheInstance<'r> = Texture<'r>;
+use super::*;
 
-pub struct Graphics {
+pub struct Backend {
     context: Sdl,
     video: VideoSubsystem,
     canvas: WindowCanvas,
     event_pump: EventPump,
 }
 
-impl Graphics {
+impl Backend {
     pub fn setup(scale: u32) -> Result<Self, String> {
         let context = sdl2::init()?;
         let video = context.video()?;
@@ -63,76 +59,38 @@ impl Graphics {
         })
     }
 
-    pub fn graphics_cache(&self) -> CacheObject {
-        self.canvas.texture_creator()
-    }
-
-    pub fn instanciate_cache<'r>(cache: &'r CacheObject) -> CacheInstance<'r> {
-        cache
-            .create_texture(PixelFormatEnum::BGR555, TextureAccess::Streaming, 240, 1)
-            .unwrap()
-    }
-
-    pub fn drawline<'r>(
-        &mut self,
-        cache_instance: &mut CacheInstance<'r>,
-        y: usize,
-        scanline: &[u8],
-    ) -> State {
-        for event in self.event_pump.poll_iter() {
-            if let Event::Quit { .. } = event {
-                return State::Exited;
-            }
-        }
-
-        cache_instance
-            .update(None, scanline, 2)
-            .expect("Fatal error in graphics stack: Issue with scanline texture");
+    pub fn draw_pixel(&mut self, position: (usize, usize), colour: RGBA) {
+        self.canvas.set_draw_color::<(u8, u8, u8)>(colour.into());
         self.canvas
-            .copy(cache_instance, None, Some(Rect::new(0, y as i32, 240, 1)))
-            .expect("Fatal error in graphics stack: Issue with renderer");
+            .draw_point((position.0 as i32, position.1 as i32))
+            .unwrap();
 
-        self.canvas.present();
-
-        State::Running
-    }
-}
-
-pub struct Interrupt {
-    pub vblank: bool,
-    pub hblank: bool,
-}
-
-impl Interrupt {
-    pub const fn none() -> Self {
-        Self {
-            vblank: false,
-            hblank: false,
+        if position == (0, 0) {
+            self.canvas.present()
         }
     }
 }
 
-pub enum State {
-    Exited,
-    Interrupted(Interrupt),
-    Running,
-}
-
-#[cfg(test)]
+/*#[cfg(test)]
 mod tests {
     #[test]
-    fn graphics_test() -> Result<(), String> {
+    fn drawline_test() -> Result<(), String> {
         let mut video = super::Graphics::setup(4)?;
         let cache = video.graphics_cache();
         let mut texture = super::Graphics::instanciate_cache(&cache);
 
+        let now = std::time::Instant::now();
+
         use super::State;
         loop {
+            if now.elapsed() > std::time::Duration::from_secs(5) {
+                break Ok(());
+            }
+
             match video.drawline(&mut texture, 10, &[0xFF; 240 * 2]) {
                 State::Exited => break Ok(()),
-                State::Running => continue,
-                State::Interrupted(interrupts) => continue,
+                _ => continue,
             }
         }
     }
-}
+}*/

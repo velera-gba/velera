@@ -38,7 +38,7 @@ impl Default for CPU {
     /// Create new instance of CPU
     fn default() -> Self {
         Self {
-            mmu: MMU::new(constants::default_cpu::MMU_DISPLAY).unwrap(),
+            mmu: MMU::new(),
             rom: Vec::new(),
             arm: Default::default(),
             lr: Default::default(),
