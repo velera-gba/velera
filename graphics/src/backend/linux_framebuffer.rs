@@ -27,13 +27,15 @@ impl Backend {
             return Err("Error getting framebuffer info".to_string());
         }
 
+        if fb_info.bits_per_pixel != 32 { return Err(format!("Unsupported format: {} bits per pixel is unsupported", fb_info.bits_per_pixel)) };
+
         let framebuffer_length = fb_info.xres as usize * fb_info.yres as usize;
 
         // map the framebuffer into memory
         let framebuffer = Some(unsafe {
             let framebuffer = mmap(
                 std::ptr::null(),
-                framebuffer_length * 4,
+                framebuffer_length * fb_info.bits_per_pixel / 8,
                 PROT_READ | PROT_WRITE,
                 MAP_SHARED,
                 fb_fd,
