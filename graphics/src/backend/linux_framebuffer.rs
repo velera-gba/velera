@@ -27,7 +27,12 @@ impl Backend {
             return Err("Error getting framebuffer info".to_string());
         }
 
-        if fb_info.bits_per_pixel != 32 { return Err(format!("Unsupported format: {} bits per pixel is unsupported", fb_info.bits_per_pixel)) };
+        if fb_info.bits_per_pixel != 32 {
+            return Err(format!(
+                "Unsupported format: {} bits per pixel is unsupported",
+                fb_info.bits_per_pixel
+            ));
+        };
 
         let framebuffer_length = fb_info.xres as usize * fb_info.yres as usize;
 
@@ -62,7 +67,6 @@ impl Backend {
         })
     }
 
-
     /// Set the pixel at (x,y) to colour
     /// Returns None if an error occured
     pub fn draw_pixel(&mut self, position: (usize, usize), colour: super::RGBA) {
@@ -70,11 +74,9 @@ impl Backend {
         for x_scaled in 0..self.scale {
             for y_scaled in 0..self.scale {
                 unsafe {
-                    self.framebuffer.as_mut().unwrap()[
-                        position.0 * self.scale
+                    self.framebuffer.as_mut().unwrap()[position.0 * self.scale
                         + (self.fb_info.xres as usize * (position.1 * self.scale + y_scaled))
-                        + x_scaled
-                    ] = *colour;
+                        + x_scaled] = *colour;
                 }
             }
         }
@@ -96,7 +98,6 @@ impl Drop for Backend {
         }
     }
 }
-
 
 // Syscall definitions
 #[cfg(target_os = "linux")]

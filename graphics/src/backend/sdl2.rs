@@ -3,10 +3,8 @@ use sdl2::IntegerOrSdlError::*;
 
 use sdl2::{
     event::Event,
-    pixels::{Color, PixelFormatEnum},
-    rect::Rect,
-    render::{ TextureAccess, WindowCanvas},
-    video::WindowContext,
+    pixels::Color,
+    render::WindowCanvas,
     EventPump, Sdl, VideoSubsystem,
 };
 
@@ -63,9 +61,13 @@ impl Backend {
 
     pub fn draw_pixel(&mut self, position: (usize, usize), colour: RGBA) {
         self.canvas.set_draw_color::<(u8, u8, u8)>(colour.into());
-        self.canvas.draw_point((position.0 as i32, position.1 as i32)).unwrap();
+        self.canvas
+            .draw_point((position.0 as i32, position.1 as i32))
+            .unwrap();
 
-        if position == (0, 0) { self.canvas.present() }
+        if position == (0, 0) {
+            self.canvas.present()
+        }
     }
 }
 

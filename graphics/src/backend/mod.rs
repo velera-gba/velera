@@ -13,15 +13,7 @@ pub type Backend = linux_framebuffer::Backend;
 pub struct BGR555(pub u16);
 
 impl BGR555 {
-    /// Initialise a new Pixel
-    fn new(bgr: u16) -> Self {
-        Self(bgr)
-    }
-
-    fn bits5_to_8(byte: u8) -> u8 {
-        (byte as f32 / 31.0 * 255.0) as u8
-    }
-
+    /// Approximate an 8bit intensity as a 5bit intensity
     fn bits8_to_5(byte: u8) -> u8 {
         (byte as f32 / 255.0 * 31.0) as u8 & 0b11111
     }
@@ -30,13 +22,12 @@ impl BGR555 {
 impl From<&[u8]> for BGR555 {
     fn from(slice: &[u8]) -> Self {
         match slice.len() {
-            1 => panic!("At least 2 bytes are needed to convert to BGR555. Instead recieved {:?}", slice),
-            3 => {
-                [slice[0], slice[1], slice[2]].into()
-            },
-            2 | _ => {
-                [slice[0], slice[1]].into()
-            }
+            1 => panic!(
+                "At least 2 bytes are needed to convert to BGR555. Instead recieved {:?}",
+                slice
+            ),
+            3 => [slice[0], slice[1], slice[2]].into(),
+            2 | _ => [slice[0], slice[1]].into(),
         }
     }
 }
@@ -50,9 +41,9 @@ impl From<[u8; 2]> for BGR555 {
 impl From<[u8; 3]> for BGR555 {
     fn from(bytes: [u8; 3]) -> Self {
         Self(
-            (Self::bits8_to_5(bytes[0]) as u16)       |
-            (Self::bits8_to_5(bytes[1]) as u16) << 5  |
-            (Self::bits8_to_5(bytes[2]) as u16) << 10
+            (Self::bits8_to_5(bytes[0]) as u16)
+                | (Self::bits8_to_5(bytes[1]) as u16) << 5
+                | (Self::bits8_to_5(bytes[2]) as u16) << 10,
         )
     }
 }
@@ -60,9 +51,9 @@ impl From<[u8; 3]> for BGR555 {
 impl From<u32> for BGR555 {
     fn from(rgba: u32) -> Self {
         Self(
-            (Self::bits8_to_5((rgba & 0xFF0000 >> 16)   as u8) as u16)       |
-            (Self::bits8_to_5((rgba & 0xFF00 >> 8)      as u8) as u16) << 5  |
-            (Self::bits8_to_5((rgba & 0xFF)             as u8) as u16) << 10
+            (Self::bits8_to_5((rgba & 0xFF0000 >> 16) as u8) as u16)
+                | (Self::bits8_to_5((rgba & 0xFF00 >> 8) as u8) as u16) << 5
+                | (Self::bits8_to_5((rgba & 0xFF) as u8) as u16) << 10,
         )
     }
 }
@@ -70,9 +61,9 @@ impl From<u32> for BGR555 {
 impl From<RGBA> for BGR555 {
     fn from(rgba: RGBA) -> Self {
         Self(
-            (Self::bits8_to_5((*rgba & 0xFF0000 >> 16)   as u8) as u16)       |
-            (Self::bits8_to_5((*rgba & 0xFF00 >> 8)      as u8) as u16) << 5  |
-            (Self::bits8_to_5((*rgba & 0xFF)             as u8) as u16) << 10
+            (Self::bits8_to_5((*rgba & 0xFF0000 >> 16) as u8) as u16)
+                | (Self::bits8_to_5((*rgba & 0xFF00 >> 8) as u8) as u16) << 5
+                | (Self::bits8_to_5((*rgba & 0xFF) as u8) as u16) << 10,
         )
     }
 }
@@ -90,27 +81,29 @@ impl std::ops::Deref for BGR555 {
 pub struct RGBA(pub u32);
 
 impl RGBA {
-    /// Initialise a new Pixel
-    fn new(bgr: u32) -> Self {
-        Self(bgr)
+    /// Approximate a 5bit intensity as an 8bit intensity
+    fn bits5_to_8(byte: u8) -> u8 {
+        (byte as f32 / 31.0 * 255.0) as u8
     }
 }
-
-
 
 impl From<BGR555> for RGBA {
     fn from(bgr: BGR555) -> Self {
         Self(
-            (BGR555::bits5_to_8((*bgr & 0b000000000011111)        as u8) as u32) << 16 |
-            (BGR555::bits5_to_8(((*bgr & 0b000001111100000) >> 5)   as u8) as u32) << 8  |
-            (BGR555::bits5_to_8(((*bgr & 0b111110000000000) >> 10)  as u8) as u32)
+            (Self::bits5_to_8((*bgr & 0b000000000011111) as u8) as u32) << 16
+                | (Self::bits5_to_8(((*bgr & 0b000001111100000) >> 5) as u8) as u32) << 8
+                | (Self::bits5_to_8(((*bgr & 0b111110000000000) >> 10) as u8) as u32),
         )
     }
 }
 
 impl Into<(u8, u8, u8)> for RGBA {
     fn into(self) -> (u8, u8, u8) {
-        (((*self & 0xFF0000) >> 16) as u8, ((*self & 0xFF00) >> 8) as u8, (*self & 0xFF) as u8)
+        (
+            ((*self & 0xFF0000) >> 16) as u8,
+            ((*self & 0xFF00) >> 8) as u8,
+            (*self & 0xFF) as u8,
+        )
     }
 }
 
@@ -122,46 +115,46 @@ impl std::ops::Deref for RGBA {
     }
 }
 
-struct InputStates {
-    a:      bool,
-    b:      bool,
+pub struct InputStates {
+    a: bool,
+    b: bool,
     select: bool,
-    start:  bool,
-    right:  bool,
-    left:   bool,
-    up:     bool,
-    down:   bool,
-    r:      bool,
-    l:      bool
+    start: bool,
+    right: bool,
+    left: bool,
+    up: bool,
+    down: bool,
+    r: bool,
+    l: bool,
 }
 
 impl InputStates {
-    fn from_u16(raw: u16) -> Self {
+    pub fn from_u16(raw: u16) -> Self {
         Self {
-            a:      raw & 1        != 0,
-            b:      raw & (1 << 1) != 0,
+            a: raw & 1 != 0,
+            b: raw & (1 << 1) != 0,
             select: raw & (1 << 2) != 0,
-            start:  raw & (1 << 3) != 0,
-            right:  raw & (1 << 4) != 0,
-            left:   raw & (1 << 5) != 0,
-            up:     raw & (1 << 6) != 0,
-            down:   raw & (1 << 7) != 0,
-            r:      raw & (1 << 8) != 0,
-            l:      raw & (1 << 9) != 0
+            start: raw & (1 << 3) != 0,
+            right: raw & (1 << 4) != 0,
+            left: raw & (1 << 5) != 0,
+            up: raw & (1 << 6) != 0,
+            down: raw & (1 << 7) != 0,
+            r: raw & (1 << 8) != 0,
+            l: raw & (1 << 9) != 0,
         }
     }
 
-    fn to_u16(&self) -> u16 {
-        self.a       as u16       |
-        (self.b      as u16) << 1 |
-        (self.select as u16) << 2 |
-        (self.start  as u16) << 3 |
-        (self.right  as u16) << 4 |
-        (self.left   as u16) << 5 |
-        (self.up     as u16) << 6 |
-        (self.down   as u16) << 7 |
-        (self.r      as u16) << 8 |
-        (self.l      as u16) << 9
+    pub fn to_u16(&self) -> u16 {
+        self.a as u16
+            | (self.b as u16) << 1
+            | (self.select as u16) << 2
+            | (self.start as u16) << 3
+            | (self.right as u16) << 4
+            | (self.left as u16) << 5
+            | (self.up as u16) << 6
+            | (self.down as u16) << 7
+            | (self.r as u16) << 8
+            | (self.l as u16) << 9
     }
 }
 

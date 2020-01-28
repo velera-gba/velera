@@ -12,10 +12,9 @@ pub use self::graphics::{CacheInstance, CacheObject, Interrupt, State};
 #[cfg(feature = "fbdev")]
 use self::fb_graphics::Graphics;
 #[cfg(feature = "fbdev")]
-pub use self::fb_graphics::{CacheInstance, CacheObject, Interrupt, State};*/
+pub use self::fb_graphics::{CacheInstance, CacheObject, Interrupt, State};
 
-mod backend;
-use backend::*;
+
 
 pub struct Memory {
     pub palette: Box<[u8]>,
@@ -50,7 +49,12 @@ impl Memory {
             _ => (),
         }
     }
-}
+}*/
+
+pub use memory;
+
+mod backend;
+use backend::*;
 
 /// Indicates when an interrupt is fired
 pub struct Interrupt {
@@ -101,41 +105,29 @@ pub struct Display {
 }
 
 impl Display {
-    pub fn init(scale: u32) -> Result<(Memory, Self), String> {
+    pub fn init(scale: u32) -> Result<Self, String> {
         let backend = backend::Backend::setup(scale)?;
 
-        Ok((
-            Memory {
-                palette: vec![0; 1024].into_boxed_slice(),
-                vram: vec![0; 96 * 1024].into_boxed_slice(),
-                oam: vec![0; 1024].into_boxed_slice(),
-                lcd: vec![0; 0x56].into_boxed_slice(),
-                keypad: vec![0; 4].into_boxed_slice(),
-            },
-            Self {
-                backend,
-                hcount: 0
-            },
-        ))
+        Ok(Self { backend, hcount: 0 })
     }
 
     /// A graphics cycle is done every 4 cpu cycles
-    pub fn cycle<'r>(&mut self, memory: &mut Memory) -> (State, Interrupt) {
+    pub fn cycle(&mut self, memory: &mut memory::MMU) -> (State, Interrupt) {
         let mut interrupts = Interrupt::none();
 
         // Only bits 0-7 are used of this register
-        let mut vcount = memory.read(registers::VCOUNT) as usize;
-        let vcount_setting = (memory.read(registers::DISPSTAT) >> 7) as usize;
+        let mut vcount = memory.load8(registers::VCOUNT) as usize;
+        let vcount_setting = (memory.load8(registers::DISPSTAT) >> 7) as usize;
         let vblank = vcount > 160;
         let hblank = self.hcount > 240;
 
         if !vblank && !hblank {
             // Generate draw closure based on video mode
-            let pixel = match memory.lcd[registers::local(registers::DISPCNT)] & 0b111 {
+            let pixel = match memory.load8(registers::DISPCNT) & 0b111 {
                 0 => unimplemented!(),
                 1 => unimplemented!(),
                 2 => unimplemented!(),
-                3 => BGR555::from([memory.vram[(self.hcount * 2) + vcount * SCREEN_WIDTH * 2], memory.vram[(self.hcount * 2) + vcount * SCREEN_WIDTH * 2 + 1]]),
+                3 => BGR555(memory.load16((memory::base_addrs::VRAM_ADDR + (self.hcount * 2) + vcount * SCREEN_WIDTH * 2) as u32)),
                 4 => unimplemented!(),
                 5 => unimplemented!(),
                 6 | 7 => panic!("Program attempted to use undefined video mode"),
@@ -148,41 +140,39 @@ impl Display {
         // Increment the hcount
         self.hcount = if self.hcount < 307 {
             // Set hblank flag
-            memory.write(
+            memory.store8(
                 registers::DISPSTAT,
-                memory.read(registers::DISPSTAT) | 0b10u8,
+                memory.load8(registers::DISPSTAT) | 0b10u8,
             );
             // Check if hblank IRQ is set
-            if memory.read(registers::DISPSTAT) & 0b10000u8 != 0 {
+            if memory.load8(registers::DISPSTAT) & 0b10000u8 != 0 {
                 interrupts.hblank()
             };
             self.hcount + 1
         } else {
             // Unset hblank flag
-            memory.write(
+            memory.store8(
                 registers::DISPSTAT,
-                memory.read(registers::DISPSTAT) & !0b10u8,
+                memory.load8(registers::DISPSTAT) & !0b10u8,
             );
-
-
 
             // Increment or reset the VCOUNT register
             vcount = if vcount < 227 {
                 // Set vblank flag
-                memory.write(
+                memory.store8(
                     registers::DISPSTAT,
-                    memory.read(registers::DISPSTAT) | 0b1u8,
+                    memory.load8(registers::DISPSTAT) | 0b1u8,
                 );
                 // Check if vblank IRQ is set
-                if memory.read(registers::DISPSTAT) & 0b1000u8 != 0 {
+                if memory.load8(registers::DISPSTAT) & 0b1000u8 != 0 {
                     interrupts.vblank()
                 };
                 vcount + 1
             } else {
                 // Unset vblank flag
-                memory.write(
+                memory.store8(
                     registers::DISPSTAT,
-                    memory.read(registers::DISPSTAT) & !0b1u8,
+                    memory.load8(registers::DISPSTAT) & !0b1u8,
                 );
                 0
             };
@@ -190,7 +180,7 @@ impl Display {
             0
         };
 
-        memory.write(registers::VCOUNT, vcount as u8);
+        memory.store8(registers::VCOUNT, vcount as _);
 
         (State::Running, interrupts)
     }
@@ -242,6 +232,5 @@ pub mod registers {
 }
 
 // Other constants
-pub const SCREEN_WIDTH:  usize = 240;
+pub const SCREEN_WIDTH: usize = 240;
 pub const SCREEN_HEIGHT: usize = 160;
-
