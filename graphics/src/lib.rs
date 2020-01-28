@@ -1,6 +1,18 @@
+#[cfg(not(feature = "fbdev"))]
 mod graphics;
+
+#[cfg(feature = "fbdev")]
+mod fb_graphics;
+
+#[cfg(not(feature = "fbdev"))]
 use self::graphics::Graphics;
+#[cfg(not(feature = "fbdev"))]
 pub use self::graphics::{CacheInstance, CacheObject, Interrupt, State};
+
+#[cfg(feature = "fbdev")]
+use self::fb_graphics::Graphics;
+#[cfg(feature = "fbdev")]
+pub use self::fb_graphics::{CacheInstance, CacheObject, Interrupt, State};
 
 pub struct Memory {
     pub palette: Box<[u8]>,
@@ -43,7 +55,7 @@ impl Memory {
 /// ```rust
 /// use graphics::{ Display, State };
 /// const SCREEN_SCALE: u32 = 2;
-/// 
+///
 /// // Initialise the graphics backend and SDL
 /// let (mut memory, mut display) = Display::init(SCREEN_SCALE).unwrap();
 /// // These 2 structures cannot be owned by Display and as such exist here
@@ -91,7 +103,11 @@ impl Display {
     }
 
     /// Draw a the next scan line
-    pub fn cycle<'r>(&mut self, cache_instance: &mut CacheInstance<'r>, mut memory: Memory) -> (State, Interrupt, Memory) {
+    pub fn cycle<'r>(
+        &mut self,
+        cache_instance: &mut CacheInstance<'r>,
+        mut memory: Memory,
+    ) -> (State, Interrupt, Memory) {
         let mut interrupts = Interrupt::none();
 
         // Only bits 0-7 are used of this register
@@ -110,25 +126,32 @@ impl Display {
                 6 | 7 => panic!("Program attempted to use undefined video mode"),
                 _ => unreachable!(),
             };
-    
+
             self.graphics.drawline(cache_instance, vcount, scanline)
         } else {
             State::Blanking
         };
 
         // Increment or reset the VCOUNT register
-        let vcount =
-            if vcount < 227 {
-                // Set vblank flag
-                memory.write(registers::DISPSTAT, memory.read(registers::DISPSTAT) | 0b1u8);
-                // Check if vblank IRQ is set
-                if memory.read(registers::DISPSTAT) | 0b1000u8 != 0 { interrupts.vblank() };
-                vcount + 1
-            } else {
-                // Unset vblank flag
-                memory.write(registers::DISPSTAT, memory.read(registers::DISPSTAT) & !0b1u8);
-                0
+        let vcount = if vcount < 227 {
+            // Set vblank flag
+            memory.write(
+                registers::DISPSTAT,
+                memory.read(registers::DISPSTAT) | 0b1u8,
+            );
+            // Check if vblank IRQ is set
+            if memory.read(registers::DISPSTAT) | 0b1000u8 != 0 {
+                interrupts.vblank()
             };
+            vcount + 1
+        } else {
+            // Unset vblank flag
+            memory.write(
+                registers::DISPSTAT,
+                memory.read(registers::DISPSTAT) & !0b1u8,
+            );
+            0
+        };
         memory.write(registers::VCOUNT, vcount as u8);
 
         (state, interrupts, memory)

@@ -14,7 +14,9 @@ use sdl2::{
 extern crate vulkano;
 
 // Hide the SDL2 structures from the callee
+/// For storage only. DO NOT attempt to use
 pub type CacheObject = TextureCreator<WindowContext>;
+/// For storage only. DO NOT attempt to use
 pub type CacheInstance<'r> = Texture<'r>;
 
 pub struct Graphics {
@@ -73,7 +75,12 @@ impl Graphics {
             .unwrap()
     }
 
-    pub fn drawline<'r>(&mut self, cache_instance: &mut CacheInstance<'r>, y: usize, scanline: &[u8]) -> State {
+    pub fn drawline<'r>(
+        &mut self,
+        cache_instance: &mut CacheInstance<'r>,
+        y: usize,
+        scanline: &[u8],
+    ) -> State {
         for event in self.event_pump.poll_iter() {
             if let Event::Quit { .. } = event {
                 return State::Exited;
@@ -94,29 +101,35 @@ impl Graphics {
 }
 
 pub struct Interrupt {
-    pub vblank:     bool,
-    pub vcounter:   bool,
-    pub hblank:     bool,
+    pub vblank: bool,
+    pub vcounter: bool,
+    pub hblank: bool,
 }
 
 impl Interrupt {
     pub const fn none() -> Self {
         Self {
-            vblank:     false,
-            vcounter:   false,
-            hblank:     false,
+            vblank: false,
+            vcounter: false,
+            hblank: false,
         }
     }
 
-    pub fn vblank   (&mut self) { self.vblank   = true }
-    pub fn vcounter (&mut self) { self.vcounter = true }
-    pub fn hblank   (&mut self) { self.hblank   = true }
+    pub fn vblank(&mut self) {
+        self.vblank = true
+    }
+    pub fn vcounter(&mut self) {
+        self.vcounter = true
+    }
+    pub fn hblank(&mut self) {
+        self.hblank = true
+    }
 }
 
 pub enum State {
     Exited,
     Running,
-    Blanking
+    Blanking,
 }
 
 #[cfg(test)]

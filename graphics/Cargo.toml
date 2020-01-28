@@ -7,6 +7,7 @@ edition = "2018"
 [features]
 default = ["vulkan"]
 vulkan = ["vulkano"]
+fbdev = []
 
 [dependencies.sdl2]
 version = "0.32.2"
