@@ -3,7 +3,7 @@
 #[cfg(not(target_os = "linux"))]
 compile_error!("This feature requires Linux system calls");
 
-pub struct Graphics {
+pub struct Backend {
     // No choice but be static even though it is not
     framebuffer: Option<&'static mut [u32]>,
 
@@ -11,13 +11,8 @@ pub struct Graphics {
     scale: usize,
 }
 
-/// Dummy structs to comply with the SDL2 Graphics interface
-pub type CacheObject = ();
-/// Dummy structs to comply with the SDL2 Graphics interface
-pub type CacheInstance<'r> = &'r ();
-
 #[cfg(target_os = "linux")]
-impl Graphics {
+impl Backend {
     /// Setup the graphics stack with the Linux framebuffer backend
     /// Uses Linux system calls
     pub fn setup(scale: u32) -> Result<Self, String> {
@@ -30,7 +25,7 @@ impl Graphics {
         let fb_info: fb_var_screeninfo = unsafe { std::mem::zeroed() };
         if 0 != unsafe { ioctl(fb_fd, FBIOGET_VSCREENINFO, &fb_info) } {
             return Err("Error getting framebuffer info".to_string());
-        };
+        }
 
         let framebuffer_length = fb_info.xres as usize * fb_info.yres as usize;
 
@@ -65,60 +60,27 @@ impl Graphics {
         })
     }
 
-    pub fn graphics_cache(&self) -> CacheObject {
-        ()
-    }
-
-    pub fn instanciate_cache<'r>(cache: &'r CacheObject) -> CacheInstance<'r> {
-        cache
-    }
-
-    pub fn drawline<'r>(
-        &mut self,
-        cache_instance: &mut CacheInstance<'r>,
-        y: usize,
-        scanline: &[u8],
-    ) -> State {
-        for (x, pixel) in scanline
-            .chunks_exact(2)
-            .map(|bgr| Self::bgr555_to_rgb888(bgr))
-            .enumerate()
-        {
-            self.set_pixel((x,y), pixel).unwrap();
-        }
-
-        State::Running
-    }
 
     /// Set the pixel at (x,y) to colour
     /// Returns None if an error occured
-    pub fn set_pixel(&mut self, pos: (usize, usize), mut colour: u32) -> Option<()> {
-
+    pub fn draw_pixel(&mut self, position: (usize, usize), colour: super::RGBA) {
         const FB_WIDTH: usize = 4;
         for x_scaled in 0..self.scale {
             for y_scaled in 0..self.scale {
-                let index = pos.0 * self.scale + (self.fb_info.xres as usize * (pos.1 * self.scale + y_scaled)) + x_scaled;
                 unsafe {
-                    self.framebuffer.as_mut().unwrap()[index] = colour;
+                    self.framebuffer.as_mut().unwrap()[
+                        position.0 * self.scale
+                        + (self.fb_info.xres as usize * (position.1 * self.scale + y_scaled))
+                        + x_scaled
+                    ] = *colour;
                 }
             }
         }
-
-        Some(())
-    }
-
-    pub fn bgr555_to_rgb888(bgr: &[u8]) -> u32 {
-        let (msb, lsb) = (bgr[1] as u32, bgr[0] as u32);
-        let red     = (lsb & 0b11111) as f32;
-        let green   = ((lsb & 0b11100000) >> 3 | msb & 0b11) as f32;
-        let blue    = (msb & 0b01111100 >> 2) as f32;
-        ((red/31.0*255.0) as u32) << 16 | ((green/31.0*255.0) as u32) << 8 | (blue/31.0*255.0) as u32
     }
 }
 
-impl Drop for Graphics {
+impl Drop for Backend {
     fn drop(&mut self) {
-
         let ptr = self.framebuffer.as_mut().unwrap().as_ptr() as *mut void;
         let len = self.framebuffer.as_mut().unwrap().len();
         self.framebuffer = None;
@@ -133,37 +95,6 @@ impl Drop for Graphics {
     }
 }
 
-pub struct Interrupt {
-    pub vblank: bool,
-    pub vcounter: bool,
-    pub hblank: bool,
-}
-
-impl Interrupt {
-    pub const fn none() -> Self {
-        Self {
-            vblank: false,
-            vcounter: false,
-            hblank: false,
-        }
-    }
-
-    pub fn vblank(&mut self) {
-        self.vblank = true
-    }
-    pub fn vcounter(&mut self) {
-        self.vcounter = true
-    }
-    pub fn hblank(&mut self) {
-        self.hblank = true
-    }
-}
-
-pub enum State {
-    Exited,
-    Running,
-    Blanking,
-}
 
 // Syscall definitions
 #[cfg(target_os = "linux")]
@@ -283,21 +214,3 @@ const PROT_WRITE: i32 = 0x2;
 
 const MAP_FAILED: i32 = -1;
 const MAP_SHARED: i32 = 0x1;
-
-#[cfg(test)]
-mod tests {
-    #[test]
-    fn drawline_test() -> Result<(), String> {
-        let mut video = super::Graphics::setup(4)?;
-        let cache = video.graphics_cache();
-        let mut texture = super::Graphics::instanciate_cache(&cache);
-
-        use super::State;
-        loop {
-            match video.drawline(&mut texture, 10, &[0xFF; 240 * 2]) {
-                State::Exited => break Ok(()),
-                _ => continue,
-            }
-        }
-    }
-}

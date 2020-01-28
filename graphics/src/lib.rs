@@ -1,4 +1,4 @@
-#[cfg(not(feature = "fbdev"))]
+/*#[cfg(not(feature = "fbdev"))]
 mod graphics;
 
 #[cfg(feature = "fbdev")]
@@ -12,7 +12,10 @@ pub use self::graphics::{CacheInstance, CacheObject, Interrupt, State};
 #[cfg(feature = "fbdev")]
 use self::fb_graphics::Graphics;
 #[cfg(feature = "fbdev")]
-pub use self::fb_graphics::{CacheInstance, CacheObject, Interrupt, State};
+pub use self::fb_graphics::{CacheInstance, CacheObject, Interrupt, State};*/
+
+mod backend;
+use backend::*;
 
 pub struct Memory {
     pub palette: Box<[u8]>,
@@ -27,14 +30,14 @@ impl Memory {
     /// Read an address from memory and returns it. Called by the MMU.
     /// Assumes address is in the internal display memory map (04000000 - 08000000).
     pub fn read(&self, addr: u32) -> u8 {
-        return match addr as usize {
+        match addr as usize {
             0x0400_0000..=0x0400_0056 => self.lcd[(addr - 0x0400_0000) as usize],
             0x0400_0130..=0x0400_0132 => self.keypad[(addr - 0x0400_0130) as usize],
             0x0500_0000..=0x0500_03FF => self.palette[(addr - 0x0500_0000) as usize],
             0x0600_0000..=0x0601_7FFF => self.vram[(addr - 0x0600_0000) as usize],
             0x0700_0000..=0x0700_03FF => self.oam[(addr - 0x0700_03FF) as usize],
             _ => 0,
-        };
+        }
     }
 
     pub fn write(&mut self, addr: u32, val: u8) {
@@ -49,38 +52,57 @@ impl Memory {
     }
 }
 
+/// Indicates when an interrupt is fired
+pub struct Interrupt {
+    pub vblank: bool,
+    pub vcounter: bool,
+    pub hblank: bool,
+}
+
+impl Interrupt {
+    pub const fn none() -> Self {
+        Self {
+            vblank: false,
+            vcounter: false,
+            hblank: false,
+        }
+    }
+
+    pub fn vblank(&mut self) {
+        self.vblank = true
+    }
+    pub fn vcounter(&mut self) {
+        self.vcounter = true
+    }
+    pub fn hblank(&mut self) {
+        self.hblank = true
+    }
+}
+
+/// Propogates meta state to the CPU module
+pub enum State {
+    Exited,
+    Running,
+}
+
 /// Emulates the functionality of the GBA display and keypad hardware
 ///
 /// Usage:
 /// ```rust
-/// use graphics::{ Display, State };
-/// const SCREEN_SCALE: u32 = 2;
-///
-/// // Initialise the graphics backend and SDL
-/// let (mut memory, mut display) = Display::init(SCREEN_SCALE).unwrap();
-/// // These 2 structures cannot be owned by Display and as such exist here
-/// let cache = display.graphics_cache();
-/// let mut cache_instance = Display::instanciate_cache(&cache);
-///
-/// loop {
-///     // To be called when a new scanline is to be drawn
-///     
-///     memory = match display.cycle(&mut cache_instance, memory) {
-///         (State::Exited, _, _) => break (),
-///         (_, _, memory) => memory,
-///     }
-/// }
 /// ```
 ///
 /// The memory struct contains boxed slices of the displays memory segments.
 /// The registers module contains convenience constants and a local function for getting the memory address relative to the boxed slice
 pub struct Display {
-    graphics: Graphics,
+    backend: Backend,
+
+    // There is no register for this so count here
+    hcount: usize,
 }
 
 impl Display {
     pub fn init(scale: u32) -> Result<(Memory, Self), String> {
-        let graphics = Graphics::setup(scale)?;
+        let backend = backend::Backend::setup(scale)?;
 
         Ok((
             Memory {
@@ -90,71 +112,87 @@ impl Display {
                 lcd: vec![0; 0x56].into_boxed_slice(),
                 keypad: vec![0; 4].into_boxed_slice(),
             },
-            Self { graphics },
+            Self {
+                backend,
+                hcount: 0
+            },
         ))
     }
 
-    pub fn graphics_cache(&self) -> CacheObject {
-        self.graphics.graphics_cache()
-    }
-
-    pub fn instanciate_cache(cache: &CacheObject) -> CacheInstance {
-        Graphics::instanciate_cache(cache)
-    }
-
-    /// Draw a the next scan line
-    pub fn cycle<'r>(
-        &mut self,
-        cache_instance: &mut CacheInstance<'r>,
-        mut memory: Memory,
-    ) -> (State, Interrupt, Memory) {
+    /// A graphics cycle is done every 4 cpu cycles
+    pub fn cycle<'r>(&mut self, memory: &mut Memory) -> (State, Interrupt) {
         let mut interrupts = Interrupt::none();
 
         // Only bits 0-7 are used of this register
-        let vcount = memory.read(registers::VCOUNT) as usize;
-        let vblank = if vcount > 160 { true } else { false };
+        let mut vcount = memory.read(registers::VCOUNT) as usize;
+        let vcount_setting = (memory.read(registers::DISPSTAT) >> 7) as usize;
+        let vblank = vcount > 160;
+        let hblank = self.hcount > 240;
 
-        let state = if !vblank {
+        if !vblank && !hblank {
             // Generate draw closure based on video mode
-            let scanline = match memory.lcd[registers::local(registers::DISPCNT)] & 0b111 {
+            let pixel = match memory.lcd[registers::local(registers::DISPCNT)] & 0b111 {
                 0 => unimplemented!(),
                 1 => unimplemented!(),
                 2 => unimplemented!(),
-                3 => &memory.vram[240 * 2 * vcount..(vcount + 1) * 240 * 2],
+                3 => BGR555::from([memory.vram[(self.hcount * 2) + vcount * SCREEN_WIDTH * 2], memory.vram[(self.hcount * 2) + vcount * SCREEN_WIDTH * 2 + 1]]),
                 4 => unimplemented!(),
                 5 => unimplemented!(),
                 6 | 7 => panic!("Program attempted to use undefined video mode"),
                 _ => unreachable!(),
             };
 
-            self.graphics.drawline(cache_instance, vcount, scanline)
-        } else {
-            State::Blanking
-        };
+            self.backend.draw_pixel((self.hcount, vcount), pixel.into())
+        }
 
-        // Increment or reset the VCOUNT register
-        let vcount = if vcount < 227 {
-            // Set vblank flag
+        // Increment the hcount
+        self.hcount = if self.hcount < 307 {
+            // Set hblank flag
             memory.write(
                 registers::DISPSTAT,
-                memory.read(registers::DISPSTAT) | 0b1u8,
+                memory.read(registers::DISPSTAT) | 0b10u8,
             );
-            // Check if vblank IRQ is set
-            if memory.read(registers::DISPSTAT) | 0b1000u8 != 0 {
-                interrupts.vblank()
+            // Check if hblank IRQ is set
+            if memory.read(registers::DISPSTAT) & 0b10000u8 != 0 {
+                interrupts.hblank()
             };
-            vcount + 1
+            self.hcount + 1
         } else {
-            // Unset vblank flag
+            // Unset hblank flag
             memory.write(
                 registers::DISPSTAT,
-                memory.read(registers::DISPSTAT) & !0b1u8,
+                memory.read(registers::DISPSTAT) & !0b10u8,
             );
+
+
+
+            // Increment or reset the VCOUNT register
+            vcount = if vcount < 227 {
+                // Set vblank flag
+                memory.write(
+                    registers::DISPSTAT,
+                    memory.read(registers::DISPSTAT) | 0b1u8,
+                );
+                // Check if vblank IRQ is set
+                if memory.read(registers::DISPSTAT) & 0b1000u8 != 0 {
+                    interrupts.vblank()
+                };
+                vcount + 1
+            } else {
+                // Unset vblank flag
+                memory.write(
+                    registers::DISPSTAT,
+                    memory.read(registers::DISPSTAT) & !0b1u8,
+                );
+                0
+            };
+
             0
         };
+
         memory.write(registers::VCOUNT, vcount as u8);
 
-        (state, interrupts, memory)
+        (State::Running, interrupts)
     }
 }
 
@@ -203,29 +241,7 @@ pub mod registers {
     }
 }
 
-#[cfg(test)]
-mod tests {
-    #[test]
-    fn mode3_test() -> Result<(), String> {
-        let (mut memory, mut display) = super::Display::init(4)?;
-        let cache = display.graphics_cache();
-        let mut cache_instance = super::Display::instanciate_cache(&cache);
+// Other constants
+pub const SCREEN_WIDTH:  usize = 240;
+pub const SCREEN_HEIGHT: usize = 160;
 
-        memory.lcd[super::registers::local(super::registers::DISPCNT)] = 0b00000011;
-        // Draw rgb pixels at (80,80)
-        memory.vram[80 * 480 + 160] = 0b00011111;
-        memory.vram[80 * 480 + 161] = 0b00000000;
-        memory.vram[80 * 480 + 162] = 0b11100000;
-        memory.vram[80 * 480 + 163] = 0b00000011;
-        memory.vram[80 * 480 + 164] = 0b00000000;
-        memory.vram[80 * 480 + 165] = 0b01111100;
-
-        use super::State;
-        loop {
-            memory = match display.cycle(&mut cache_instance, memory) {
-                (State::Exited, _, _) => break Ok(()),
-                (_, _, memory) => memory,
-            }
-        }
-    }
-}
