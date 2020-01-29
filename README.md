@@ -14,7 +14,7 @@
 - [What is Velera](#what-is-velera)
     - [Velera's objectives](#objectives)
     - [Features](#features)
-    - [Long-term Features](#long-term features)
+    - [Long-term Features](#longterm features)
 - [Getting Help](#getting-help)
     - [Community](#community)
     - [Troubleshooting](#troubleshooting)
