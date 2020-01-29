@@ -59,15 +59,29 @@ impl Backend {
         })
     }
 
+    /// Set the pixel at (x,y) to colour
     pub fn draw_pixel(&mut self, position: (usize, usize), colour: RGBA) {
         self.canvas.set_draw_color::<(u8, u8, u8)>(colour.into());
         self.canvas
             .draw_point((position.0 as i32, position.1 as i32))
-            .unwrap();
+            .ok();
 
         if position == (0, 0) {
             self.canvas.present()
         }
+    }
+
+    /// Get input from the user
+    pub fn get_input(&mut self) -> InputStates {
+        let mut states = InputStates::new();
+        for event in self.event_pump.poll_iter() {
+            match event {
+                Event::Quit {..} => states.exit = true,
+                _ => ()
+            }
+        }
+
+        states
     }
 }
 
