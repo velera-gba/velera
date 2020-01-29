@@ -115,6 +115,9 @@ impl Display {
     pub fn cycle(&mut self, memory: &mut memory::MMU) -> (State, Interrupt) {
         let mut interrupts = Interrupt::none();
 
+        // Get user input
+        let input = self.backend.get_input();
+
         // Only bits 0-7 are used of this register
         let mut vcount = memory.load8(registers::VCOUNT) as usize;
         let vcount_setting = (memory.load8(registers::DISPSTAT) >> 7) as usize;
@@ -182,7 +185,7 @@ impl Display {
 
         memory.store8(registers::VCOUNT, vcount as _);
 
-        (State::Running, interrupts)
+        (if input.exit { State::Exited } else { State::Running }, interrupts)
     }
 }
 

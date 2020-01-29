@@ -116,31 +116,54 @@ impl std::ops::Deref for RGBA {
 }
 
 pub struct InputStates {
-    a: bool,
-    b: bool,
-    select: bool,
-    start: bool,
-    right: bool,
-    left: bool,
-    up: bool,
-    down: bool,
-    r: bool,
-    l: bool,
+    // GBA keys
+    pub a:      bool,
+    pub b:      bool,
+    pub select: bool,
+    pub start:  bool,
+    pub right:  bool,
+    pub left:   bool,
+    pub up:     bool,
+    pub down:   bool,
+    pub r:      bool,
+    pub l:      bool,
+
+    // Emulator keys
+    pub exit:   bool,
 }
 
 impl InputStates {
+    pub fn new() -> Self {
+        Self {
+            a:      false,
+            b:      false,
+            select: false,
+            start:  false,
+            right:  false,
+            left:   false,
+            up:     false,
+            down:   false,
+            r:      false,
+            l:      false,
+
+            exit:   false,
+        }
+    }
+
     pub fn from_u16(raw: u16) -> Self {
         Self {
-            a: raw & 1 != 0,
-            b: raw & (1 << 1) != 0,
+            a:      raw & 1 != 0,
+            b:      raw & (1 << 1) != 0,
             select: raw & (1 << 2) != 0,
-            start: raw & (1 << 3) != 0,
-            right: raw & (1 << 4) != 0,
-            left: raw & (1 << 5) != 0,
-            up: raw & (1 << 6) != 0,
-            down: raw & (1 << 7) != 0,
-            r: raw & (1 << 8) != 0,
-            l: raw & (1 << 9) != 0,
+            start:  raw & (1 << 3) != 0,
+            right:  raw & (1 << 4) != 0,
+            left:   raw & (1 << 5) != 0,
+            up:     raw & (1 << 6) != 0,
+            down:   raw & (1 << 7) != 0,
+            r:      raw & (1 << 8) != 0,
+            l:      raw & (1 << 9) != 0,
+
+            exit:   false,
         }
     }
 

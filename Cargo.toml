@@ -6,6 +6,11 @@ edition = "2018"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
+[features]
+default = ["vulkan"]
+vulkan = ["graphics/vulkan"]
+fbdev = ["graphics/fbdev"]
+
 [dependencies]
 audio = { path = "audio" }
 cpu = { path = "cpu" }

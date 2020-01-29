@@ -1,5 +1,7 @@
 // Linux framebuffer graphics backend
 
+use super::*;
+
 #[cfg(not(target_os = "linux"))]
 compile_error!("This feature requires Linux system calls");
 
@@ -40,7 +42,7 @@ impl Backend {
         let framebuffer = Some(unsafe {
             let framebuffer = mmap(
                 std::ptr::null(),
-                framebuffer_length * fb_info.bits_per_pixel / 8,
+                framebuffer_length * fb_info.bits_per_pixel as usize / 8,
                 PROT_READ | PROT_WRITE,
                 MAP_SHARED,
                 fb_fd,
@@ -68,7 +70,6 @@ impl Backend {
     }
 
     /// Set the pixel at (x,y) to colour
-    /// Returns None if an error occured
     pub fn draw_pixel(&mut self, position: (usize, usize), colour: super::RGBA) {
         const FB_WIDTH: usize = 4;
         for x_scaled in 0..self.scale {
@@ -81,7 +82,17 @@ impl Backend {
             }
         }
     }
+
+    /// Get input from the user
+    pub fn get_input(&mut self) -> InputStates {
+        let states = InputStates::new();
+
+        // TODO: Switch to raw keyboard mode
+
+        states
+    }
 }
+
 
 impl Drop for Backend {
     fn drop(&mut self) {
