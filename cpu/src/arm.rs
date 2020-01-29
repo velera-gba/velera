@@ -1,11 +1,33 @@
-use crate::{constants::default_cpu, cpu::CPU, enums::MnemonicARM};
+use crate::{constants::default_cpu, cpu::CPU};
 
-use std::{
-    collections::VecDeque,
-    default::Default,
-};
+use crate::enums::{InstructionType, MnemonicARM};
+use std::{collections::VecDeque, default::Default};
 
 mod decode;
+
+pub struct ARM7TDMI {
+    pub registers: [i32; 16],
+    pub cpsr: u32,
+    pub spsr: u32,
+    pub temp_rd: i32,   // temporary destination register
+    pub temp_rs: i32,   // temporary source register
+    pub temp_rn: i32,   // temporary index register
+    pub immediate: i32, // temporary immediate
+}
+
+impl Default for ARM7TDMI {
+    fn default() -> Self {
+        Self {
+            registers: default_cpu::RS,
+            cpsr: default_cpu::CPSR,
+            spsr: default_cpu::SPSR,
+            temp_rd: 0,
+            temp_rs: 0,
+            temp_rn: 0,
+            immediate: 0,
+        }
+    }
+}
 
 /// Holds a temporary instruction to be executed
 #[derive(Debug, Default, PartialEq, Clone)]
@@ -19,7 +41,7 @@ pub struct DecodedInstruction {
     pub val1: Option<u8>, // multi-purpose value (can be a shift to apply, etc)
     pub val2: Option<u8>, // ^
     pub val3: Option<u8>,
-    pub offset: Option<u32>, // offset for branching
+    pub offset: Option<i32>, // offset for branching
 
     pub set_cond: Option<bool>, // choose if should set condition codes
     pub imm: Option<bool>,      // whether the values come from registers or not
@@ -49,33 +71,10 @@ impl ARMInstruction {
 }
 
 /// Handles ARM decoding and execution.
-pub struct ARM7TDMI {
-    pub registers: [i32; 16],
-    pub cpsr: u32,
-    pub spsr: u32,
-    pub temp_rd: i32,   // temporary destination register
-    pub temp_rs: i32,   // temporary source register
-    pub temp_rn: i32,   // temporary index register
-    pub immediate: i32, // temporary immediate
-}
-
-impl Default for ARM7TDMI {
-    fn default() -> Self {
-        Self {
-            registers: default_cpu::RS,
-            cpsr: default_cpu::CPSR,
-            spsr: default_cpu::SPSR,
-            temp_rd: 0,
-            temp_rs: 0,
-            temp_rn: 0,
-            immediate: 0,
-        }
-    }
-}
-
 /// Finds out which instruction the numbers represent and separates its values
-pub fn decode_arm(_: &mut CPU, instruction: u32) -> VecDeque<fn(&mut CPU)> {
-    let _decoded = decode::BaseInstruction::base_to_decoded(instruction);
+pub fn decode_arm(cpu: &mut CPU, instruction: u32) -> VecDeque<fn(&mut CPU)> {
+    let decoded = decode::BaseInstruction::base_to_decoded(instruction);
+    cpu.decoded_instruction = InstructionType::ARM(ARMInstruction::new_decoded(decoded));
     // digest decoded into a series of single-cycle instructions...
     unimplemented!();
 }

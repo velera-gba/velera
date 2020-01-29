@@ -110,7 +110,7 @@ pub fn branch(instruction: u32, cond: u8) -> DecodedInstruction {
         MnemonicARM::B
     };
 
-    let offset = Some(get_last_bits(instruction, 24));
+    let offset = Some(get_last_bits(instruction, 24) as i32);
 
     DecodedInstruction {
         cond,
