@@ -13,6 +13,7 @@ pub struct Backend {
     scale: usize,
 }
 
+/// You must ensure that this structure gets dropped before program termination
 #[cfg(target_os = "linux")]
 impl Backend {
     /// Setup the graphics stack with the Linux framebuffer backend
@@ -53,13 +54,17 @@ impl Backend {
                 return Err("Unable to mmap framebuffer".to_string());
             }
 
-            unsafe { std::slice::from_raw_parts_mut(framebuffer, framebuffer_length) }
+            std::slice::from_raw_parts_mut(framebuffer, framebuffer_length)
         });
 
         // Do not use fb_fd past this point
         if 0 != unsafe { close(fb_fd) } {
             eprintln!("Failed to close /dev/fb0. Please file a bug report."); // Should only fail if program is terminating, in which case this should not print
         }
+
+        unsafe { Self::kd_raw()? };
+        unsafe { signal(SIGINT, catch_signal) };
+        unsafe { signal(SIGKILL, catch_signal) };
 
         Ok(Self {
             framebuffer,
@@ -69,33 +74,100 @@ impl Backend {
         })
     }
 
+    /// Enter MEDIUMRAW mode
+    pub unsafe fn kd_raw() -> Result<(), String> {
+        const STDIN: i32 = 0;
+
+        if INIT_TC_STATE.is_some() || INIT_KB_MODE.is_some() { return Err("Terminal attempted to change state twice which is not allowed.".to_string()) }
+        
+        let mut term_state = termios::none();
+        if tcgetattr(STDIN, &term_state as *const termios) != 0 {
+            return Err("Unable to get terminal attributes".to_string())
+        }
+        INIT_TC_STATE = Some(term_state);
+
+        // Make stdin nonblocking
+        fcntl(STDIN, F_SETFL, fcntl(STDIN, F_GETFL) | O_NONBLOCK);
+
+        let mut kb_mode = 0;
+        if ioctl(STDIN, KDGKBMODE, &kb_mode as *const i32) < 0 {
+            return Err("Unable to get keyboard mode. This application must be run in a tty".to_string())
+        }
+        INIT_KB_MODE = Some(kb_mode);
+
+        term_state.c_lflag &= !(TC_ICANON | TC_ECHO | ISIG);
+        term_state.c_iflag &= !(ICRNL | INLCR | ISTRIP) | IGNBRK;
+        tcsetattr(STDIN, TCSANOW, &term_state as *const termios);
+
+        if ioctl(STDIN, KDSKBMODE, K_MEDIUMRAW) < 0 {
+            return Err("Unable to change keyboard mode to MEDIUMRAW".to_string())
+        }
+
+        Ok(())
+    }
+
     /// Set the pixel at (x,y) to colour
     pub fn draw_pixel(&mut self, position: (usize, usize), colour: super::RGBA) {
         const FB_WIDTH: usize = 4;
         for x_scaled in 0..self.scale {
             for y_scaled in 0..self.scale {
-                unsafe {
-                    self.framebuffer.as_mut().unwrap()[position.0 * self.scale
-                        + (self.fb_info.xres as usize * (position.1 * self.scale + y_scaled))
-                        + x_scaled] = *colour;
-                }
+                self.framebuffer.as_mut().unwrap()[position.0 * self.scale
+                    + (self.fb_info.xres as usize * (position.1 * self.scale + y_scaled))
+                    + x_scaled] = *colour;
             }
         }
     }
 
     /// Get input from the user
     pub fn get_input(&mut self) -> InputStates {
-        let states = InputStates::new();
+        let mut states = InputStates::new();
 
-        // TODO: Switch to raw keyboard mode
+        if unsafe { SIG_END } { states.exit = true }
+
+        use std::io::Read;
+
+        // TODO: Allow rebinding as not all keyboards are alike
+        let mut key = [0];
+        while let Ok(_) = std::io::stdin().read(&mut key[..]) {
+            match key[0] {
+                1 => states.exit = true,
+                _ => ()
+            }
+        };
 
         states
     }
 }
 
+// I would not consider this use unsafe because of how it is used
+/// set when an SIGINT or SIGKILL was recieved
+static mut SIG_END: bool = false;
+extern "C" fn catch_signal(signal: i32) {
+    unsafe { SIG_END = true }
+}
 
+// TODO: Actual unsafe usage if a signal is handled during exit
+// The chance of this is astrronomically small; Inconcievable to get even if I tried
+// Consider a lock anyway just to be sure
+static mut INIT_KB_MODE: Option<i32> = None;
+static mut INIT_TC_STATE: Option<termios> = None;
+
+
+// Ensure that the terminal and keyboard mode get restored and that the framebuffer gets deallocated
 impl Drop for Backend {
     fn drop(&mut self) {
+        const STDIN: i32 = 0;
+        unsafe {
+            if let Some(tc_state) = INIT_TC_STATE {
+                tcsetattr(STDIN, TCSANOW, &tc_state as *const termios);
+                INIT_TC_STATE = None;
+            }
+            if let Some(kb_mode) = INIT_KB_MODE {
+                ioctl(STDIN, KDSKBMODE, kb_mode);
+                INIT_KB_MODE = None;
+            }
+        }
+
         let ptr = self.framebuffer.as_mut().unwrap().as_ptr() as *mut void;
         let len = self.framebuffer.as_mut().unwrap().len();
         self.framebuffer = None;
@@ -127,6 +199,7 @@ extern "C" {
         offset: isize,
     ) -> *mut void;
     pub fn munmap(addr: *const void, length: usize) -> i32;
+    pub fn fcntl(fd: i32, cmd: i32, ...) -> i32;
 
     // termios functions for capturing input better
     pub fn tcgetattr(fd: i32, termios_p: *const termios) -> i32;
@@ -219,8 +292,18 @@ impl termios {
 // fb IOCTL constants
 const FBIOGET_VSCREENINFO: u64 = 0x4600;
 
-// fcntl modes
+// kd IOCTL constants
+const KDGKBMODE: u64 = 0x4B44;
+const KDSKBMODE: u64 = 0x4B45;
+    // modes
+const K_XLATE: u32 = 0x01;
+const K_MEDIUMRAW: u32 = 0x02;
+
+// fcntl constants
 const O_RDWR: i32 = 2;
+const O_NONBLOCK: i32 = 0o4000;
+const F_GETFL: i32 = 3;
+const F_SETFL: i32 = 4;
 
 // mmap consts
 const PROT_READ: i32 = 0x1;
@@ -228,3 +311,19 @@ const PROT_WRITE: i32 = 0x2;
 
 const MAP_FAILED: i32 = -1;
 const MAP_SHARED: i32 = 0x1;
+
+// termios constants
+const IGNBRK: u32 = 0o001;
+const ISTRIP: u32 = 0o040;
+const INLCR: u32 = 0o100;
+const ICRNL: u32 = 0o400;
+
+const ISIG: u32 = 0o0001;
+const TC_ECHO: u32 = 0o0010;
+const TC_ICANON: u32 = 0o0002;
+const TCSANOW: i32 = 0;
+const TCIOFLUSH: i32 = 2;
+
+// Signals
+const SIGINT: i32 = 2;
+const SIGKILL: i32 = 9;

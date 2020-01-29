@@ -64,7 +64,7 @@ impl Backend {
         self.canvas.set_draw_color::<(u8, u8, u8)>(colour.into());
         self.canvas
             .draw_point((position.0 as i32, position.1 as i32))
-            .unwrap();
+            .ok();
 
         if position == (0, 0) {
             self.canvas.present()

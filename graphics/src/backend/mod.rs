@@ -13,6 +13,7 @@ pub type Backend = linux_framebuffer::Backend;
 pub struct BGR555(pub u16);
 
 impl BGR555 {
+    #[inline]
     /// Approximate an 8bit intensity as a 5bit intensity
     fn bits8_to_5(byte: u8) -> u8 {
         (byte as f32 / 255.0 * 31.0) as u8 & 0b11111
@@ -22,10 +23,10 @@ impl BGR555 {
 impl From<&[u8]> for BGR555 {
     fn from(slice: &[u8]) -> Self {
         match slice.len() {
-            1 => panic!(
+            1 => { eprintln!(
                 "At least 2 bytes are needed to convert to BGR555. Instead recieved {:?}",
                 slice
-            ),
+            ); BGR555(0) },
             3 => [slice[0], slice[1], slice[2]].into(),
             2 | _ => [slice[0], slice[1]].into(),
         }
@@ -33,6 +34,7 @@ impl From<&[u8]> for BGR555 {
 }
 
 impl From<[u8; 2]> for BGR555 {
+    #[inline]
     fn from(bytes: [u8; 2]) -> Self {
         Self(u16::from_le_bytes(bytes))
     }
@@ -81,6 +83,7 @@ impl std::ops::Deref for BGR555 {
 pub struct RGBA(pub u32);
 
 impl RGBA {
+    #[inline]
     /// Approximate a 5bit intensity as an 8bit intensity
     fn bits5_to_8(byte: u8) -> u8 {
         (byte as f32 / 31.0 * 255.0) as u8

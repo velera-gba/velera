@@ -133,7 +133,7 @@ impl Display {
                 3 => BGR555(memory.load16((memory::base_addrs::VRAM_ADDR + (self.hcount * 2) + vcount * SCREEN_WIDTH * 2) as u32)),
                 4 => unimplemented!(),
                 5 => unimplemented!(),
-                6 | 7 => panic!("Program attempted to use undefined video mode"),
+                6 | 7 => { eprintln!("Program attempted to use undefined video mode"); return (State::Exited, interrupts) },
                 _ => unreachable!(),
             };
 
