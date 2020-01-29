@@ -38,6 +38,7 @@ pub mod base_addrs {
     pub const CART_SRAM_MIRROR_ADDR: usize = 0xF00_0000;
 }
 
+#[derive(Default)]
 pub struct MMU {
     wram: Box<[u8]>,
     iwram: Box<[u8]>,
