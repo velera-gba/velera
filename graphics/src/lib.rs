@@ -1,57 +1,4 @@
-/*#[cfg(not(feature = "fbdev"))]
-mod graphics;
-
-#[cfg(feature = "fbdev")]
-mod fb_graphics;
-
-#[cfg(not(feature = "fbdev"))]
-use self::graphics::Graphics;
-#[cfg(not(feature = "fbdev"))]
-pub use self::graphics::{CacheInstance, CacheObject, Interrupt, State};
-
-#[cfg(feature = "fbdev")]
-use self::fb_graphics::Graphics;
-#[cfg(feature = "fbdev")]
-pub use self::fb_graphics::{CacheInstance, CacheObject, Interrupt, State};
-
-
-
-pub struct Memory {
-    pub palette: Box<[u8]>,
-    pub vram: Box<[u8]>,
-    pub oam: Box<[u8]>,
-
-    pub lcd: Box<[u8]>,
-    pub keypad: Box<[u8]>,
-}
-
-impl Memory {
-    /// Read an address from memory and returns it. Called by the MMU.
-    /// Assumes address is in the internal display memory map (04000000 - 08000000).
-    pub fn read(&self, addr: u32) -> u8 {
-        match addr as usize {
-            0x0400_0000..=0x0400_0056 => self.lcd[(addr - 0x0400_0000) as usize],
-            0x0400_0130..=0x0400_0132 => self.keypad[(addr - 0x0400_0130) as usize],
-            0x0500_0000..=0x0500_03FF => self.palette[(addr - 0x0500_0000) as usize],
-            0x0600_0000..=0x0601_7FFF => self.vram[(addr - 0x0600_0000) as usize],
-            0x0700_0000..=0x0700_03FF => self.oam[(addr - 0x0700_03FF) as usize],
-            _ => 0,
-        }
-    }
-
-    pub fn write(&mut self, addr: u32, val: u8) {
-        match addr as usize {
-            0x0400_0000..=0x0400_0056 => self.lcd[(addr - 0x0400_0000) as usize] = val,
-            0x0400_0132 => self.keypad[2] = val,
-            0x0500_0000..=0x0500_03FF => self.palette[(addr - 0x0500_0000) as usize] = val,
-            0x0600_0000..=0x0601_7FFF => self.vram[(addr - 0x0600_0000) as usize] = val,
-            0x0700_0000..=0x0700_03FF => self.oam[(addr - 0x0700_03FF) as usize] = val,
-            _ => (),
-        }
-    }
-}*/
-
-pub use memory;
+use memory;
 
 mod backend;
 use backend::*;
@@ -93,6 +40,17 @@ pub enum State {
 ///
 /// Usage:
 /// ```rust
+/// const SCALE: u32 = 4;
+/// let mut display = graphics::Display::init(SCALE).unwrap();
+/// let mut memory = memory::MMU::new();
+/// 
+/// use graphics::State;
+/// loop {
+///     match display.cycle(&mut memory) {
+///         (State::Exited, _) => break,
+///         _ => (),
+///     }
+/// }
 /// ```
 ///
 /// The memory struct contains boxed slices of the displays memory segments.
@@ -228,10 +186,6 @@ pub mod registers {
     pub const BLDCNT: u32 = 0x400_0050;
     pub const BLDALPHA: u32 = 0x400_0052;
     pub const BLDY: u32 = 0x400_0054;
-
-    pub const fn local(address: u32) -> usize {
-        address as usize - 0x400_0000
-    }
 }
 
 // Other constants
