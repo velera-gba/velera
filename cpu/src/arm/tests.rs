@@ -3,11 +3,16 @@
 mod tests {
     use super::super::*;
 
-    use crate::arm::decode::{
-        branch, data_processing, data_transfer, interrupt, multiply, psr_transfer, swap,
-        BaseInstruction, DecodedInstruction,
+    use crate::{
+        arm::{
+            decode::{
+                branch, data_processing, data_transfer, interrupt, multiply, psr_transfer, swap,
+                BaseInstruction,
+            },
+            DecodedInstruction,
+        },
+        enums::MnemonicARM,
     };
-    use crate::enums::MnemonicARM;
 
     const cond: u8 = 0b0000;
 

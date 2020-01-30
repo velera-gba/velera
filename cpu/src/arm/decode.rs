@@ -1,4 +1,4 @@
-use crate::enums::MnemonicARM;
+use crate::{arm::DecodedInstruction, enums::MnemonicARM};
 
 /// get bit in a certain position
 #[inline]
@@ -25,24 +25,6 @@ fn bool_2_u8(b: bool) -> u8 {
     } else {
         0
     }
-}
-
-#[derive(Debug, Default, PartialEq)]
-pub struct DecodedInstruction {
-    pub cond: u8,
-    pub instr: MnemonicARM,
-    pub rn: Option<u8>,   // index register
-    pub rm: Option<u8>,   // second index register
-    pub rd: Option<u8>,   // destination register
-    pub rs: Option<u8>,   // source register
-    pub val1: Option<u8>, // multi-purpose value (can be a shift to apply, etc)
-    pub val2: Option<u8>, // ^
-    pub val3: Option<u8>,
-    pub offset: Option<u32>, // offset for branching
-
-    pub set_cond: Option<bool>, // choose if should set condition codes
-    pub imm: Option<bool>,      // whether the values come from registers or not
-    pub acc: Option<bool>,      // whether the values should accumulate
 }
 
 pub fn data_processing(instruction: u32, cond: u8) -> DecodedInstruction {
@@ -440,7 +422,7 @@ impl BaseInstruction {
     // TODO: fucking do something about this lmao
     /// This function will get an instruction without the condition field (upper 4 bits of the 32).
     /// This function exists only to feed the decode functions, that will transform it into a decoded instruction
-    fn get_instr(instruction: u32) -> BaseInstruction {
+    pub fn get_instr(instruction: u32) -> BaseInstruction {
         use BaseInstruction::*;
 
         let instr: BaseInstruction;
