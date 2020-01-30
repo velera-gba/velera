@@ -11,6 +11,7 @@ pub struct Backend {
 
     fb_info: fb_var_screeninfo,
     scale: usize,
+    keymap: Keymap
 }
 
 /// You must ensure that this structure gets dropped before program termination
@@ -71,6 +72,7 @@ impl Backend {
 
             fb_info,
             scale: scale as usize,
+            keymap: Keymap::new(),
         })
     }
 
@@ -118,6 +120,31 @@ impl Backend {
         }
     }
 
+    pub fn rebind_input(&mut self) {
+        const STDIN: i32 = 0;
+        // Make input blocking
+        unsafe { fcntl(STDIN, F_SETFL, fcntl(STDIN, F_GETFL) & !O_NONBLOCK) };
+
+        use std::io::Read;
+
+        let mut key = [0];
+
+        self.keymap = Keymap::bind(|name, default| {
+            println!("Tap the key for `{}`", name);
+            while {
+                if let Err(_) = std::io::stdin().read(&mut key[..]) { return default };
+                // ignore keyup
+                key[0] & 0b10000000 != 0
+            } {};
+
+            // Ensure high bit is not set
+            key[0] & !0b10000000
+        });
+
+        // Make input non-blocking
+        unsafe { fcntl(STDIN, F_SETFL, fcntl(STDIN, F_GETFL) | O_NONBLOCK) };
+    }
+
     /// Get input from the user
     pub fn get_input(&mut self) -> InputStates {
         let mut states = InputStates::new();
@@ -126,14 +153,10 @@ impl Backend {
 
         use std::io::Read;
 
-        // TODO: Allow rebinding as not all keyboards are alike
         let mut key = [0];
         while let Ok(_) = std::io::stdin().read(&mut key[..]) {
-            match key[0] {
-                1 => states.exit = true,
-                _ => ()
-            }
-        };
+            self.keymap.match_key(key[0], &mut states)
+        }
 
         states
     }

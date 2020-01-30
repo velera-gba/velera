@@ -118,6 +118,79 @@ impl std::ops::Deref for RGBA {
     }
 }
 
+/// Maps scancodes to keys
+pub struct Keymap {
+    // GBA keys
+    pub a:      u8,
+    pub b:      u8,
+    pub select: u8,
+    pub start:  u8,
+    pub right:  u8,
+    pub left:   u8,
+    pub up:     u8,
+    pub down:   u8,
+    pub r:      u8,
+    pub l:      u8,
+
+    // Emulator keys
+    pub exit:   u8,
+}
+
+impl Keymap {
+    pub fn new() -> Self {
+        Self {
+            a:      44,
+            b:      45,
+            select: 57,
+            start:  28,
+            right:  106,
+            left:   105,
+            up:     103,
+            down:   108,
+            r:      82,
+            l:      97,
+
+            exit:   1,
+        }
+    }
+
+    #[inline]
+    pub fn match_key(&self, key: u8, states: &mut InputStates) {
+        match key {
+            k if k == self.exit      => states.exit   = true,
+            k if k == self.a         => states.a      = true,
+            k if k == self.b         => states.b      = true,
+            k if k == self.select    => states.select = true,
+            k if k == self.start     => states.start  = true,
+            k if k == self.right     => states.right  = true,
+            k if k == self.left      => states.left   = true,
+            k if k == self.up        => states.up     = true,
+            k if k == self.down      => states.down   = true,
+            k if k == self.r         => states.r      = true,
+            k if k == self.l         => states.l      = true,
+
+            _ => ()
+        }
+    }
+
+    pub fn bind<F: FnMut(&str, u8) -> u8>(mut prompt: F) -> Self {
+        let mut map = Self::new();
+        map.exit    = prompt("exit",            map.exit);
+        map.a       = prompt("a",               map.a);
+        map.b       = prompt("b",               map.b);
+        map.select  = prompt("select",          map.select);
+        map.start   = prompt("start",           map.start);
+        map.right   = prompt("right",           map.right);
+        map.left    = prompt("left",            map.left);
+        map.up      = prompt("up",              map.up);
+        map.down    = prompt("down",            map.down);
+        map.r       = prompt("right bumper",    map.r);
+        map.l       = prompt("left bumper",     map.l);
+
+        map
+    }
+}
+
 pub struct InputStates {
     // GBA keys
     pub a:      bool,

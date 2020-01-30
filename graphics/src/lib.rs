@@ -145,6 +145,9 @@ impl Display {
 
         (if input.exit { State::Exited } else { State::Running }, interrupts)
     }
+
+    #[inline]
+    pub fn rebind_input(&mut self) { self.backend.rebind_input() }
 }
 
 /// Constants for lcd register address mapping

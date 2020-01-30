@@ -71,6 +71,10 @@ impl Backend {
         }
     }
 
+    pub fn rebind_input(&mut self) {
+        unimplemented!()
+    }
+
     /// Get input from the user
     pub fn get_input(&mut self) -> InputStates {
         let mut states = InputStates::new();
