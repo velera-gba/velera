@@ -40,6 +40,7 @@ pub struct DecodedInstruction {
     pub rs: Option<u8>,   // source register
     pub val1: Option<u8>, // multi-purpose value (can be a shift to apply, etc)
     pub val2: Option<u8>, // ^
+    pub shift_type: Option<u32>, // 0=LSL, 1=LSR, 2=ASR, 3=ROR
     pub val3: Option<u8>,
     pub offset: Option<i32>, // offset for branching
 

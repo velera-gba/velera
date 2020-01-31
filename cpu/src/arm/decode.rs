@@ -19,14 +19,6 @@ pub fn get_last_bits(input: u32, n: u8) -> u32 {
 }
 
 #[inline]
-fn bool_2_u8(b: bool) -> u8 {
-    if b {
-        1
-    } else {
-        0
-    }
-}
-
 pub fn data_processing(instruction: u32, cond: u8) -> DecodedInstruction {
     use crate::constants::dp_opcodes::*;
 
@@ -68,24 +60,44 @@ pub fn data_processing(instruction: u32, cond: u8) -> DecodedInstruction {
             rd,
             val1,
             val2,
+            imm: Some(true),
             set_cond,
             ..Default::default()
         };
     }
 
-    let val1 = Some(get_last_bits(instruction >> 4, 8) as u8); // shift applied to rm
+    // Register as second operand
     let rm = Some(get_last_bits(instruction, 4) as u8);
+    let shift_type = Some(get_last_bits(instruction >> 5, 2));
 
-    // if val2 is none/rm is not none, the instruction is immediate
-    DecodedInstruction {
-        cond,
-        instr,
-        rn,
-        rm,
-        rd,
-        val1,
-        set_cond,
-        ..Default::default()
+    let shift_by_register = get_bit_at(instruction, 4);
+    if shift_by_register {
+        let rs = Some(get_last_bits(instruction >> 8, 4) as u8);
+        DecodedInstruction {
+            cond,
+            instr,
+            rn,
+            rm,
+            rd,
+            rs,
+            shift_type,
+            set_cond,
+            ..Default::default()
+        }
+    } else {
+        // immediate amount to shift
+        let val1 = Some(get_last_bits(instruction >> 7, 5) as u8);
+        DecodedInstruction {
+            cond,
+            instr,
+            rn,
+            rm,
+            rd,
+            val1,
+            shift_type,
+            set_cond,
+            ..Default::default()
+        }
     }
 }
 
@@ -123,7 +135,7 @@ pub fn branch(instruction: u32, cond: u8) -> DecodedInstruction {
 
 /// Reads PSR transfer statements
 pub fn psr_transfer(instruction: u32, cond: u8) -> DecodedInstruction {
-    let psr = Some(bool_2_u8(get_bit_at(instruction, 22)));
+    let psr = Some(get_bit_at(instruction, 22) as u8);
 
     let imm = get_bit_at(instruction, 25);
     // MRS (move to register from special register)
@@ -188,10 +200,10 @@ pub fn psr_transfer(instruction: u32, cond: u8) -> DecodedInstruction {
 pub fn data_transfer(instruction: u32, cond: u8) -> DecodedInstruction {
     // bitmasks
     let imm = get_bit_at(instruction, 25);
-    let index = bool_2_u8(get_bit_at(instruction, 24)) << 3;
-    let up_down = bool_2_u8(get_bit_at(instruction, 23)) << 2;
-    let byte_or_word = bool_2_u8(get_bit_at(instruction, 22)) << 1;
-    let write_back = bool_2_u8(get_bit_at(instruction, 21));
+    let index = (get_bit_at(instruction, 24) as u8) << 3;
+    let up_down = (get_bit_at(instruction, 23) as u8) << 2;
+    let byte_or_word = (get_bit_at(instruction, 22) as u8) << 1;
+    let write_back = get_bit_at(instruction, 21) as u8;
 
     let load = get_bit_at(instruction, 20);
 
@@ -207,17 +219,14 @@ pub fn data_transfer(instruction: u32, cond: u8) -> DecodedInstruction {
             MnemonicARM::STM
         };
 
-        // register list is 16 bits long, so we'll divide it into two parts, val2 being the high byte
-        let val2 = Some(get_last_bits(instruction >> 8, 8) as u8);
-        let val3 = Some(get_last_bits(instruction, 8) as u8);
+        let offset = Some(get_last_bits(instruction, 16) as i32);
 
         return DecodedInstruction {
             cond,
             instr,
             rn,
             val1,
-            val2,
-            val3,
+            offset,
             ..Default::default()
         };
     }
@@ -231,17 +240,15 @@ pub fn data_transfer(instruction: u32, cond: u8) -> DecodedInstruction {
             MnemonicARM::STR
         };
 
-        if imm {
-            let val2 = Some(get_last_bits(instruction, 8) as u8);
-            let val3 = Some(get_last_bits(instruction >> 8, 4) as u8);
+        if !imm {
+            let offset = Some(get_last_bits(instruction, 12) as i32);
             return DecodedInstruction {
                 cond,
                 instr,
                 rn,
                 rd,
                 val1,
-                val2,
-                val3,
+                offset,
                 imm: Some(true),
                 ..Default::default()
             };
@@ -250,7 +257,8 @@ pub fn data_transfer(instruction: u32, cond: u8) -> DecodedInstruction {
         let rm = Some(get_last_bits(instruction, 4) as u8);
 
         // shift applied to rm
-        let val2 = Some(get_last_bits(instruction >> 4, 8) as u8);
+        let val2 = Some(get_last_bits(instruction >> 7, 5) as u8);
+        let shift_type = Some(get_last_bits(instruction >> 5, 2));
 
         return DecodedInstruction {
             cond,
@@ -260,6 +268,7 @@ pub fn data_transfer(instruction: u32, cond: u8) -> DecodedInstruction {
             rm,
             val1,
             val2,
+            shift_type,
             imm: Some(false),
             ..Default::default()
         };
@@ -307,8 +316,8 @@ pub fn data_transfer(instruction: u32, cond: u8) -> DecodedInstruction {
         };
     }
 
-    let mut offset = (get_last_bits(instruction >> 8, 4) as u8) << 4;
-    offset |= get_last_bits(instruction, 4) as u8;
+    let mut offset = (get_last_bits(instruction >> 8, 4) as i32) << 4;
+    offset |= get_last_bits(instruction, 4) as i32;
 
     DecodedInstruction {
         cond,
@@ -316,7 +325,7 @@ pub fn data_transfer(instruction: u32, cond: u8) -> DecodedInstruction {
         rn,
         rd,
         val1,
-        val2: Some(offset),
+        offset: Some(offset),
         imm: Some(true),
         ..Default::default()
     }
@@ -373,7 +382,7 @@ pub fn multiply(instruction: u32, cond: u8) -> DecodedInstruction {
 }
 
 pub fn swap(instruction: u32, cond: u8) -> DecodedInstruction {
-    let is_byte = Some(bool_2_u8(get_bit_at(instruction, 22)));
+    let is_byte = Some((get_bit_at(instruction, 22)) as u8);
     let rn = Some(get_last_bits(instruction >> 16, 4) as u8);
     let rd = Some(get_last_bits(instruction >> 12, 4) as u8);
     let rm = Some(get_last_bits(instruction, 4) as u8);
