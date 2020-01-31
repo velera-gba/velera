@@ -15,10 +15,8 @@ pub fn get_last_bits(input: u32, n: u8) -> u32 {
     if n < 32 {
         return input & ((1 << n) - 1);
     }
-    panic!("tried to get >32 last bits");
 }
 
-#[inline]
 pub fn data_processing(instruction: u32, cond: u8) -> DecodedInstruction {
     use crate::constants::dp_opcodes::*;
 
