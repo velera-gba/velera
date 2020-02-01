@@ -11,7 +11,7 @@ pub struct Backend {
 
     fb_info: fb_var_screeninfo,
     scale: usize,
-    keymap: Keymap
+    keymap: Keymap<u8>
 }
 
 /// You must ensure that this structure gets dropped before program termination
@@ -129,7 +129,7 @@ impl Backend {
 
         let mut key = [0];
 
-        self.keymap = Keymap::bind(|name, default| {
+        self.keymap = Keymap::bind(Keymap::<u8>::new(), |name, default| {
             println!("Tap the key for `{}`", name);
             while {
                 if let Err(_) = std::io::stdin().read(&mut key[..]) { return default };
@@ -201,6 +201,25 @@ impl Drop for Backend {
             -1 => panic!("Failed to unmap framebuffer memory. Please file a bug report"),
             // If this occurs we have probably linked to the wrong munmap
             _ => panic!("munmap returned a value which does not match the specifications"),
+        }
+    }
+}
+
+impl Keymap<u8> {
+    pub fn new() -> Self {
+        Self {
+            a:      44,
+            b:      45,
+            select: 57,
+            start:  28,
+            right:  106,
+            left:   105,
+            up:     103,
+            down:   108,
+            r:      82,
+            l:      97,
+    
+            exit:   1,
         }
     }
 }

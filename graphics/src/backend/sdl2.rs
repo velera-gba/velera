@@ -18,6 +18,8 @@ pub struct Backend {
     video: VideoSubsystem,
     canvas: WindowCanvas,
     event_pump: EventPump,
+
+    keymap: Keymap<sdl2::keyboard::Keycode>,
 }
 
 impl Backend {
@@ -56,6 +58,8 @@ impl Backend {
             video,
             canvas,
             event_pump,
+
+            keymap: Keymap::new(),
         })
     }
 
@@ -81,11 +85,32 @@ impl Backend {
         for event in self.event_pump.poll_iter() {
             match event {
                 Event::Quit {..} => states.exit = true,
+                Event::KeyDown { keycode: Some(sdl2::keyboard::Keycode::Escape), ..}  => states.exit = true,
                 _ => ()
             }
         }
 
         states
+    }
+}
+
+impl Keymap<sdl2::keyboard::Keycode> {
+    pub fn new() -> Self {
+        use sdl2::keyboard::Keycode;
+        Self {
+            a:      Keycode::Z,
+            b:      Keycode::X,
+            select: Keycode::Return,
+            start:  Keycode::Backspace,
+            right:  Keycode::Right,
+            left:   Keycode::Left,
+            up:     Keycode::Up,
+            down:   Keycode::Down,
+            r:      Keycode::Kp0,
+            l:      Keycode::RCtrl,
+    
+            exit:   Keycode::Escape,
+        }
     }
 }
 

@@ -119,43 +119,26 @@ impl std::ops::Deref for RGBA {
 }
 
 /// Maps scancodes to keys
-pub struct Keymap {
+pub struct Keymap<T> {
     // GBA keys
-    pub a:      u8,
-    pub b:      u8,
-    pub select: u8,
-    pub start:  u8,
-    pub right:  u8,
-    pub left:   u8,
-    pub up:     u8,
-    pub down:   u8,
-    pub r:      u8,
-    pub l:      u8,
+    pub a:      T,
+    pub b:      T,
+    pub select: T,
+    pub start:  T,
+    pub right:  T,
+    pub left:   T,
+    pub up:     T,
+    pub down:   T,
+    pub r:      T,
+    pub l:      T,
 
     // Emulator keys
-    pub exit:   u8,
+    pub exit:   T,
 }
 
-impl Keymap {
-    pub fn new() -> Self {
-        Self {
-            a:      44,
-            b:      45,
-            select: 57,
-            start:  28,
-            right:  106,
-            left:   105,
-            up:     103,
-            down:   108,
-            r:      82,
-            l:      97,
-
-            exit:   1,
-        }
-    }
-
+impl<T: PartialEq> Keymap<T> {
     #[inline]
-    pub fn match_key(&self, key: u8, states: &mut InputStates) {
+    pub fn match_key(&self, key: T, states: &mut InputStates) {
         match key {
             k if k == self.exit      => states.exit   = true,
             k if k == self.a         => states.a      = true,
@@ -173,8 +156,7 @@ impl Keymap {
         }
     }
 
-    pub fn bind<F: FnMut(&str, u8) -> u8>(mut prompt: F) -> Self {
-        let mut map = Self::new();
+    pub fn bind<F: FnMut(&str, T) -> T>(mut map: Self, mut prompt: F) -> Self {
         map.exit    = prompt("exit",            map.exit);
         map.a       = prompt("a",               map.a);
         map.b       = prompt("b",               map.b);
