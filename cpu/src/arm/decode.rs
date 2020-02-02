@@ -15,6 +15,7 @@ pub fn get_last_bits(input: u32, n: u8) -> u32 {
     if n < 32 {
         return input & ((1 << n) - 1);
     }
+    0
 }
 
 pub fn data_processing(instruction: u32, cond: u8) -> DecodedInstruction {
@@ -336,13 +337,12 @@ pub fn multiply(instruction: u32, cond: u8) -> DecodedInstruction {
     let rs = Some(get_last_bits(instruction >> 8, 4) as u8);
     let rm = Some(get_last_bits(instruction, 4) as u8);
 
+    // is it a long instruction?
+    let long = get_bit_at(instruction, 23);
+    let unsigned = get_bit_at(instruction, 22);
     let acc = get_bit_at(instruction, 21);
     let set_cond = Some(get_bit_at(instruction, 20));
 
-    // is it a long instruction?
-    let long = get_bit_at(instruction, 23);
-
-    let unsigned = get_bit_at(instruction, 22);
     let instr;
 
     if long {
