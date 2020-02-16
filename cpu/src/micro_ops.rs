@@ -61,6 +61,7 @@ pub fn switch_mode(cpu: &mut CPU) {
 // TODO: treat overflows
 // rd = rm * rs
 pub fn multiply(cpu: &mut CPU) {
+    let (rd, rm, rs);
     match &cpu.decoded_instruction {
         InstructionType::Thumb(_) => {
             unimplemented!();
@@ -68,18 +69,21 @@ pub fn multiply(cpu: &mut CPU) {
 
         InstructionType::ARM(instr) => {
             if let Some(decoded) = &instr.decoded_instruction {
-                cpu.arm.registers[decoded.rd.unwrap() as usize] = cpu.arm.registers
-                    [decoded.rm.unwrap() as usize]
-                    * cpu.arm.registers[decoded.rs.unwrap() as usize];
+                rd = decoded.rd.unwrap() as usize;
+                rm = decoded.rm.unwrap() as usize;
+                rs = decoded.rs.unwrap() as usize;
             } else {
                 eprintln!("Expected decoded instruction at multiply instruction");
             }
         }
     }
+
+    cpu.arm.registers[rd] = cpu.arm.registers[rm] * cpu.arm.registers[rs];
 }
 
 // rd = rm * rs + rn
 pub fn multiply_accumulate(cpu: &mut CPU) {
+    let (rd, rm, rs, rn);
     match &cpu.decoded_instruction {
         InstructionType::Thumb(_) => {
             unimplemented!();
@@ -87,18 +91,21 @@ pub fn multiply_accumulate(cpu: &mut CPU) {
 
         InstructionType::ARM(instr) => {
             if let Some(decoded) = &instr.decoded_instruction {
-                cpu.arm.registers[decoded.rd.unwrap() as usize] = cpu.arm.registers
-                    [decoded.rm.unwrap() as usize]
-                    * cpu.arm.registers[decoded.rs.unwrap() as usize]
-                    + cpu.arm.registers[decoded.rn.unwrap() as usize];
+                rd = decoded.rd.unwrap() as usize;
+                rm = decoded.rm.unwrap() as usize;
+                rs = decoded.rs.unwrap() as usize;
+                rn = decoded.rn.unwrap() as usize;
             } else {
                 eprintln!("Expected decoded instruction at multiply accumulate instruction");
             }
         }
     }
+
+    cpu.arm.registers[rd] = cpu.arm.registers[rm] * cpu.arm.registers[rs] + cpu.arm.registers[rn];
 }
 
 pub fn signed_multiply(cpu: &mut CPU) {
+    let (rm, rs, rd_low, rd_hi);
     match &cpu.decoded_instruction {
         InstructionType::Thumb(_) => {
             unimplemented!();
@@ -106,19 +113,24 @@ pub fn signed_multiply(cpu: &mut CPU) {
 
         InstructionType::ARM(instr) => {
             if let Some(decoded) = &instr.decoded_instruction {
-                let r = cpu.arm.registers[decoded.rm.unwrap() as usize] as i64
-                    * cpu.arm.registers[decoded.rs.unwrap() as usize] as i64;
-
-                cpu.arm.registers[decoded.rn.unwrap() as usize] = (r & 0xFFFF_FFFF) as i32;
-                cpu.arm.registers[decoded.rd.unwrap() as usize] = (r >> 32) as i32;
+                rm = decoded.rm.unwrap() as usize;
+                rs = decoded.rs.unwrap() as usize;
+                rd_low = decoded.rn.unwrap() as usize;
+                rd_hi = decoded.rd.unwrap() as usize;
             } else {
                 eprintln!("Expected decoded instruction at multiply accumulate instruction");
             }
         }
     }
+
+    let r = cpu.arm.registers[rm] as i64 * cpu.arm.registers[rs] as i64;
+
+    cpu.arm.registers[rd_low] = (r & 0xFFFF_FFFF) as i32;
+    cpu.arm.registers[rd_hi] = (r >> 32) as i32;
 }
 
 pub fn unsigned_multiply(cpu: &mut CPU) {
+    let (rm, rs, rd_low, rd_hi);
     match &cpu.decoded_instruction {
         InstructionType::Thumb(_) => {
             unimplemented!();
@@ -126,16 +138,70 @@ pub fn unsigned_multiply(cpu: &mut CPU) {
 
         InstructionType::ARM(instr) => {
             if let Some(decoded) = &instr.decoded_instruction {
-                let r = cpu.arm.registers[decoded.rm.unwrap() as usize] as u64
-                    * cpu.arm.registers[decoded.rs.unwrap() as usize] as u64;
-
-                cpu.arm.registers[decoded.rn.unwrap() as usize] = (r & 0xFFFF_FFFF) as i32;
-                cpu.arm.registers[decoded.rd.unwrap() as usize] = (r >> 32) as i32;
+                rm = decoded.rm.unwrap() as usize;
+                rs = decoded.rs.unwrap() as usize;
+                rd_low = decoded.rn.unwrap() as usize;
+                rd_hi = decoded.rd.unwrap() as usize;
             } else {
                 eprintln!("Expected decoded instruction at multiply accumulate instruction");
             }
         }
     }
+
+    let r = cpu.arm.registers[rm] as u64 * cpu.arm.registers[rs] as u64;
+
+    cpu.arm.registers[rd_low] = (r & 0xFFFF_FFFF) as i32;
+    cpu.arm.registers[rd_hi] = (r >> 32) as i32;
+}
+
+pub fn signed_multiply_accumulate(cpu: &mut CPU) {
+    let (rd_hi, rd_low, rm, rs);
+    match &cpu.decoded_instruction {
+        InstructionType::Thumb(_) => {
+            unimplemented!();
+        }
+
+        InstructionType::ARM(instr) => {
+            if let Some(decoded) = &instr.decoded_instruction {
+                rm = decoded.rm.unwrap() as usize;
+                rs = decoded.rs.unwrap() as usize;
+                rd_hi = decoded.rd.unwrap() as usize;
+                rd_low = decoded.rn.unwrap() as usize;
+            } else {
+                eprintln!("Expected decoded instruction at multiply accumulate instruction");
+            }
+        }
+    }
+
+    let r = cpu.arm.registers[rm] as i64 * cpu.arm.registers[rs] as i64;
+
+    cpu.arm.registers[rd_low] = ((r + rd_low as i64) & 0xFFFF_FFFF) as i32;
+    cpu.arm.registers[rd_hi] = (cpu.arm.registers[rd_hi] + (r >> 32) as i32) as i32;
+}
+
+pub fn unsigned_multiply_accumulate(cpu: &mut CPU) {
+    let (rd_hi, rd_low, rm, rs);
+    match &cpu.decoded_instruction {
+        InstructionType::Thumb(_) => {
+            unimplemented!();
+        }
+
+        InstructionType::ARM(instr) => {
+            if let Some(decoded) = &instr.decoded_instruction {
+                rm = decoded.rm.unwrap() as usize;
+                rs = decoded.rs.unwrap() as usize;
+                rd_hi = decoded.rd.unwrap() as usize;
+                rd_low = decoded.rn.unwrap() as usize;
+            } else {
+                eprintln!("Expected decoded instruction at multiply accumulate instruction");
+            }
+        }
+    }
+
+    let r = cpu.arm.registers[rm] as u64 * cpu.arm.registers[rs] as u64;
+
+    cpu.arm.registers[rd_low] = ((r + rd_low as u64) & 0xFFFF_FFFF) as i32;
+    cpu.arm.registers[rd_hi] = (cpu.arm.registers[rd_hi] as u32 + (r >> 32) as u32) as i32;
 }
 
 // implement accumulate instructions

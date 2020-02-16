@@ -16,6 +16,12 @@ These are the goals and to do's for this module
 - [X] Change val2 and val3 to offset
 - [X] Support shifting in ARM
 - [ ] Remove all `unimplemented!` from the code
+- [X] Accumulate instructions
+- [ ] ALU Instructions
+- [ ] Privilege modes
+- [ ] Exceptions
+- [ ] Interrupts
+- [ ] Load/Store
 
 ### Middle term:
 
