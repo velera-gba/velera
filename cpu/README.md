@@ -11,6 +11,7 @@ These are the goals and to do's for this module
 - **thumb** module execution
 
 - [ ] Finish micro operations
+
 - [X] Use `as` to cast to u8 from bool
 - [X] Implement data transfer instructions (LDR, STR, ...) the right way (supporting addressing)
 - [X] Change val2 and val3 to offset
@@ -21,7 +22,9 @@ These are the goals and to do's for this module
 - [ ] Privilege modes
 - [ ] Exceptions
 - [ ] Interrupts
-- [ ] Load/Store
+- [ ] Load/Store instructions
+- [ ] Implement Thumb versions of instructions
+- [ ] Add micro ops testing
 
 ### Middle term:
 
