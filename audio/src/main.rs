@@ -7,7 +7,7 @@ fn main(){
     
     print!("Playing Test Tone...\n");
     //sound::GbaAudio::test_tone(&gba_audio, 440, 0);
-    sound::GbaAudio::test_tone(&gba_audio, 440/2, 1);
+    sound::GbaAudio::test_tone(&gba_audio, 22050, 1);
     /*
     let pulseA = Pulse::create();
     print!("Pulse A created [pulseA]...\n");

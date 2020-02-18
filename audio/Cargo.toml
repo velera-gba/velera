@@ -9,3 +9,4 @@ edition = "2018"
 [dependencies]
 rodio = "0.10.0"
 rand = "0.7.3"
+sample = "0.10.0"
