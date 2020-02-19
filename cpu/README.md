@@ -13,12 +13,13 @@ These are the goals and to do's for this module
 - [ ] Finish micro operations
 
 - [X] Use `as` to cast to u8 from bool
-- [X] Implement data transfer instructions (LDR, STR, ...) the right way (supporting addressing)
+- [ ] Implement data transfer instructions (LDR, STR, ...) the right way (supporting addressing)
 - [X] Change val2 and val3 to offset
 - [X] Support shifting in ARM
 - [ ] Remove all `unimplemented!` from the code
 - [X] Accumulate instructions
 - [ ] ALU Instructions
+- [ ] Implement "set condition codes"
 - [ ] Privilege modes
 - [ ] Exceptions
 - [ ] Interrupts
