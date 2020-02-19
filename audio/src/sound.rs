@@ -82,12 +82,12 @@ impl GbaAudio {
         let mut time: u16 = 1;
         loop{
             if pulse_a.empty(){
-                //let buffer_pulse_a = SamplesBuffer::new(1, 44100, test_pulse_a.to_vec());
-                //pulse_a.append(buffer_pulse_a);
+                let buffer_pulse_a = SamplesBuffer::new(1, 44100, test_pulse_a.to_vec());
+                pulse_a.append(buffer_pulse_a);
             }
             if pulse_b.empty(){ 
-                //let buffer_pulse_b = SamplesBuffer::new(1, 44100, test_pulse_b.to_vec());
-                //pulse_b.append(buffer_pulse_b);
+                let buffer_pulse_b = SamplesBuffer::new(1, 44100, test_pulse_b.to_vec());
+                pulse_b.append(buffer_pulse_b);
             }
             if wave.empty(){
                 let buffer_wave = SamplesBuffer::new(1, 44100, test_wavetable.to_vec());
@@ -100,7 +100,7 @@ impl GbaAudio {
                 let buffer_noise = SamplesBuffer::new(1, time.into(), test_noise.to_vec());
                 noise.append(buffer_noise);
             }
-            if time < 11025 {
+            if time < 44100 {
                 time += 1;
             }
             else {
