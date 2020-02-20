@@ -13,14 +13,14 @@ extern crate vulkano;
 
 use super::*;
 
-pub struct Backend {
+pub struct Frontend {
     context: Sdl,
     video: VideoSubsystem,
     canvas: WindowCanvas,
     event_pump: EventPump,
 }
 
-impl Backend {
+impl Frontend {
     pub fn setup(scale: u32) -> Result<Self, String> {
         let context = sdl2::init()?;
         let video = context.video()?;

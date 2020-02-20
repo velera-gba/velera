@@ -1,11 +1,11 @@
-// Linux framebuffer graphics backend
+// Linux framebuffer graphics frontend
 
 use super::*;
 
 #[cfg(not(target_os = "linux"))]
 compile_error!("This feature requires Linux system calls");
 
-pub struct Backend {
+pub struct Frontend {
     // No choice but be static even though it is not
     framebuffer: Option<&'static mut [u32]>,
 
@@ -15,8 +15,8 @@ pub struct Backend {
 
 /// You must ensure that this structure gets dropped before program termination
 #[cfg(target_os = "linux")]
-impl Backend {
-    /// Setup the graphics stack with the Linux framebuffer backend
+impl Frontend {
+    /// Setup the graphics stack with the Linux framebuffer frontend
     /// Uses Linux system calls
     pub fn setup(scale: u32) -> Result<Self, String> {
         // Unsafe as using system calls
@@ -154,7 +154,7 @@ static mut INIT_TC_STATE: Option<termios> = None;
 
 
 // Ensure that the terminal and keyboard mode get restored and that the framebuffer gets deallocated
-impl Drop for Backend {
+impl Drop for Frontend {
     fn drop(&mut self) {
         const STDIN: i32 = 0;
         unsafe {
