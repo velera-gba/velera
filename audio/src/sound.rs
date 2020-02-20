@@ -3,6 +3,8 @@
 // Velera Sound Module //
 /////////////////////////
 mod noise;
+mod pitch;
+mod amplify;
 extern crate rodio;
 extern crate sample;
 use rodio::Sink;
@@ -46,7 +48,7 @@ impl GbaAudio {
         }
     }
     #[allow(unused_variables, unused_mut)]
-    pub fn test_tone(&self, _freq: u32, _channel: usize) {
+    pub fn test_tone(&self, freq: u32, volume: f32, _channel: usize) {
         //Init Channels
         let pulse_a = &self.channels[0];
         let pulse_b = &self.channels[1];
@@ -82,7 +84,9 @@ impl GbaAudio {
         let mut time: u16 = 1;
         loop{
             if pulse_a.empty(){
-                let buffer_pulse_a = SamplesBuffer::new(1, 44100, test_pulse_a.to_vec());
+                let mut pulse_a_pitch = pitch::set_frequency(test_pulse_a.to_vec(), freq);
+                let mut pulse_a_sample = amplify::set_amplitude(pulse_a_pitch, volume);
+                let mut buffer_pulse_a = SamplesBuffer::new(1, 44100, pulse_a_sample.to_vec());
                 pulse_a.append(buffer_pulse_a);
             }
             if pulse_b.empty(){ 
@@ -90,7 +94,9 @@ impl GbaAudio {
                 pulse_b.append(buffer_pulse_b);
             }
             if wave.empty(){
-                let buffer_wave = SamplesBuffer::new(1, 44100, test_wavetable.to_vec());
+                let wavetable_sample = amplify::set_amplitude(pitch::set_frequency(test_wavetable.to_vec(), freq), 1.0);
+
+                let buffer_wave = SamplesBuffer::new(1, 44100, wavetable_sample);
                 wave.append(buffer_wave);
             }
 
@@ -98,7 +104,7 @@ impl GbaAudio {
             if noise.empty(){
                 test_noise = noise::gen_noise(44100);
                 let buffer_noise = SamplesBuffer::new(1, time.into(), test_noise.to_vec());
-                noise.append(buffer_noise);
+                //noise.append(buffer_noise);
             }
             if time < 44100 {
                 time += 1;
