@@ -5,7 +5,6 @@ authors = ["AidoP <aidop@me.com>"]
 edition = "2018"
 
 [features]
-default = ["vulkan"]
 vulkan = ["vulkano"]
 fbdev = []
 
