@@ -5,10 +5,6 @@ authors = ["AidoP <aidop@me.com>"]
 edition = "2018"
 
 [features]
-<<<<<<< HEAD
-#default = ["vulkan"]
-=======
->>>>>>> 09c4cd26e169dc1f496bcde055f47741c3a155c4
 vulkan = ["vulkano"]
 fbdev = []
 
