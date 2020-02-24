@@ -81,6 +81,7 @@ pub fn data_processing(instruction: u32, cond: u8) -> DecodedInstruction {
             rs,
             shift_type,
             set_cond,
+            imm: Some(false),
             ..Default::default()
         }
     } else {
@@ -95,6 +96,7 @@ pub fn data_processing(instruction: u32, cond: u8) -> DecodedInstruction {
             val1,
             shift_type,
             set_cond,
+            imm: Some(false),
             ..Default::default()
         }
     }
