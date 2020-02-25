@@ -1,6 +1,6 @@
 use crate::{constants::default_cpu, cpu::CPU};
 
-use crate::enums::{InstructionType, MnemonicARM};
+use crate::enums::{InstructionType, MnemonicARM, ShiftType};
 use std::{collections::VecDeque, default::Default};
 
 mod decode;
@@ -34,19 +34,22 @@ impl Default for ARM7TDMI {
 pub struct DecodedInstruction {
     pub cond: u8,
     pub instr: MnemonicARM,
-    pub rn: Option<u8>,   // index register
-    pub rm: Option<u8>,   // second index register
-    pub rd: Option<u8>,   // destination register
-    pub rs: Option<u8>,   // source register
+
+    pub rn: Option<u8>, // index register
+    pub rm: Option<u8>, // second index register
+    pub rd: Option<u8>, // destination register
+    pub rs: Option<u8>, // source register
+
     pub val1: Option<u8>, // multi-purpose value (can be a shift to apply, etc)
     pub val2: Option<u8>, // ^
-    pub shift_type: Option<u32>, // 0=LSL, 1=LSR, 2=ASR, 3=ROR
     pub val3: Option<u8>,
+
     pub offset: Option<i32>, // offset for branching
 
-    pub set_cond: Option<bool>, // choose if should set condition codes
-    pub imm: Option<bool>,      // whether the values come from registers or not
-    pub acc: Option<bool>,      // whether the values should accumulate
+    pub shift_type: Option<ShiftType>, // 0=LSL, 1=LSR, 2=ASR, 3=ROR
+    pub set_cond: Option<bool>,        // choose if should set condition codes
+    pub imm: Option<bool>,             // whether the values come from registers or not
+    pub acc: Option<bool>,             // whether the values should accumulate
 }
 
 #[derive(Clone)]

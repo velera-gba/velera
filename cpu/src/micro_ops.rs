@@ -1,9 +1,4 @@
-use crate::{
-    constants,
-    constants::registers,
-    cpu::CPU,
-    enums::{InstructionType, MnemonicARM, MnemonicARM::*},
-};
+use crate::{constants, constants::registers, cpu::CPU, enums::InstructionType};
 
 /// Does nothing at all. used as a placeholder.
 pub fn dummy_cycle(_cpu: &mut CPU) {}
@@ -221,9 +216,12 @@ pub fn unsigned_multiply_accumulate(cpu: &mut CPU) {
 
 // TODO (Alice Micheloni): set condition codes
 pub fn alu_master(cpu: &mut CPU) {
+    use crate::enums::{MnemonicARM::*, ShiftType};
+
     let (rn, rd);
     let op2: i32;
-    let mnemonic: MnemonicARM;
+    let mnemonic: crate::enums::MnemonicARM;
+
     match &cpu.decoded_instruction {
         InstructionType::Thumb(_) => {
             unimplemented!();
@@ -265,11 +263,10 @@ pub fn alu_master(cpu: &mut CPU) {
                      * 3 - ROR
                      */
                     match shift_type {
-                        0 => op2 = (to_shift) << shift_amount,
-                        1 => op2 = (to_shift) >> shift_amount,
-                        2 => op2 = to_shift >> shift_amount,
-                        3 => op2 = (to_shift).rotate_right(shift_amount as u32),
-                        _ => unreachable!(),
+                        ShiftType::LSL => op2 = (to_shift) << shift_amount,
+                        ShiftType::LSR => op2 = (to_shift) >> shift_amount,
+                        ShiftType::ASR => op2 = to_shift >> shift_amount,
+                        ShiftType::ROR => op2 = (to_shift).rotate_right(shift_amount as u32),
                     }
                 }
             } else {
