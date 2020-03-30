@@ -1,6 +1,6 @@
-use crate::{arm::DecodedInstruction, enums::MnemonicARM};
+use crate::{arm::DecodedInstruction, enums::MnemonicARM, enums::ShiftType};
 
-/// get bit in a certain position
+/// Get bit in a certain position
 #[inline]
 fn get_bit_at(input: u32, n: u8) -> bool {
     if n < 32 {
@@ -9,13 +9,31 @@ fn get_bit_at(input: u32, n: u8) -> bool {
     false
 }
 
-/// gets n last bits
+/// Gets n last bits
 #[inline]
 pub fn get_last_bits(input: u32, n: u8) -> u32 {
     if n < 32 {
         return input & ((1 << n) - 1);
     }
     0
+}
+
+/// Transforms a number into its equivalent ShiftType variant.
+/// 0 - LSL
+/// 1 - LSR
+/// 2 - ASR
+/// 3 - ROR
+fn get_shift_type(shift_type: u32) -> ShiftType {
+    return match shift_type {
+        0 => ShiftType::LSL,
+        1 => ShiftType::LSR,
+        2 => ShiftType::ASR,
+        3 => ShiftType::ROR,
+        x => {
+            eprintln!("unexpected shift type while decoding: {:?}", x);
+            ShiftType::LSL
+        }
+    };
 }
 
 pub fn data_processing(instruction: u32, cond: u8) -> DecodedInstruction {
@@ -67,7 +85,8 @@ pub fn data_processing(instruction: u32, cond: u8) -> DecodedInstruction {
 
     // Register as second operand
     let rm = Some(get_last_bits(instruction, 4) as u8);
-    let shift_type = Some(get_last_bits(instruction >> 5, 2));
+    let shift_type = get_last_bits(instruction >> 5, 2);
+    let shift_type = Some(get_shift_type(shift_type));
 
     let shift_by_register = get_bit_at(instruction, 4);
     if shift_by_register {
@@ -259,7 +278,8 @@ pub fn data_transfer(instruction: u32, cond: u8) -> DecodedInstruction {
 
         // shift applied to rm
         let val2 = Some(get_last_bits(instruction >> 7, 5) as u8);
-        let shift_type = Some(get_last_bits(instruction >> 5, 2));
+        let shift_type = get_last_bits(instruction >> 5, 2);
+        let shift_type = Some(get_shift_type(shift_type));
 
         return DecodedInstruction {
             cond,

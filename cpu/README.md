@@ -18,13 +18,14 @@ These are the goals and to do's for this module
 - [X] Support shifting in ARM
 - [ ] Remove all `unimplemented!` from the code
 - [X] Accumulate instructions
-- [ ] ALU Instructions
-- [ ] Implement "set condition codes"
+- [X] ALU Instructions
+- [X] Set condition codes on data processing/multiply instructions
 - [ ] Privilege modes
 - [ ] Exceptions
 - [ ] Interrupts
 - [ ] Load/Store instructions
 - [ ] Implement Thumb versions of instructions
+- [ ] Break down big micro ops into smaller ones (actual kek)
 - [ ] Add micro ops testing
 
 ### Middle term:
