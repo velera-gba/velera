@@ -76,7 +76,9 @@ pub mod cpu_modes {
 /// Default ARM registers
 pub mod default_cpu {
     pub const MMU_DISPLAY: u32 = 1;
-    pub const RS: [i32; 16] = [0; 16];
+    pub const REGISTERS: [i32; 16] = [0; 16];
+    pub const FIQ_REGISTERS: [i32; 7] = [0; 7];
+    pub const BANKED_REGISTERS: [i32; 2] = [0; 2];
     // CPU starts at user mode, with FIQ and IRQ disabled by default
     pub const CPSR: u32 = 0b1100_0000;
     pub const SPSR: u32 = 0x0;

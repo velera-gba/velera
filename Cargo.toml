@@ -1,10 +1,8 @@
 [package]
 name = "velera"
 version = "0.0.1"
-authors = ["Guilherme Torres <guilhermetorres97@gmail.com>", "AidoP <aidop@me.com>", "Kazuna Nakama <kazunanakama@gmail.com>", "Lucas Micheloni <lucas.michelonidesouza@gmail.com>"]
+authors = ["Guilherme Torres <guilhermetorres97@gmail.com>", "AidoP <aidop@me.com>", "Kazuna Nakama <kazunanakama@gmail.com>", "Alice Micheloni <alicemicheloni@tutanota.com>"]
 edition = "2018"
-
-# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [features]
 vulkan = ["graphics/vulkan"]

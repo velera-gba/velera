@@ -90,3 +90,14 @@ impl Default for ShiftType {
         Self::LSL
     }
 }
+
+#[derive(Debug, PartialEq, Clone)]
+pub enum ProcessorMode {
+    User,
+    FIQ,
+    IRQ,
+    Supervisor,
+    Abort,
+    Undefined,
+    System,
+}

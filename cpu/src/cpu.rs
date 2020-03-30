@@ -8,7 +8,7 @@ use crate::thumb::decode_thumb;
 use crate::{arm, gb};
 
 use crate::constants;
-use crate::enums::InstructionType;
+use crate::enums::{InstructionType, ProcessorMode};
 
 use crate::utils;
 
@@ -75,7 +75,7 @@ pub fn cycle(cpu: &mut CPU) {
 /// Check if a function is in thumb mode
 #[inline]
 fn is_thumb_mode(cpu: &CPU) -> u32 {
-    (cpu.arm.cpsr & (1 << constants::cpsr_flags::STATE_BIT))
+    cpu.arm.cpsr & (1 << constants::cpsr_flags::STATE_BIT)
 }
 
 /// Get next instruction.

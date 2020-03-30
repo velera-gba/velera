@@ -1,24 +1,121 @@
 use crate::{constants::default_cpu, cpu::CPU};
 
-use crate::enums::{InstructionType, MnemonicARM, ShiftType};
+use crate::enums::{InstructionType, MnemonicARM, ProcessorMode, ShiftType};
 use std::{collections::VecDeque, default::Default};
 
 mod decode;
 
 pub struct ARM7TDMI {
-    pub registers: [i32; 16],
+    registers: [i32; 16],
+    fiq_banked_registers: [i32; 7],
+    irq_banked_registers: [i32; 2],
+    supervisor_banked_registers: [i32; 2],
+    abort_banked_registers: [i32; 2],
+    undefined_banked_registers: [i32; 2],
     pub cpsr: u32,
     pub spsr: u32,
     pub shifter_carry: u32, // last bit shifted out in execution
+    pub mode: ProcessorMode,
+}
+
+impl ARM7TDMI {
+    /// Wraps the ARM registers to apply privilege modes when reading.
+    pub fn load_register(&mut self, r: usize) -> i32 {
+        match self.mode {
+            ProcessorMode::User | ProcessorMode::System => self.registers[r],
+            ProcessorMode::FIQ => {
+                if r >= 8 && r < 15 {
+                    self.fiq_banked_registers[r - 8]
+                } else {
+                    self.registers[r]
+                }
+            }
+            ProcessorMode::Supervisor => {
+                if r >= 13 && r < 15 {
+                    self.supervisor_banked_registers[r - 13]
+                } else {
+                    self.registers[r]
+                }
+            }
+            ProcessorMode::IRQ => {
+                if r >= 13 && r < 15 {
+                    self.irq_banked_registers[r - 13]
+                } else {
+                    self.registers[r]
+                }
+            }
+            ProcessorMode::Abort => {
+                if r >= 13 && r < 15 {
+                    self.abort_banked_registers[r - 13]
+                } else {
+                    self.registers[r]
+                }
+            }
+            ProcessorMode::Undefined => {
+                if r >= 13 && r < 15 {
+                    self.undefined_banked_registers[r - 13]
+                } else {
+                    self.registers[r]
+                }
+            }
+        }
+    }
+
+    pub fn write_register(&mut self, r: usize, v: i32) {
+        match self.mode {
+            ProcessorMode::User | ProcessorMode::System => self.registers[r] = v,
+            ProcessorMode::FIQ => {
+                if r >= 8 && r < 15 {
+                    self.fiq_banked_registers[r - 8] = v;
+                } else {
+                    self.registers[r] = v;
+                }
+            }
+            ProcessorMode::Supervisor => {
+                if r >= 13 && r < 15 {
+                    self.supervisor_banked_registers[r - 13] = v;
+                } else {
+                    self.registers[r] = v;
+                }
+            }
+            ProcessorMode::IRQ => {
+                if r >= 13 && r < 15 {
+                    self.irq_banked_registers[r - 13] = v;
+                } else {
+                    self.registers[r] = v;
+                }
+            }
+            ProcessorMode::Abort => {
+                if r >= 13 && r < 15 {
+                    self.abort_banked_registers[r - 13] = v;
+                } else {
+                    self.registers[r] = v;
+                }
+            }
+            ProcessorMode::Undefined => {
+                if r >= 13 && r < 15 {
+                    self.undefined_banked_registers[r - 13] = v;
+                } else {
+                    self.registers[r] = v;
+                }
+            }
+        }
+    }
 }
 
 impl Default for ARM7TDMI {
     fn default() -> Self {
         Self {
-            registers: default_cpu::RS,
+            registers: default_cpu::REGISTERS,
+            fiq_banked_registers: default_cpu::FIQ_REGISTERS,
+            irq_banked_registers: default_cpu::BANKED_REGISTERS,
+            supervisor_banked_registers: default_cpu::BANKED_REGISTERS,
+            abort_banked_registers: default_cpu::BANKED_REGISTERS,
+            undefined_banked_registers: default_cpu::BANKED_REGISTERS,
             cpsr: default_cpu::CPSR,
-            spsr: default_cpu::SPSR
+            spsr: default_cpu::SPSR,
             shifter_carry: 0,
+            mode: ProcessorMode::User,
         }
     }
 }

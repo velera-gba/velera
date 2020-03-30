@@ -84,7 +84,13 @@ pub fn multiply(cpu: &mut CPU) {
     } else {
         cpu.arm.registers[rd] = ((rm as i64 * rs as i64) & 0xFFFF_FFFF) as i32;
     }
-    arm_set_flags_neutral(cpu, cpu.arm.registers[rd] as i64);
+    if set_cond {
+        cpu.arm.cpsr |= (cpu.arm.registers[rd] >> 31) as u32;
+        if cpu.arm.registers[rd] == 0 {
+            cpu.arm.cpsr |= 1 << 30;
+        }
+        cpu.arm.cpsr &= !(1 << 29);
+    }
 }
 
 // rd = rm * rs + rn
@@ -108,7 +114,7 @@ pub fn multiply_accumulate(cpu: &mut CPU) {
     }
 
     if let Some(res) = rm.checked_mul(rs) {
-        cpu.arm.registers[rd] = res + (cpu.arm.registers[rn]);
+        cpu.arm.registers[rd] = res + (cpu.arm.registers[rn as usize]);
     } else {
         cpu.arm.registers[rd] = ((rm as i64 * rs as i64 + rn as i64) & 0xFFFF_FFFF) as i32;
     }
@@ -162,7 +168,7 @@ pub fn unsigned_multiply(cpu: &mut CPU) {
 
     let r = cpu.arm.registers[rm] as u64 * cpu.arm.registers[rs] as u64;
 
-    arm_set_flags_neutral(cpu, r);
+    arm_set_flags_neutral(cpu, r as i64);
     cpu.arm.registers[rd_low] = (r & 0xFFFF_FFFF) as i32;
     cpu.arm.registers[rd_hi] = (r >> 32) as i32;
 }
@@ -337,7 +343,7 @@ pub fn alu_master(cpu: &mut CPU) {
         AND => {
             cpu.arm.registers[rd] = rn & op2;
             if set_cond {
-                arm_set_flags_neutral(cpu, rn & op2 as i64);
+                arm_set_flags_neutral(cpu, (rn & op2) as i64);
             }
         }
         EOR => {

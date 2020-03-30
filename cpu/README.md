@@ -24,6 +24,7 @@ These are the goals and to do's for this module
 - [ ] Exceptions
 - [ ] Interrupts
 - [ ] Load/Store instructions
+- [ ] Correct arm master decode instruction
 - [ ] Implement Thumb versions of instructions
 - [ ] Break down big micro ops into smaller ones (actual kek)
 - [ ] Add micro ops testing
