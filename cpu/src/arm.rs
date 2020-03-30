@@ -9,10 +9,6 @@ pub struct ARM7TDMI {
     pub registers: [i32; 16],
     pub cpsr: u32,
     pub spsr: u32,
-    pub temp_rd: i32,       // temporary destination register
-    pub temp_rs: i32,       // temporary source register
-    pub temp_rn: i32,       // temporary index register
-    pub immediate: i32,     // temporary immediate
     pub shifter_carry: u32, // last bit shifted out in execution
 }
 
@@ -21,11 +17,7 @@ impl Default for ARM7TDMI {
         Self {
             registers: default_cpu::RS,
             cpsr: default_cpu::CPSR,
-            spsr: default_cpu::SPSR,
-            temp_rd: 0,
-            temp_rs: 0,
-            temp_rn: 0,
-            immediate: 0,
+            spsr: default_cpu::SPSR
             shifter_carry: 0,
         }
     }
