@@ -3,7 +3,6 @@ use crate::{constants::registers, cpu::CPU, enums::InstructionType};
 /// Does nothing at all. used as a placeholder.
 pub fn dummy_cycle(_cpu: &mut CPU) {}
 
-/*
 // Start branch micro operations
 
 /// Stores the program counter value in the link register
@@ -511,5 +510,3 @@ fn arm_ror(cpu: &mut CPU, x: u32, y: u32, set_cond: bool) -> u32 {
 // End ALU micro operations
 // -------------------------
 // Start misc operations
-
-*/
