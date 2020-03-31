@@ -52,6 +52,67 @@ impl Default for PSR {
     }
 }
 
+impl PSR {
+    pub fn unpack(&self) -> u32 {
+        let mode = match self.mode {
+            ProcessorMode::User => 0b1_0000,
+            ProcessorMode::System => 0b1_1111,
+            ProcessorMode::FIQ => 0b1_0001,
+            ProcessorMode::IRQ => 0b1_0010,
+            ProcessorMode::Supervisor => 0b1_0011,
+            ProcessorMode::Abort => 0b1_0111,
+            ProcessorMode::Undefined => 0b1_1011,
+        };
+
+        let neg = (self.negative as u32) << 31;
+        let zero = (self.negative as u32) << 30;
+        let carry = (self.negative as u32) << 29;
+        let overflow = (self.negative as u32) << 28;
+        let irq = (self.disable_irq as u32) << 7;
+        let fiq = (self.disable_fiq as u32) << 6;
+        let thumb = (self.thumb_mode as u32) << 5;
+
+        mode | neg | zero | carry | overflow | irq | fiq | thumb
+    }
+
+    pub fn pack(source: u32) -> Self {
+        let negative = get_bit_at(source, 31);
+        let zero = get_bit_at(source, 30);
+        let carry = get_bit_at(source, 29);
+        let overflow = get_bit_at(source, 28);
+        let disable_irq = get_bit_at(source, 7);
+        let disable_fiq = get_bit_at(source, 6);
+        let thumb_mode = get_bit_at(source, 5);
+
+        let mode = match source & 0b1111 {
+            0b0000 => ProcessorMode::User,
+            0b1111 => ProcessorMode::System,
+            0b0001 => ProcessorMode::FIQ,
+            0b0010 => ProcessorMode::IRQ,
+            0b0011 => ProcessorMode::Supervisor,
+            0b0111 => ProcessorMode::Abort,
+            0b1011 => ProcessorMode::Undefined,
+            _ => ProcessorMode::User, // shouldn't get here
+        };
+
+        Self {
+            negative,
+            zero,
+            carry,
+            overflow,
+            disable_irq,
+            disable_fiq,
+            thumb_mode,
+            mode,
+        }
+    }
+}
+
+#[inline]
+fn get_bit_at(v: u32, pos: u8) -> bool {
+    ((v << pos) & 1) != 0
+}
+
 impl ARM7TDMI {
     /// Wraps the ARM registers to apply privilege modes when reading.
     pub fn load_register(&mut self, r: usize) -> i32 {
