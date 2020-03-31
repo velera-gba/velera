@@ -65,9 +65,9 @@ impl PSR {
         };
 
         let neg = (self.negative as u32) << 31;
-        let zero = (self.negative as u32) << 30;
-        let carry = (self.negative as u32) << 29;
-        let overflow = (self.negative as u32) << 28;
+        let zero = (self.zero as u32) << 30;
+        let carry = (self.carry as u32) << 29;
+        let overflow = (self.overflow as u32) << 28;
         let irq = (self.disable_irq as u32) << 7;
         let fiq = (self.disable_fiq as u32) << 6;
         let thumb = (self.thumb_mode as u32) << 5;

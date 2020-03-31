@@ -11,7 +11,7 @@ mod tests {
             },
             DecodedInstruction,
         },
-        enums::MnemonicARM,
+        enums::{MnemonicARM, ShiftType},
     };
 
     const cond: u8 = 0b0000;
@@ -51,7 +51,8 @@ mod tests {
                 set_cond: Some(false),
                 rm: Some(0b0101),
                 rs: Some(0),
-                shift_type: Some(0),
+                imm: Some(false),
+                shift_type: Some(ShiftType::LSL),
                 ..Default::default()
             }
         );
@@ -87,7 +88,7 @@ mod tests {
                 rm: Some(0b1000),
                 val1: Some(0b1001),
                 val2: Some(4),
-                shift_type: Some(2),
+                shift_type: Some(ShiftType::ASR),
                 imm: Some(false),
                 ..Default::default()
             }
