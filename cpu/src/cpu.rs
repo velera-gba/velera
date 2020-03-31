@@ -8,7 +8,7 @@ use crate::thumb::decode_thumb;
 use crate::{arm, gb};
 
 use crate::constants;
-use crate::enums::{InstructionType, ProcessorMode};
+use crate::enums::InstructionType;
 
 use crate::utils;
 
@@ -25,6 +25,7 @@ use crate::utils;
 ///
 /// cpu.execute();
 /// ```
+#[derive(Clone)]
 pub struct CPU {
     pub mmu: MMU,
     pub rom: Vec<u8>,
@@ -74,23 +75,25 @@ pub fn cycle(cpu: &mut CPU) {
 
 /// Check if a function is in thumb mode
 #[inline]
-fn is_thumb_mode(cpu: &CPU) -> u32 {
-    cpu.arm.cpsr & (1 << constants::cpsr_flags::STATE_BIT)
+fn is_thumb_mode(cpu: &CPU) -> bool {
+    cpu.arm.cpsr.thumb_mode
 }
 
 /// Get next instruction.
 fn fetch(cpu: &mut CPU) -> InstructionType {
     let index = constants::registers::PROGRAM_COUNTER;
-    let program_counter = cpu.arm.registers[index] as usize;
-    if is_thumb_mode(cpu) != 0 {
+    let program_counter = cpu.arm.load_register(index) as usize;
+    if is_thumb_mode(cpu) {
         // fetches 16-bit half-word
-        cpu.arm.registers[index] += 2;
+        cpu.arm
+            .store_register(index, cpu.arm.clone().load_register(index) + 2);
         InstructionType::Thumb(
             ((cpu.rom[program_counter] as u16) << 8) | (cpu.rom[program_counter + 1] as u16),
         )
     } else {
         // fetches 32-bit word
-        cpu.arm.registers[index] += 4;
+        cpu.arm
+            .store_register(index, cpu.arm.clone().load_register(index) + 4);
         InstructionType::ARM(arm::ARMInstruction::new_fetched(
             ((cpu.rom[program_counter] as u32) << 24)
                 | ((cpu.rom[program_counter + 1] as u32) << 16)
@@ -124,13 +127,15 @@ fn pop_micro_operation(cpu: &mut CPU) {
     match result {
         Some(function) => {
             function(cpu);
-            let word_size = if is_thumb_mode(cpu) != 0 { 16 } else { 32 };
-            cpu.arm.registers[constants::registers::PROGRAM_COUNTER as usize] += word_size;
+            let word_size = if is_thumb_mode(cpu) { 16 } else { 32 };
+            let index = constants::registers::PROGRAM_COUNTER as usize;
+            cpu.arm
+                .store_register(index, cpu.arm.clone().load_register(index) + word_size);
         }
 
         None => eprintln!(
             "{:#x}: execution queue got to unexpected end, skipping cycle",
-            cpu.arm.registers[constants::registers::PROGRAM_COUNTER]
+            cpu.arm.load_register(constants::registers::PROGRAM_COUNTER)
         ),
     }
 }

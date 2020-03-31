@@ -10,13 +10,13 @@ use std::collections::VecDeque;
 /// Thumb bitmasks for decoding.
 struct ThumbOpPack {
     op_bitmask: u16,
-    opcode_bitmask: u16
+    opcode_bitmask: u16,
 }
 
 /// Decodes already-fetched thumb instruction.
 pub fn decode_thumb(cpu: &mut CPU, instruction: u16) -> VecDeque<fn(&mut CPU)> {
     let mut operation: bool = false;
-    let mut queue: VecDeque<fn(&mut CPU)>= VecDeque::new();
+    let mut queue: VecDeque<fn(&mut CPU)> = VecDeque::new();
 
     temp_reg_wrap!(
         cpu,
@@ -422,15 +422,14 @@ pub fn decode_thumb(cpu: &mut CPU, instruction: u16) -> VecDeque<fn(&mut CPU)> {
         // to do: switch to ARM state, deal with exception
         eprintln!(
             "{:#x}: undefinded THUMB instruction exception.",
-            cpu.arm.registers[registers::PROGRAM_COUNTER as usize]
+            cpu.arm.load_register(registers::PROGRAM_COUNTER as usize)
         );
 
         return VecDeque::new();
-    }
-    else {
+    } else {
         eprintln!(
             "{:#x}: unknown error in decode.",
-            cpu.arm.registers[registers::PROGRAM_COUNTER as usize]
+            cpu.arm.load_register(registers::PROGRAM_COUNTER as usize)
         );
         return VecDeque::new();
     }

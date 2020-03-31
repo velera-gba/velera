@@ -5,6 +5,7 @@ use std::{collections::VecDeque, default::Default};
 
 mod decode;
 
+#[derive(Clone)]
 pub struct ARM7TDMI {
     registers: [i32; 16],
     fiq_banked_registers: [i32; 7],
@@ -12,16 +13,49 @@ pub struct ARM7TDMI {
     supervisor_banked_registers: [i32; 2],
     abort_banked_registers: [i32; 2],
     undefined_banked_registers: [i32; 2],
-    pub cpsr: u32,
-    pub spsr: u32,
+
+    pub cpsr: PSR,
+    pub spsr_fiq: PSR,
+    pub spsr_irq: PSR,
+    pub spsr_svc: PSR,
+    pub spsr_abt: PSR,
+    pub spsr_und: PSR,
+
     pub shifter_carry: u32, // last bit shifted out in execution
+}
+
+#[derive(Clone)]
+pub struct PSR {
+    pub negative: bool,
+    pub zero: bool,
+    pub carry: bool,
+    pub overflow: bool,
+    pub thumb_mode: bool,
+    pub disable_irq: bool,
+    pub disable_fiq: bool,
+
     pub mode: ProcessorMode,
+}
+
+impl Default for PSR {
+    fn default() -> Self {
+        Self {
+            negative: false,
+            zero: false,
+            carry: false,
+            overflow: false,
+            thumb_mode: false,
+            disable_irq: true,
+            disable_fiq: true,
+            mode: ProcessorMode::User,
+        }
+    }
 }
 
 impl ARM7TDMI {
     /// Wraps the ARM registers to apply privilege modes when reading.
     pub fn load_register(&mut self, r: usize) -> i32 {
-        match self.mode {
+        match self.cpsr.mode {
             ProcessorMode::User | ProcessorMode::System => self.registers[r],
             ProcessorMode::FIQ => {
                 if r >= 8 && r < 15 {
@@ -61,8 +95,8 @@ impl ARM7TDMI {
         }
     }
 
-    pub fn write_register(&mut self, r: usize, v: i32) {
-        match self.mode {
+    pub fn store_register(&mut self, r: usize, v: i32) {
+        match self.cpsr.mode {
             ProcessorMode::User | ProcessorMode::System => self.registers[r] = v,
             ProcessorMode::FIQ => {
                 if r >= 8 && r < 15 {
@@ -112,10 +146,13 @@ impl Default for ARM7TDMI {
             supervisor_banked_registers: default_cpu::BANKED_REGISTERS,
             abort_banked_registers: default_cpu::BANKED_REGISTERS,
             undefined_banked_registers: default_cpu::BANKED_REGISTERS,
-            cpsr: default_cpu::CPSR,
-            spsr: default_cpu::SPSR,
+            cpsr: PSR::default(),
+            spsr_fiq: PSR::default(),
+            spsr_irq: PSR::default(),
+            spsr_svc: PSR::default(),
+            spsr_abt: PSR::default(),
+            spsr_und: PSR::default(),
             shifter_carry: 0,
-            mode: ProcessorMode::User,
         }
     }
 }

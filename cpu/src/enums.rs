@@ -101,3 +101,10 @@ pub enum ProcessorMode {
     Undefined,
     System,
 }
+
+impl Default for ProcessorMode {
+    #[inline]
+    fn default() -> Self {
+        Self::User
+    }
+}
