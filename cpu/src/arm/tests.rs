@@ -11,7 +11,7 @@ mod tests {
             },
             DecodedInstruction,
         },
-        enums::MnemonicARM,
+        enums::{MnemonicARM, ShiftType},
     };
 
     const cond: u8 = 0b0000;
@@ -49,8 +49,10 @@ mod tests {
                 rn: Some(0b1100),
                 rd: Some(0b1010),
                 set_cond: Some(false),
-                val1: Some(0b0000_0001),
                 rm: Some(0b0101),
+                rs: Some(0),
+                imm: Some(false),
+                shift_type: Some(ShiftType::LSL),
                 ..Default::default()
             }
         );
@@ -65,6 +67,7 @@ mod tests {
                 set_cond: Some(true),
                 val1: Some(0b0010),
                 val2: Some(0b0001_1111),
+                imm: Some(true),
                 ..Default::default()
             }
         );
@@ -72,7 +75,7 @@ mod tests {
 
     #[test]
     fn test_arm_decode_data_transfer() {
-        let instruction_simple_load_register = 0b0000_0101_0011_0001_0100_0010_0100_1000;
+        let instruction_simple_load_register = 0b0000_0111_0011_0001_0100_0010_0100_1000;
         let result_simple_load_register = data_transfer(instruction_simple_load_register, cond);
 
         assert_eq!(
@@ -84,13 +87,14 @@ mod tests {
                 rd: Some(0b0100),
                 rm: Some(0b1000),
                 val1: Some(0b1001),
-                val2: Some(0b0010_0100),
+                val2: Some(4),
+                shift_type: Some(ShiftType::ASR),
                 imm: Some(false),
                 ..Default::default()
             }
         );
 
-        let instruction_simple_store_imm = 0b0000_0111_1110_0001_0100_1100_1001_0100;
+        let instruction_simple_store_imm = 0b0000_0101_1110_0001_0100_1100_1001_0100;
         let result_simple_store_imm = data_transfer(instruction_simple_store_imm, cond);
 
         assert_eq!(
@@ -101,8 +105,7 @@ mod tests {
                 rn: Some(0b0001),
                 rd: Some(0b0100),
                 val1: Some(0b1111),
-                val2: Some(0b1001_0100),
-                val3: Some(0b1100),
+                offset: Some(0b1100_1001_0100),
                 imm: Some(true),
                 ..Default::default()
             }
@@ -137,7 +140,7 @@ mod tests {
                 val1: Some(0b1011),
                 rn: Some(0b1011),
                 rd: Some(0b1001),
-                val2: Some(0b1001_0110),
+                offset: Some(0b1001_0110),
                 imm: Some(true),
                 ..Default::default()
             }
@@ -177,8 +180,7 @@ mod tests {
                 instr: MnemonicARM::LDM,
                 rn: Some(0b1110),
                 val1: Some(0b0100),
-                val2: Some(0b0100_1111),
-                val3: Some(0b1000_0100),
+                offset: Some(0b0100_1111_1000_0100),
                 ..Default::default()
             }
         );
@@ -193,8 +195,7 @@ mod tests {
                 instr: MnemonicARM::STM,
                 rn: Some(0b1101),
                 val1: Some(0b1011),
-                val2: Some(0b0101_1101),
-                val3: Some(0b1010_0111),
+                offset: Some(0b0101_1101_1010_0111),
                 ..Default::default()
             }
         );

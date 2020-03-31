@@ -45,41 +45,12 @@ pub mod registers {
     pub const PROGRAM_COUNTER: usize = 15;
 }
 
-/// Flags of the Current Program Status Register.
-pub mod cpsr_flags {
-    pub const SIGNED: u8 = 31;
-    pub const ZERO: u8 = 30;
-    pub const CARRY: u8 = 29;
-    pub const OVERFLOW: u8 = 28;
-    pub const STICKY_OVERFLOW: u8 = 27;
-    pub const IRQ_DISABLE: u8 = 7;
-    pub const FIQ_DISABLE: u8 = 6;
-    pub const STATE_BIT: u8 = 5;
-    pub const MODE4: u8 = 4;
-    pub const MODE3: u8 = 3;
-    pub const MODE2: u8 = 2;
-    pub const MODE1: u8 = 1;
-    pub const MODE0: u8 = 0;
-}
-
-/// ARM privilege mode
-pub mod cpu_modes {
-    pub const USER: u8 = 0b1_0000;
-    pub const FIQ: u8 = 0b1_0001;
-    pub const IRQ: u8 = 0b1_0010;
-    pub const SUPERVISOR: u8 = 0b10011;
-    pub const ABORT: u8 = 0b10111;
-    pub const UNDEFINED: u8 = 0b11011;
-    pub const SYSTEM: u8 = 0b11111;
-}
-
 /// Default ARM registers
 pub mod default_cpu {
     pub const MMU_DISPLAY: u32 = 1;
-    pub const RS: [i32; 16] = [0; 16];
-    // CPU starts at user mode, with FIQ and IRQ disabled by default
-    pub const CPSR: u32 = 0b1100_0000;
-    pub const SPSR: u32 = 0x0;
+    pub const REGISTERS: [i32; 16] = [0; 16];
+    pub const FIQ_REGISTERS: [i32; 7] = [0; 7];
+    pub const BANKED_REGISTERS: [i32; 2] = [0; 2];
 }
 
 /// Thumb instruction mode bitmask constants.

@@ -27,6 +27,8 @@ mod tests {
         thumb_bitmasks::SUB
     ];
 
+    /*
+    ---> OLD TEST SUITE, WILL BE DELETED IN THE FUTURE <---
     #[test]
     fn test_thumb_decode_addsub() {
         let mut test_cpu: CPU = Default::default();
@@ -106,4 +108,5 @@ mod tests {
             assert_eq!(test_cpu.arm.temp_rn, 4);
         }
     }
+    */
 }

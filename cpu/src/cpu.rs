@@ -12,19 +12,9 @@ use crate::enums::InstructionType;
 
 use crate::utils;
 
-/// This struct will handle all the memory operations, fetching, decoding and execution of
+/// This will handle all the memory operations, fetching, decoding and execution of
 /// instructions.
-///
-/// ```
-/// let cpu = CPU::default();
-/// cpu.fetch();
-///
-/// // finds out the mode of the function (either thumb or 32-bit arm) and decodes it
-/// // through a bit mask or otherwise a DecodedInstruction struct.
-/// cpu.decode();
-///
-/// cpu.execute();
-/// ```
+#[derive(Clone)]
 pub struct CPU {
     pub mmu: MMU,
     pub rom: Vec<u8>,
@@ -32,6 +22,7 @@ pub struct CPU {
     pub lr: gb::LR35902,
     pub should_exit: bool,
     pub fetched_instruction: InstructionType,
+    pub decoded_instruction: InstructionType,
     pub execution_queue: VecDeque<fn(&mut CPU)>,
 }
 
@@ -44,7 +35,8 @@ impl Default for CPU {
             arm: Default::default(),
             lr: Default::default(),
             should_exit: false,
-            fetched_instruction: InstructionType::ARM(arm::ARMInstruction::new_fetched(0)),
+            fetched_instruction: InstructionType::Thumb(0), // 0 is no-op
+            decoded_instruction: InstructionType::Thumb(0),
             execution_queue: VecDeque::new(),
         }
     }
@@ -68,28 +60,29 @@ pub fn cycle(cpu: &mut CPU) {
         cpu.execution_queue = queue;
         cpu.fetched_instruction = fetch(cpu);
     }
-
 }
 
 /// Check if a function is in thumb mode
 #[inline]
-fn is_thumb_mode(cpu: &CPU) -> u32 {
-    (cpu.arm.cpsr & (1 << constants::cpsr_flags::STATE_BIT))
+fn is_thumb_mode(cpu: &CPU) -> bool {
+    cpu.arm.cpsr.thumb_mode
 }
 
 /// Get next instruction.
 fn fetch(cpu: &mut CPU) -> InstructionType {
-    let index = constants::registers::PROGRAM_COUNTER as usize;
-    let program_counter = cpu.arm.registers[index] as usize;
-    if is_thumb_mode(cpu) != 0 {
+    let index = constants::registers::PROGRAM_COUNTER;
+    let program_counter = cpu.arm.load_register(index) as usize;
+    if is_thumb_mode(cpu) {
         // fetches 16-bit half-word
-        cpu.arm.registers[index] += 2;
+        cpu.arm
+            .store_register(index, cpu.arm.clone().load_register(index) + 2);
         InstructionType::Thumb(
             ((cpu.rom[program_counter] as u16) << 8) | (cpu.rom[program_counter + 1] as u16),
         )
     } else {
         // fetches 32-bit word
-        cpu.arm.registers[index] += 4;
+        cpu.arm
+            .store_register(index, cpu.arm.clone().load_register(index) + 4);
         InstructionType::ARM(arm::ARMInstruction::new_fetched(
             ((cpu.rom[program_counter] as u32) << 24)
                 | ((cpu.rom[program_counter + 1] as u32) << 16)
@@ -99,6 +92,8 @@ fn fetch(cpu: &mut CPU) -> InstructionType {
     }
 }
 
+/// Finds out the mode of the function (either thumb or 32-bit arm) and decodes it
+/// through a bit mask or otherwise a DecodedInstruction struct.
 fn decode(cpu: &mut CPU) -> VecDeque<fn(&mut CPU)> {
     match cpu.fetched_instruction.clone() {
         InstructionType::ARM(instr) => {
@@ -123,10 +118,15 @@ fn pop_micro_operation(cpu: &mut CPU) {
     match result {
         Some(function) => {
             function(cpu);
+            let word_size = if is_thumb_mode(cpu) { 16 } else { 32 };
+            let index = constants::registers::PROGRAM_COUNTER as usize;
+            cpu.arm
+                .store_register(index, cpu.arm.clone().load_register(index) + word_size);
         }
+
         None => eprintln!(
             "{:#x}: execution queue got to unexpected end, skipping cycle",
-            cpu.arm.registers[constants::registers::PROGRAM_COUNTER as usize]
+            cpu.arm.load_register(constants::registers::PROGRAM_COUNTER)
         ),
     }
 }

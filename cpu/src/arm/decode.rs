@@ -1,6 +1,6 @@
-use crate::{arm::DecodedInstruction, enums::MnemonicARM};
+use crate::{arm::DecodedInstruction, enums::MnemonicARM, enums::ShiftType};
 
-/// get bit in a certain position
+/// Get bit in a certain position
 #[inline]
 fn get_bit_at(input: u32, n: u8) -> bool {
     if n < 32 {
@@ -9,21 +9,26 @@ fn get_bit_at(input: u32, n: u8) -> bool {
     false
 }
 
-/// gets n last bits
+/// Gets n last bits
 #[inline]
 pub fn get_last_bits(input: u32, n: u8) -> u32 {
     if n < 32 {
         return input & ((1 << n) - 1);
     }
-    panic!("tried to get >32 last bits");
+    0
 }
 
-#[inline]
-fn bool_2_u8(b: bool) -> u8 {
-    if b {
-        1
-    } else {
-        0
+/// Transforms a number into its equivalent ShiftType variant.
+fn get_shift_type(shift_type: u32) -> ShiftType {
+    match shift_type {
+        0 => ShiftType::LSL,
+        1 => ShiftType::LSR,
+        2 => ShiftType::ASR,
+        3 => ShiftType::ROR,
+        x => {
+            eprintln!("unexpected shift type while decoding: {:?}", x);
+            ShiftType::LSL
+        }
     }
 }
 
@@ -68,24 +73,47 @@ pub fn data_processing(instruction: u32, cond: u8) -> DecodedInstruction {
             rd,
             val1,
             val2,
+            imm: Some(true),
             set_cond,
             ..Default::default()
         };
     }
 
-    let val1 = Some(get_last_bits(instruction >> 4, 8) as u8); // shift applied to rm
+    // Register as second operand
     let rm = Some(get_last_bits(instruction, 4) as u8);
+    let shift_type = get_last_bits(instruction >> 5, 2);
+    let shift_type = Some(get_shift_type(shift_type));
 
-    // if val2 is none/rm is not none, the instruction is immediate
-    DecodedInstruction {
-        cond,
-        instr,
-        rn,
-        rm,
-        rd,
-        val1,
-        set_cond,
-        ..Default::default()
+    let shift_by_register = get_bit_at(instruction, 4);
+    if shift_by_register {
+        let rs = Some(get_last_bits(instruction >> 8, 4) as u8);
+        DecodedInstruction {
+            cond,
+            instr,
+            rn,
+            rm,
+            rd,
+            rs,
+            shift_type,
+            set_cond,
+            imm: Some(false),
+            ..Default::default()
+        }
+    } else {
+        // immediate amount to shift
+        let val1 = Some(get_last_bits(instruction >> 7, 5) as u8);
+        DecodedInstruction {
+            cond,
+            instr,
+            rn,
+            rm,
+            rd,
+            val1,
+            shift_type,
+            set_cond,
+            imm: Some(false),
+            ..Default::default()
+        }
     }
 }
 
@@ -110,7 +138,7 @@ pub fn branch(instruction: u32, cond: u8) -> DecodedInstruction {
         MnemonicARM::B
     };
 
-    let offset = Some(get_last_bits(instruction, 24));
+    let offset = Some(get_last_bits(instruction, 24) as i32);
 
     DecodedInstruction {
         cond,
@@ -123,7 +151,7 @@ pub fn branch(instruction: u32, cond: u8) -> DecodedInstruction {
 
 /// Reads PSR transfer statements
 pub fn psr_transfer(instruction: u32, cond: u8) -> DecodedInstruction {
-    let psr = Some(bool_2_u8(get_bit_at(instruction, 22)));
+    let psr = Some(get_bit_at(instruction, 22) as u8);
 
     let imm = get_bit_at(instruction, 25);
     // MRS (move to register from special register)
@@ -188,10 +216,10 @@ pub fn psr_transfer(instruction: u32, cond: u8) -> DecodedInstruction {
 pub fn data_transfer(instruction: u32, cond: u8) -> DecodedInstruction {
     // bitmasks
     let imm = get_bit_at(instruction, 25);
-    let index = bool_2_u8(get_bit_at(instruction, 24)) << 3;
-    let up_down = bool_2_u8(get_bit_at(instruction, 23)) << 2;
-    let byte_or_word = bool_2_u8(get_bit_at(instruction, 22)) << 1;
-    let write_back = bool_2_u8(get_bit_at(instruction, 21));
+    let index = (get_bit_at(instruction, 24) as u8) << 3;
+    let up_down = (get_bit_at(instruction, 23) as u8) << 2;
+    let byte_or_word = (get_bit_at(instruction, 22) as u8) << 1;
+    let write_back = get_bit_at(instruction, 21) as u8;
 
     let load = get_bit_at(instruction, 20);
 
@@ -207,17 +235,14 @@ pub fn data_transfer(instruction: u32, cond: u8) -> DecodedInstruction {
             MnemonicARM::STM
         };
 
-        // register list is 16 bits long, so we'll divide it into two parts, val2 being the high byte
-        let val2 = Some(get_last_bits(instruction >> 8, 8) as u8);
-        let val3 = Some(get_last_bits(instruction, 8) as u8);
+        let offset = Some(get_last_bits(instruction, 16) as i32);
 
         return DecodedInstruction {
             cond,
             instr,
             rn,
             val1,
-            val2,
-            val3,
+            offset,
             ..Default::default()
         };
     }
@@ -231,17 +256,15 @@ pub fn data_transfer(instruction: u32, cond: u8) -> DecodedInstruction {
             MnemonicARM::STR
         };
 
-        if imm {
-            let val2 = Some(get_last_bits(instruction, 8) as u8);
-            let val3 = Some(get_last_bits(instruction >> 8, 4) as u8);
+        if !imm {
+            let offset = Some(get_last_bits(instruction, 12) as i32);
             return DecodedInstruction {
                 cond,
                 instr,
                 rn,
                 rd,
                 val1,
-                val2,
-                val3,
+                offset,
                 imm: Some(true),
                 ..Default::default()
             };
@@ -250,7 +273,9 @@ pub fn data_transfer(instruction: u32, cond: u8) -> DecodedInstruction {
         let rm = Some(get_last_bits(instruction, 4) as u8);
 
         // shift applied to rm
-        let val2 = Some(get_last_bits(instruction >> 4, 8) as u8);
+        let val2 = Some(get_last_bits(instruction >> 7, 5) as u8);
+        let shift_type = get_last_bits(instruction >> 5, 2);
+        let shift_type = Some(get_shift_type(shift_type));
 
         return DecodedInstruction {
             cond,
@@ -260,6 +285,7 @@ pub fn data_transfer(instruction: u32, cond: u8) -> DecodedInstruction {
             rm,
             val1,
             val2,
+            shift_type,
             imm: Some(false),
             ..Default::default()
         };
@@ -307,8 +333,8 @@ pub fn data_transfer(instruction: u32, cond: u8) -> DecodedInstruction {
         };
     }
 
-    let mut offset = (get_last_bits(instruction >> 8, 4) as u8) << 4;
-    offset |= get_last_bits(instruction, 4) as u8;
+    let mut offset = (get_last_bits(instruction >> 8, 4) as i32) << 4;
+    offset |= get_last_bits(instruction, 4) as i32;
 
     DecodedInstruction {
         cond,
@@ -316,7 +342,7 @@ pub fn data_transfer(instruction: u32, cond: u8) -> DecodedInstruction {
         rn,
         rd,
         val1,
-        val2: Some(offset),
+        offset: Some(offset),
         imm: Some(true),
         ..Default::default()
     }
@@ -329,13 +355,12 @@ pub fn multiply(instruction: u32, cond: u8) -> DecodedInstruction {
     let rs = Some(get_last_bits(instruction >> 8, 4) as u8);
     let rm = Some(get_last_bits(instruction, 4) as u8);
 
+    // is it a long instruction?
+    let long = get_bit_at(instruction, 23);
+    let unsigned = get_bit_at(instruction, 22);
     let acc = get_bit_at(instruction, 21);
     let set_cond = Some(get_bit_at(instruction, 20));
 
-    // is it a long instruction?
-    let long = get_bit_at(instruction, 23);
-
-    let unsigned = get_bit_at(instruction, 22);
     let instr;
 
     if long {
@@ -373,7 +398,7 @@ pub fn multiply(instruction: u32, cond: u8) -> DecodedInstruction {
 }
 
 pub fn swap(instruction: u32, cond: u8) -> DecodedInstruction {
-    let is_byte = Some(bool_2_u8(get_bit_at(instruction, 22)));
+    let is_byte = Some((get_bit_at(instruction, 22)) as u8);
     let rn = Some(get_last_bits(instruction >> 16, 4) as u8);
     let rd = Some(get_last_bits(instruction >> 12, 4) as u8);
     let rm = Some(get_last_bits(instruction, 4) as u8);
@@ -416,6 +441,7 @@ pub enum BaseInstruction {
     Multiply,
     DataProcessing,
     PSR,
+    // Undefined,
 }
 
 impl BaseInstruction {
@@ -423,49 +449,67 @@ impl BaseInstruction {
     /// This function will get an instruction without the condition field (upper 4 bits of the 32).
     /// This function exists only to feed the decode functions, that will transform it into a decoded instruction
     pub fn get_instr(instruction: u32) -> BaseInstruction {
-        use BaseInstruction::*;
+        // believe me its a lot better than the other solution
+        let cond = get_last_bits(instruction >> 28, 4);
 
-        let instr: BaseInstruction;
-        if get_last_bits(instruction >> 4, 24) == 0b0001_0010_1111_1111_1111_0001 {
-            instr = BranchAndExchange;
-        } else if get_last_bits(instruction >> 24, 4) == 0b1111 {
-            instr = Interrupt;
-        } else if get_last_bits(instruction >> 25, 3) == 0b101 {
-            instr = Branch;
-        } else if get_last_bits(instruction >> 25, 3) == 0b011
-            || get_last_bits(instruction >> 25, 3) == 0b010
-            || get_last_bits(instruction >> 25, 3) == 0b100
-        {
-            instr = DataTransfer;
-        } else if (get_bit_at(instruction, 7) && get_bit_at(instruction, 4))
-            && !get_bit_at(instruction, 25)
-            || get_last_bits(instruction >> 23, 2) == 0b10
-                && get_last_bits(instruction >> 18, 4) == 0
-            || !get_bit_at(instruction, 22) && get_last_bits(instruction >> 18, 4) == 0
-            || get_bit_at(instruction, 22)
-        {
-            instr = DataTransfer;
-        } else if (get_last_bits(instruction >> 23, 5) == 0b10
-            && get_bit_at(instruction, 7)
-            && get_bit_at(instruction, 4))
-            || get_last_bits(instruction >> 4, 4) == 0b1001
-                && (get_last_bits(instruction >> 23, 5) == 0b1
-                    || get_last_bits(instruction >> 23, 6) == 0b0)
-        {
-            instr = Multiply;
-        } else if !get_bit_at(instruction, 20)
-            && ((get_last_bits(instruction >> 23, 5) == 0b00010
-                && get_last_bits(instruction >> 4, 8) == 0)
-                || (get_last_bits(instruction >> 23, 5) == 0b00110 && get_bit_at(instruction, 21)))
-        {
-            instr = PSR;
-        }
-        // TODO: move this to an else if and handle unknown instructions in the else
-        else {
-            instr = DataProcessing;
-        }
+        let bits27to25 = get_last_bits(instruction >> 25, 3);
 
-        instr
+        let bit24 = get_bit_at(instruction, 24);
+        let bit23 = get_bit_at(instruction, 23);
+        let bit22 = get_bit_at(instruction, 22);
+        let bit21 = get_bit_at(instruction, 21);
+        let bit20 = get_bit_at(instruction, 20);
+        let bit7 = get_bit_at(instruction, 7);
+        let bit4 = get_bit_at(instruction, 4);
+
+        let byte4 = get_last_bits(instruction >> 16, 4);
+        let byte5 = get_last_bits(instruction >> 12, 4);
+        let byte6 = get_last_bits(instruction >> 8, 4);
+        let byte7 = get_last_bits(instruction >> 4, 4);
+        let byte8 = get_last_bits(instruction, 4);
+
+        match (
+            cond, bits27to25, bit24, bit23, bit22, bit21, bit20, byte4, byte5, byte6, byte7, byte8,
+            bit7, bit4,
+        ) {
+            // BX, BLX
+            (_, 0b000, true, false, true, false, false, 0b1111, 0b1111, 0b1111, 0b0001, _, _, _) => {
+                BaseInstruction::BranchAndExchange
+            }
+
+            // SWI
+            (_, 0b111, true, _, _, _, _, _, _, _, _, _, _, _) => BaseInstruction::Interrupt,
+
+            // B, BL, BLX
+            (_, 0b101, _, _, _, _, _, _, _, _, _, _, _, _) => BaseInstruction::Branch,
+
+            // TransReg9
+            (_, 0b011, _, _, _, _, _, _, _, _, _, _, _, false) |
+            // TransImm9
+            (_, 0b010, _, _, _, _, _, _, _, _, _, _, _, _) |
+            // Block Trans
+            (_, 0b100, _, _, _, _, _, _, _, _, _, _, _, _) |
+            // TransImm10, TransReg10, TransSwp12
+            (_, 0b000, _, _, _, _, _, _, _, 0b0000, _, _, true, true) => BaseInstruction::DataTransfer,
+
+            // Multiply
+            (_, 0b000, false, false, false, _, _, _, _, _, 0b1001, _, _, _) |
+            // MulLong
+            (_, 0b000, false, true, _, _, _, _, _, _, 0b1001, _, _, _) |
+            // MulHalf
+            (_, 0b000, true, false, _, _, false, _, _, _, _, _, true, false) => BaseInstruction::Multiply,
+
+            // PSR Imm
+            (_, 0b001, true, false, _, true, false, _, _, _, _, _, _, _) |
+            // PSR Reg
+            (_, 0b000, true, false, _, _, false, _, _, 0b0000, 0b0000, _, _, _) => BaseInstruction::PSR,
+
+            (_, 0b000, _, _, _, _, _, _, _, _, _, _, _, false) |
+            (_, 0b000, _, _, _, _, _, _, _, _, _, _, false, true) |
+            (_, 0b001, _, _, _, _, _, _, _, _, _, _, _, _) => BaseInstruction::DataProcessing,
+
+            _ => panic!(format!("Undefined instruction at decode: {}!", instruction)),
+        }
     }
 
     pub fn base_to_decoded(instr: u32) -> DecodedInstruction {

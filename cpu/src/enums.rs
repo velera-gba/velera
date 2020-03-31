@@ -75,3 +75,36 @@ pub enum ThumbFirst3Bits {
     MultiLoadStoreCondBranchSWI,
     UncondBranch,
 }
+
+#[derive(Debug, PartialEq, Clone)]
+pub enum ShiftType {
+    LSL,
+    LSR,
+    ASR,
+    ROR,
+}
+
+impl Default for ShiftType {
+    #[inline]
+    fn default() -> Self {
+        Self::LSL
+    }
+}
+
+#[derive(Debug, PartialEq, Clone)]
+pub enum ProcessorMode {
+    User,
+    FIQ,
+    IRQ,
+    Supervisor,
+    Abort,
+    Undefined,
+    System,
+}
+
+impl Default for ProcessorMode {
+    #[inline]
+    fn default() -> Self {
+        Self::User
+    }
+}

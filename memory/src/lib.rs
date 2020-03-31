@@ -38,7 +38,7 @@ pub mod base_addrs {
     pub const CART_SRAM_MIRROR_ADDR: usize = 0xF00_0000;
 }
 
-#[derive(Default)]
+#[derive(Default, Clone)]
 pub struct MMU {
     wram: Box<[u8]>,
     iwram: Box<[u8]>,
@@ -48,30 +48,27 @@ pub struct MMU {
     palette: Box<[u8]>,
     vram: Box<[u8]>,
     oam: Box<[u8]>,
-
 }
 
 impl MMU {
     /// Create a new instance of the MMU
     pub fn new() -> Self {
         Self {
-            bios:       vec![0; sizes::BIOS_SIZE].into_boxed_slice(),
-            wram:       vec![0; sizes::WRAM_SIZE].into_boxed_slice(),
-            iwram:      vec![0; sizes::IWRAM_SIZE].into_boxed_slice(),
-            rom:        vec![0; sizes::CART0_SIZE].into_boxed_slice(),
-            registers:  vec![0; sizes::IO_REGISTERS_SIZE].into_boxed_slice(),
-            palette:    vec![0; sizes::PALETTE_RAM_SIZE].into_boxed_slice(),
-            vram:       vec![0; sizes::VRAM_SIZE].into_boxed_slice(),
-            oam:        vec![0; sizes::OAM_SIZE].into_boxed_slice(),
+            bios: vec![0; sizes::BIOS_SIZE].into_boxed_slice(),
+            wram: vec![0; sizes::WRAM_SIZE].into_boxed_slice(),
+            iwram: vec![0; sizes::IWRAM_SIZE].into_boxed_slice(),
+            rom: vec![0; sizes::CART0_SIZE].into_boxed_slice(),
+            registers: vec![0; sizes::IO_REGISTERS_SIZE].into_boxed_slice(),
+            palette: vec![0; sizes::PALETTE_RAM_SIZE].into_boxed_slice(),
+            vram: vec![0; sizes::VRAM_SIZE].into_boxed_slice(),
+            oam: vec![0; sizes::OAM_SIZE].into_boxed_slice(),
         }
     }
 
     /// Reads a byte from memory
     pub fn load8(&self, addr: u32) -> u8 {
         match addr as usize {
-            base_addrs::BIOS_ADDR..=0x0000_3FFF => {
-                self.bios[addr as usize - base_addrs::BIOS_ADDR]
-            }
+            base_addrs::BIOS_ADDR..=0x0000_3FFF => self.bios[addr as usize - base_addrs::BIOS_ADDR],
             base_addrs::WORKING_RAM_ADDR..=0x0203_FFFF => {
                 self.wram[addr as usize - base_addrs::WORKING_RAM_ADDR]
             }
@@ -84,16 +81,12 @@ impl MMU {
             base_addrs::PALETTE_RAM_ADDR..=0x0500_03FF => {
                 self.palette[addr as usize - base_addrs::PALETTE_RAM_ADDR]
             }
-            base_addrs::VRAM_ADDR..=0x0601_7FFF => {
-                self.vram[addr as usize - base_addrs::VRAM_ADDR]
-            }
-            base_addrs::OAM_ADDR..=0x0700_03FF => {
-                self.oam[addr as usize - base_addrs::OAM_ADDR]
-            }
+            base_addrs::VRAM_ADDR..=0x0601_7FFF => self.vram[addr as usize - base_addrs::VRAM_ADDR],
+            base_addrs::OAM_ADDR..=0x0700_03FF => self.oam[addr as usize - base_addrs::OAM_ADDR],
             base_addrs::CART0_ADDR..=0x0DFF_FFFF => {
                 self.rom[addr as usize - base_addrs::CART0_ADDR]
             }
-            base_addrs::CART_SRAM_ADDR..=0x0E00_FFFF => unimplemented!(),        // SRAM unimplemented
+            base_addrs::CART_SRAM_ADDR..=0x0E00_FFFF => unimplemented!(), // SRAM unimplemented
             base_addrs::CART_SRAM_MIRROR_ADDR..=0x0F00_FFFF => unimplemented!(), // SRAM unimplemented
             _ => 0,
         }
@@ -144,7 +137,7 @@ impl MMU {
             base_addrs::CART0_ADDR..=0x0DFF_FFFF => {
                 self.rom[addr as usize - base_addrs::CART0_ADDR] = val
             }
-            base_addrs::CART_SRAM_ADDR..=0x0E00_FFFF => unimplemented!(),        // SRAM unimplemented
+            base_addrs::CART_SRAM_ADDR..=0x0E00_FFFF => unimplemented!(), // SRAM unimplemented
             base_addrs::CART_SRAM_MIRROR_ADDR..=0x0F00_FFFF => unimplemented!(), // SRAM unimplemented
             _ => (), // Consider making this an error
         }
