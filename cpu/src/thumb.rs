@@ -425,13 +425,13 @@ pub fn decode_thumb(cpu: &mut CPU, instruction: u16) -> VecDeque<fn(&mut CPU)> {
             cpu.arm.load_register(registers::PROGRAM_COUNTER as usize)
         );
 
-        return VecDeque::new();
+        VecDeque::new()
     } else {
         eprintln!(
             "{:#x}: unknown error in decode.",
             cpu.arm.load_register(registers::PROGRAM_COUNTER as usize)
         );
-        return VecDeque::new();
+        VecDeque::new()
     }
 }
 
@@ -440,7 +440,7 @@ fn pass_operation_thumb(instruction: u16, operation: &mut bool, pack: ThumbOpPac
         *operation = true;
         return true;
     }
-    return false;
+    false
 }
 /*
 fn put_temp_register_thumb(register: &mut i32, register_bitmask: u16, instruction: u16) {

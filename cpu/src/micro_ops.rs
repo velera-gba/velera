@@ -303,7 +303,7 @@ pub fn alu_master(cpu: &mut CPU) {
                         ShiftType::LSL => {
                             if set_cond && shift_amount > 0 {
                                 cpu.arm.shifter_carry |=
-                                    ((to_shift << shift_amount - 1) & 1) as u32;
+                                    ((to_shift << (shift_amount - 1)) & 1) as u32;
                             }
                             op2 = to_shift << shift_amount;
                         }
@@ -321,7 +321,7 @@ pub fn alu_master(cpu: &mut CPU) {
                             } else {
                                 if set_cond {
                                     cpu.arm.shifter_carry |=
-                                        ((to_shift << shift_amount - 1) & 1) as u32;
+                                        ((to_shift << (shift_amount - 1)) & 1) as u32;
                                 }
                                 op2 = to_shift >> shift_amount;
                             }

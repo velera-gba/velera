@@ -96,12 +96,8 @@ fn fetch(cpu: &mut CPU) -> InstructionType {
 /// through a bit mask or otherwise a DecodedInstruction struct.
 fn decode(cpu: &mut CPU) -> VecDeque<fn(&mut CPU)> {
     match cpu.fetched_instruction.clone() {
-        InstructionType::ARM(instr) => {
-            return decode_arm(cpu, instr.fetched_instruction.unwrap());
-        }
-        InstructionType::Thumb(instr) => {
-            return decode_thumb(cpu, instr);
-        }
+        InstructionType::ARM(instr) => decode_arm(cpu, instr.fetched_instruction.unwrap()),
+        InstructionType::Thumb(instr) => decode_thumb(cpu, instr),
     }
 }
 

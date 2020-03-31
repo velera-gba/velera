@@ -306,12 +306,10 @@ pub fn data_transfer(instruction: u32, cond: u8) -> DecodedInstruction {
             } else {
                 MnemonicARM::LDRSB
             }
+        } else if halfword {
+            MnemonicARM::LDRH
         } else {
-            if halfword {
-                MnemonicARM::LDRH
-            } else {
-                unreachable!()
-            }
+            unreachable!()
         }
     } else {
         instr = MnemonicARM::STRH;
@@ -517,7 +515,7 @@ impl BaseInstruction {
         let cond = (instr >> 28) as u8;
         let instr = get_last_bits(instr, 28);
 
-        return match Self::get_instr(instr) {
+        match Self::get_instr(instr) {
             BranchAndExchange => branch_exchange(instr, cond),
             Interrupt => interrupt(instr, cond),
             Branch => branch(instr, cond),
@@ -525,6 +523,6 @@ impl BaseInstruction {
             Multiply => multiply(instr, cond),
             PSR => psr_transfer(instr, cond),
             DataProcessing => data_processing(instr, cond),
-        };
+        }
     }
 }
