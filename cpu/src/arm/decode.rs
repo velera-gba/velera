@@ -200,7 +200,7 @@ pub fn psr_transfer(instruction: u32, cond: u8) -> DecodedInstruction {
         };
     }
 
-    // NSR w/ registers
+    // MSR w/ registers
     let rm = Some(get_last_bits(instruction, 4) as u8);
     DecodedInstruction {
         cond,
@@ -428,6 +428,14 @@ pub fn interrupt(instruction: u32, cond: u8) -> DecodedInstruction {
     }
 }
 
+pub fn undefined(_instruction: u32, cond: u8) -> DecodedInstruction {
+    DecodedInstruction {
+        cond,
+        instr: MnemonicARM::Undefined,
+        ..Default::default()
+    }
+}
+
 /// This enum describes each function defined above.
 /// It is used to get the appropriate function for each binary without having to check through each function
 #[derive(Debug, PartialEq)]
@@ -439,11 +447,10 @@ pub enum BaseInstruction {
     Multiply,
     DataProcessing,
     PSR,
-    // Undefined,
+    Undefined,
 }
 
 impl BaseInstruction {
-    // TODO: fucking do something about this lmao
     /// This function will get an instruction without the condition field (upper 4 bits of the 32).
     /// This function exists only to feed the decode functions, that will transform it into a decoded instruction
     pub fn get_instr(instruction: u32) -> BaseInstruction {
@@ -506,6 +513,8 @@ impl BaseInstruction {
             (_, 0b000, _, _, _, _, _, _, _, _, _, _, false, true) |
             (_, 0b001, _, _, _, _, _, _, _, _, _, _, _, _) => BaseInstruction::DataProcessing,
 
+            (_, 0b011, _, _, _, _, _, _, _, _, _, _, _, true) => BaseInstruction::Undefined,
+
             _ => panic!(format!("Undefined instruction at decode: {}!", instruction)),
         }
     }
@@ -523,6 +532,7 @@ impl BaseInstruction {
             Multiply => multiply(instr, cond),
             PSR => psr_transfer(instr, cond),
             DataProcessing => data_processing(instr, cond),
+            Undefined => undefined(instr, cond),
         }
     }
 }

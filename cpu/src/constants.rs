@@ -38,6 +38,12 @@ pub mod dp_opcodes {
     pub const MVN: u8 = 0xF;
 }
 
+/// List of PSR state masks
+pub mod psr_masks {
+    pub const FLAG: usize = 19;
+    pub const CONTROL: usize = 16;
+}
+
 /// Non-general pointers.
 pub mod registers {
     pub const STACK_POINTER: usize = 13;

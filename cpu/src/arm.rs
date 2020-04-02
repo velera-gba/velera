@@ -53,7 +53,7 @@ impl Default for PSR {
 }
 
 impl PSR {
-    pub fn unpack(&self) -> u32 {
+    pub fn unpack(&self) -> i32 {
         let mode = match self.mode {
             ProcessorMode::User => 0b1_0000,
             ProcessorMode::System => 0b1_1111,
@@ -64,13 +64,13 @@ impl PSR {
             ProcessorMode::Undefined => 0b1_1011,
         };
 
-        let neg = (self.negative as u32) << 31;
-        let zero = (self.zero as u32) << 30;
-        let carry = (self.carry as u32) << 29;
-        let overflow = (self.overflow as u32) << 28;
-        let irq = (self.disable_irq as u32) << 7;
-        let fiq = (self.disable_fiq as u32) << 6;
-        let thumb = (self.thumb_mode as u32) << 5;
+        let neg = (self.negative as i32) << 31;
+        let zero = (self.zero as i32) << 30;
+        let carry = (self.carry as i32) << 29;
+        let overflow = (self.overflow as i32) << 28;
+        let irq = (self.disable_irq as i32) << 7;
+        let fiq = (self.disable_fiq as i32) << 6;
+        let thumb = (self.thumb_mode as i32) << 5;
 
         mode | neg | zero | carry | overflow | irq | fiq | thumb
     }

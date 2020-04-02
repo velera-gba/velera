@@ -55,6 +55,7 @@ pub enum MnemonicARM {
     UMLAL,
     UMULL,
     MAX,
+    Undefined,
 }
 
 impl Default for MnemonicARM {

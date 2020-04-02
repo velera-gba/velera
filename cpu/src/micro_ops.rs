@@ -1,4 +1,9 @@
-use crate::{constants::registers, cpu::CPU, enums::InstructionType};
+use crate::{
+    constants,
+    constants::registers,
+    cpu::CPU,
+    enums::{InstructionType, ProcessorMode, ShiftType},
+};
 
 /// Does nothing at all. used as a placeholder.
 pub fn dummy_cycle(_cpu: &mut CPU) {}
@@ -251,7 +256,88 @@ pub fn unsigned_multiply_accumulate(cpu: &mut CPU) {
 
 // End Load/Store micro operations
 // -----------------------------
-// Start MRS/MSR micro operations
+// Start PSR transfer micro operations
+
+/// Save PSR in rd
+pub fn mrs(cpu: &mut CPU) {
+    let (rd, psr);
+    match &cpu.decoded_instruction {
+        InstructionType::Thumb(_) => {
+            unimplemented!();
+        }
+
+        InstructionType::ARM(instr) => {
+            if let Some(decoded) = &instr.decoded_instruction {
+                rd = decoded.rd.unwrap() as usize;
+                psr = decoded.val1.unwrap();
+            } else {
+                eprintln!("Expected decoded instruction at multiply instruction");
+            }
+        }
+    }
+
+    let unpacked_psr = if psr == 0 {
+        cpu.arm.cpsr.unpack()
+    } else {
+        match cpu.arm.cpsr.mode {
+            // no spsr in user/system mode
+            ProcessorMode::User | ProcessorMode::System => return,
+            ProcessorMode::FIQ => cpu.arm.spsr_fiq.unpack(),
+            ProcessorMode::IRQ => cpu.arm.spsr_irq.unpack(),
+            ProcessorMode::Supervisor => cpu.arm.spsr_svc.unpack(),
+            ProcessorMode::Abort => cpu.arm.spsr_abt.unpack(),
+            ProcessorMode::Undefined => cpu.arm.spsr_und.unpack(),
+        }
+    };
+
+    cpu.arm.store_register(rd, unpacked_psr);
+}
+
+/// Save rd in PSR
+pub fn msr(cpu: &mut CPU) {
+    let (rm, psr, shifted_imm, is_imm);
+
+    match &cpu.decoded_instruction {
+        InstructionType::Thumb(_) => {
+            unimplemented!();
+        }
+
+        InstructionType::ARM(instr) => {
+            if let Some(decoded) = &instr.decoded_instruction {
+                rm = decoded.rd.unwrap() as usize;
+                psr = decoded.val1.unwrap();
+                is_imm = decoded.imm.unwrap();
+                if is_imm {
+                    let imm_val = decoded.val2.unwrap() as u32;
+                    // ror in steps of two (0-30)
+                    let imm_shift = decoded.val3.unwrap() as u32 * 2;
+
+                    shifted_imm = arm_ror(cpu, imm_val, imm_shift, false);
+                }
+            } else {
+                eprintln!("Expected decoded instruction at multiply instruction");
+            }
+        }
+    }
+
+    let unpacked_psr = if psr == 0 {
+        cpu.arm.cpsr.unpack()
+    } else {
+        match cpu.arm.cpsr.mode {
+            // no spsr in user/system mode
+            ProcessorMode::User | ProcessorMode::System => return,
+            ProcessorMode::FIQ => cpu.arm.spsr_fiq.unpack(),
+            ProcessorMode::IRQ => cpu.arm.spsr_irq.unpack(),
+            ProcessorMode::Supervisor => cpu.arm.spsr_svc.unpack(),
+            ProcessorMode::Abort => cpu.arm.spsr_abt.unpack(),
+            ProcessorMode::Undefined => cpu.arm.spsr_und.unpack(),
+        }
+    };
+
+    if is_imm {
+    } else {
+    }
+}
 
 // End MRS/MSR micro operations
 // -----------------------------
@@ -260,7 +346,7 @@ pub fn unsigned_multiply_accumulate(cpu: &mut CPU) {
 // TODO (Alice Micheloni): Handle PC ops.
 // TODO (Alice Micheloni): Correct execution time.
 pub fn alu_master(cpu: &mut CPU) {
-    use crate::enums::{MnemonicARM::*, ShiftType};
+    use crate::enums::MnemonicARM::*;
 
     let (rn, rd, set_cond);
     let op2: i32;
@@ -491,22 +577,36 @@ fn arm_subtract(cpu: &mut CPU, x: u32, y: u32, set_cond: bool) -> u32 {
     }
 }
 
-fn arm_ror(cpu: &mut CPU, x: u32, y: u32, set_cond: bool) -> u32 {
+fn arm_ror(cpu: &mut CPU, val: u32, to_shift: u32, set_cond: bool) -> u32 {
     if y != 0 {
-        x.rotate_right(y);
+        val.rotate_right(to_shift);
 
         if set_cond {
-            cpu.arm.cpsr.negative = x >> 31 != 0;
+            cpu.arm.cpsr.negative = val >> 31 != 0;
         }
-        x
+        val
     } else {
-        x >> 1;
+        val >> 1;
         let carry = cpu.arm.cpsr.carry as u32;
         cpu.arm.shifter_carry = carry;
-        x | (carry << 31)
+        val | (carry << 31)
     }
 }
 
 // End ALU micro operations
 // -------------------------
 // Start misc operations
+
+pub fn switch_to_svc(cpu: &mut CPU) {
+    cpu.arm.cpsr.mode = ProcessorMode::Supervisor;
+    cpu.arm.cpsr.disable_irq = true;
+    cpu.arm.cpsr.thumb_mode = false;
+    cpu.arm.store_register(
+        registers::LINK_REGISTER,
+        cpu.arm.clone().load_register(registers::PROGRAM_COUNTER) + 4,
+    );
+
+    // jump to SWI/PrefetchAbort vector address
+    cpu.arm
+        .store_register(registers::PROGRAM_COUNTER, 0x0000_0008);
+}
