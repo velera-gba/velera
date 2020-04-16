@@ -20,14 +20,14 @@ These are the goals and to do's for this module
 - [X] Accumulate instructions
 - [X] ALU Instructions
 - [X] Set condition codes on data processing/multiply instructions
-- [ ] Privilege modes
-- [ ] Exceptions
-- [ ] Interrupts
+- [X] Privilege modes
+- [X] Exceptions
+- [X] Interrupts
 - [ ] Load/Store instructions
 - [X] Correct arm master decode instruction
 - [ ] Implement DMA
 - [ ] Implement Thumb versions of instructions
-- [ ] Break down big micro ops into smaller ones (actual kek)
+- [ ] Break down big micro ops into smaller ones (lol)
 - [ ] Add micro ops testing
 
 ### Middle term:
