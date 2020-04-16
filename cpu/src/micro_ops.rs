@@ -361,7 +361,19 @@ pub fn msr(cpu: &mut CPU) {
         shifted_imm
     };
 
-    cpu.arm.cpsr.pack(val & flag_mask);
+    if psr == 0 {
+        cpu.arm.cpsr.pack(val & flag_mask);
+    } else {
+        match cpu.arm.cpsr.mode {
+            // no spsr in user/system mode
+            ProcessorMode::User | ProcessorMode::System => cpu.arm.cpsr.pack(val & flag_mask),
+            ProcessorMode::FIQ => cpu.arm.spsr_fiq.pack(val & flag_mask),
+            ProcessorMode::IRQ => cpu.arm.spsr_irq.pack(val & flag_mask),
+            ProcessorMode::Supervisor => cpu.arm.spsr_svc.pack(val & flag_mask),
+            ProcessorMode::Abort => cpu.arm.spsr_abt.pack(val & flag_mask),
+            ProcessorMode::Undefined => cpu.arm.spsr_und.pack(val & flag_mask),
+        }
+    }
 }
 
 // End MRS/MSR micro operations

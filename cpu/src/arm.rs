@@ -95,7 +95,7 @@ impl PSR {
             _ => ProcessorMode::User, // shouldn't get here
         };
 
-        self = Self {
+        *self = Self {
             negative,
             zero,
             carry,
