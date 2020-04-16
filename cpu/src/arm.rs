@@ -75,7 +75,7 @@ impl PSR {
         mode | neg | zero | carry | overflow | irq | fiq | thumb
     }
 
-    pub fn pack(source: u32) -> Self {
+    pub fn pack(&mut self, source: u32) {
         let negative = get_bit_at(source, 31);
         let zero = get_bit_at(source, 30);
         let carry = get_bit_at(source, 29);
@@ -95,7 +95,7 @@ impl PSR {
             _ => ProcessorMode::User, // shouldn't get here
         };
 
-        Self {
+        self = Self {
             negative,
             zero,
             carry,

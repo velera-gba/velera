@@ -44,6 +44,11 @@ pub mod psr_masks {
     pub const CONTROL: usize = 16;
 }
 
+pub mod psr_mode_flag_masks {
+    pub const PSR_FLAGS_MASK: u32 = 0b1111_0000_0000_0000_0000_0000_0000_0000;
+    pub const PSR_CONTROL_MASK: u32 = 0b0000_0000_0000_0000_0000_0000_1111_1111;
+}
+
 /// Non-general pointers.
 pub mod registers {
     pub const STACK_POINTER: usize = 13;

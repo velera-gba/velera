@@ -169,6 +169,9 @@ pub fn psr_transfer(instruction: u32, cond: u8) -> DecodedInstruction {
 
     let instr = MnemonicARM::MSR;
 
+    // flags
+    let offset = Some(get_last_bits(instruction >> 16, 4) as i32);
+
     // MSR (transfer register contents to PSR)
     if get_bit_at(instruction, 16) {
         let rm = Some(get_last_bits(instruction, 4) as u8);
@@ -178,6 +181,7 @@ pub fn psr_transfer(instruction: u32, cond: u8) -> DecodedInstruction {
             rm,
             val1: psr,
             imm: Some(false),
+            offset,
             ..Default::default()
         };
     }
@@ -196,6 +200,7 @@ pub fn psr_transfer(instruction: u32, cond: u8) -> DecodedInstruction {
             val1: psr,
             val2: value,
             val3: shift,
+            offset,
             ..Default::default()
         };
     }
@@ -208,6 +213,7 @@ pub fn psr_transfer(instruction: u32, cond: u8) -> DecodedInstruction {
         rm,
         val1: psr,
         imm: Some(false),
+        offset,
         ..Default::default()
     }
 }

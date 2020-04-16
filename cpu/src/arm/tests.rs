@@ -251,6 +251,7 @@ mod tests {
                 val1: Some(0),
                 rm: Some(0b0001),
                 imm: Some(false),
+                offset: Some(0b1001),
                 ..Default::default()
             }
         );
@@ -267,6 +268,7 @@ mod tests {
                 val1: Some(0),
                 val2: Some(0b0010_1100),
                 val3: Some(0b1100),
+                offset: Some(0b1000),
                 ..Default::default()
             }
         );

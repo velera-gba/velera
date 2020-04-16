@@ -5,6 +5,14 @@ use crate::{
     enums::{InstructionType, ProcessorMode, ShiftType},
 };
 
+#[inline]
+fn get_bit_at(input: u32, n: u8) -> bool {
+    if n < 32 {
+        return input & (1 << n) != 0;
+    }
+    false
+}
+
 /// Does nothing at all. used as a placeholder.
 pub fn dummy_cycle(_cpu: &mut CPU) {}
 
@@ -271,7 +279,8 @@ pub fn mrs(cpu: &mut CPU) {
                 rd = decoded.rd.unwrap() as usize;
                 psr = decoded.val1.unwrap();
             } else {
-                eprintln!("Expected decoded instruction at multiply instruction");
+                eprintln!("Expected decoded instruction at mrs instruction");
+                return;
             }
         }
     }
@@ -295,7 +304,7 @@ pub fn mrs(cpu: &mut CPU) {
 
 /// Save rd in PSR
 pub fn msr(cpu: &mut CPU) {
-    let (rm, psr, shifted_imm, is_imm);
+    let (flags, rm, psr, shifted_imm, imm);
 
     match &cpu.decoded_instruction {
         InstructionType::Thumb(_) => {
@@ -306,8 +315,9 @@ pub fn msr(cpu: &mut CPU) {
             if let Some(decoded) = &instr.decoded_instruction {
                 rm = decoded.rd.unwrap() as usize;
                 psr = decoded.val1.unwrap();
-                is_imm = decoded.imm.unwrap();
-                if is_imm {
+                imm = decoded.imm.unwrap();
+                flags = decoded.offset.unwrap();
+                if imm {
                     let imm_val = decoded.val2.unwrap() as u32;
                     // ror in steps of two (0-30)
                     let imm_shift = decoded.val3.unwrap() as u32 * 2;
@@ -315,7 +325,8 @@ pub fn msr(cpu: &mut CPU) {
                     shifted_imm = arm_ror(cpu, imm_val, imm_shift, false);
                 }
             } else {
-                eprintln!("Expected decoded instruction at multiply instruction");
+                eprintln!("Expected decoded instruction at msr instruction");
+                return;
             }
         }
     }
@@ -334,9 +345,23 @@ pub fn msr(cpu: &mut CPU) {
         }
     };
 
-    if is_imm {
-    } else {
+    let mut flag_mask = 0;
+
+    if get_bit_at(flags as u32, 0) {
+        flag_mask |= constants::psr_mode_flag_masks::PSR_FLAGS_MASK;
     }
+
+    if get_bit_at(flags as u32, 3) && cpu.arm.cpsr.mode != ProcessorMode::User {
+        flag_mask |= constants::psr_mode_flag_masks::PSR_CONTROL_MASK;
+    }
+
+    let val = if imm {
+        cpu.arm.load_register(rm) as u32
+    } else {
+        shifted_imm
+    };
+
+    cpu.arm.cpsr.pack(val & flag_mask);
 }
 
 // End MRS/MSR micro operations
@@ -578,7 +603,7 @@ fn arm_subtract(cpu: &mut CPU, x: u32, y: u32, set_cond: bool) -> u32 {
 }
 
 fn arm_ror(cpu: &mut CPU, val: u32, to_shift: u32, set_cond: bool) -> u32 {
-    if y != 0 {
+    if to_shift != 0 {
         val.rotate_right(to_shift);
 
         if set_cond {
