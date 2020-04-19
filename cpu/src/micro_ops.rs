@@ -262,6 +262,62 @@ pub fn unsigned_multiply_accumulate(cpu: &mut CPU) {
 // -----------------------------
 // Start Load/Store micro operations
 
+pub fn load_register(cpu: &mut CPU) {
+    let (rn, rd, imm);
+    let (pre, up, half, writeback);
+    let offset: u32;
+    match &cpu.decoded_instruction {
+        InstructionType::Thumb(_) => {
+            unimplemented!();
+        }
+
+        InstructionType::ARM(instr) => {
+            if let Some(decoded) = &instr.decoded_instruction {
+                rd = decoded.rd.unwrap() as usize;
+                rn = cpu.arm.load_register(decoded.rn.unwrap() as usize);
+                imm = decoded.imm.unwrap();
+
+                if imm {
+                    offset = decoded.offset.unwrap() as u32;
+                } else {
+                    let shift_type = decoded.shift_type.unwrap();
+                    let shift_amount = decoded.val2.unwrap();
+                    let rm = cpu.arm.load_register(decoded.rm.unwrap() as usize) as u32;
+
+                    offset = match shift_type {
+                        ShiftType::LSL => {
+                            if shift_amount > 0 {
+                                cpu.arm.shifter_carry |= ((rm << (shift_amount - 1)) & 1) as u32;
+                            }
+                            rm << shift_amount
+                        }
+
+                        ShiftType::LSR => rm >> shift_amount,
+
+                        ShiftType::ASR => {
+                            // force arithmetic shift using signed int
+                            let x: i32 = (rm as i32 >> shift_amount) as i32;
+                            x as u32
+                        }
+
+                        ShiftType::ROR => {
+                            arm_ror(cpu, rm as u32, shift_amount as u32, false) as u32
+                        }
+                    };
+                }
+
+                let flags = decoded.val1.unwrap() as u32;
+                pre = get_bit_at(flags, 3);
+                up = get_bit_at(flags, 2);
+                half = get_bit_at(flags, 1);
+                writeback = get_bit_at(flags, 0);
+            } else {
+                eprintln!("Expected decoded instruction at LDR instruction");
+            }
+        }
+    }
+}
+
 // End Load/Store micro operations
 // -----------------------------
 // Start PSR transfer micro operations
@@ -347,11 +403,11 @@ pub fn msr(cpu: &mut CPU) {
 
     let mut flag_mask = 0;
 
-    if get_bit_at(flags as u32, 0) {
+    if get_bit_at(flags as u32, 3) {
         flag_mask |= constants::psr_mode_flag_masks::PSR_FLAGS_MASK;
     }
 
-    if get_bit_at(flags as u32, 3) && cpu.arm.cpsr.mode != ProcessorMode::User {
+    if get_bit_at(flags as u32, 0) && cpu.arm.cpsr.mode != ProcessorMode::User {
         flag_mask |= constants::psr_mode_flag_masks::PSR_CONTROL_MASK;
     }
 
@@ -428,7 +484,9 @@ pub fn alu_master(cpu: &mut CPU) {
                                 cpu.arm.shifter_carry |=
                                     ((to_shift << (shift_amount - 1)) & 1) as u32;
                             }
-                            op2 = to_shift << shift_amount;
+                            // force logical shift
+                            let x: u32 = (to_shift >> shift_amount) as u32;
+                            op2 = x as i32;
                         }
 
                         ShiftType::LSR => {
@@ -446,7 +504,10 @@ pub fn alu_master(cpu: &mut CPU) {
                                     cpu.arm.shifter_carry |=
                                         ((to_shift << (shift_amount - 1)) & 1) as u32;
                                 }
-                                op2 = to_shift >> shift_amount;
+
+                                // force logical shift
+                                let x: u32 = (to_shift >> shift_amount) as u32;
+                                op2 = x as i32;
                             }
                         }
 

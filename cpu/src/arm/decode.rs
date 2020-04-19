@@ -222,16 +222,17 @@ pub fn psr_transfer(instruction: u32, cond: u8) -> DecodedInstruction {
 pub fn data_transfer(instruction: u32, cond: u8) -> DecodedInstruction {
     // bitmasks
     let imm = get_bit_at(instruction, 25);
+
     let index = (get_bit_at(instruction, 24) as u8) << 3;
     let up_down = (get_bit_at(instruction, 23) as u8) << 2;
-    let byte_or_word = (get_bit_at(instruction, 22) as u8) << 1;
-    let write_back = get_bit_at(instruction, 21) as u8;
+    let half = (get_bit_at(instruction, 22) as u8) << 1;
+    let writeback = get_bit_at(instruction, 21) as u8;
 
     let load = get_bit_at(instruction, 20);
 
     let rn = Some(get_last_bits(instruction >> 16, 4) as u8);
 
-    let val1 = Some(0 | index | up_down | byte_or_word | write_back);
+    let val1 = Some(0 | index | up_down | half | writeback);
 
     let is_block_data = get_bit_at(instruction, 27);
     if is_block_data {
