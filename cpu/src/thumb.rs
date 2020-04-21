@@ -1,6 +1,6 @@
 use crate::constants::{cond_arm, registers, thumb_bitmasks};
 use crate::cpu::CPU;
-use crate::micro_ops::*;
+use crate::instructionset::dummy_cycle;
 use std::collections::VecDeque;
 
 // WARNING!

@@ -10,7 +10,9 @@ pub mod macros;
 
 pub mod cpu;
 
-pub mod micro_ops;
+pub mod arm_instructionset;
+pub mod instructionset;
+pub mod thumb_instructionset;
 
 pub mod arm;
 pub mod gb;
