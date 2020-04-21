@@ -1,9 +1,7 @@
-use crate::{constants::default_cpu, cpu::CPU};
+use crate::{constants::default_cpu, cpu::CPU, arm_decode};
 
 use crate::enums::{InstructionType, MnemonicARM, ProcessorMode, ShiftType};
 use std::{collections::VecDeque, default::Default};
-
-mod decode;
 
 #[derive(Clone)]
 pub struct ARM7TDMI {
@@ -266,10 +264,8 @@ impl ARMInstruction {
 /// Handles ARM decoding and execution.
 /// Finds out which instruction the numbers represent and separates its values
 pub fn decode_arm(cpu: &mut CPU, instruction: u32) -> VecDeque<fn(&mut CPU)> {
-    let decoded = decode::BaseInstruction::base_to_decoded(instruction);
+    let decoded = arm_decode::BaseInstruction::base_to_decoded(instruction);
     cpu.decoded_instruction = InstructionType::ARM(ARMInstruction::new_decoded(decoded));
     // digest decoded into a series of single-cycle instructions...
     unimplemented!();
 }
-
-pub mod tests;

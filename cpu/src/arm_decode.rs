@@ -232,7 +232,7 @@ pub fn data_transfer(instruction: u32, cond: u8) -> DecodedInstruction {
 
     let rn = Some(get_last_bits(instruction >> 16, 4) as u8);
 
-    let val1 = Some(0 | index | up_down | half | writeback);
+    let val1 = Some(index | up_down | half | writeback);
 
     let is_block_data = get_bit_at(instruction, 27);
     if is_block_data {
