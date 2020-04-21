@@ -28,6 +28,7 @@ These are the goals and to do's for this module
 - [ ] Implement DMA
 - [ ] Implement Thumb versions of instructions
 - [ ] Break down big micro ops into smaller ones (lol)
+- [ ] Implement micro ops deque creator w/ pc extra-cycle handling
 - [ ] Add micro ops testing
 
 ### Middle term:

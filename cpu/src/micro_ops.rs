@@ -21,10 +21,8 @@ pub fn dummy_cycle(_cpu: &mut CPU) {}
 /// Stores the program counter value in the link register
 #[inline]
 pub fn store_pc_to_lr(cpu: &mut CPU) {
-    cpu.arm.store_register(
-        registers::LINK_REGISTER,
-        cpu.arm.clone().load_register(registers::PROGRAM_COUNTER),
-    );
+    let pc = cpu.arm.load_register(registers::PROGRAM_COUNTER);
+    cpu.arm.store_register(registers::LINK_REGISTER, pc);
 }
 
 /// Increases the program counter
@@ -37,10 +35,8 @@ pub fn increase_pc_by_offset(cpu: &mut CPU) {
         InstructionType::ARM(instr) => {
             if let Some(decoded) = &instr.decoded_instruction {
                 if let Some(offset) = decoded.offset {
-                    cpu.arm.store_register(
-                        registers::PROGRAM_COUNTER,
-                        cpu.arm.clone().load_register(registers::PROGRAM_COUNTER) + offset,
-                    );
+                    let offset = cpu.arm.load_register(registers::PROGRAM_COUNTER) + offset;
+                    cpu.arm.store_register(registers::PROGRAM_COUNTER, offset);
                 } else {
                     eprintln!("Expected offset in branch instruction");
                 }
@@ -133,15 +129,16 @@ pub fn multiply_accumulate(cpu: &mut CPU) {
     }
 
     if let Some(res) = rm.checked_mul(rs) {
-        cpu.arm
-            .store_register(rd, res + (cpu.arm.clone().load_register(rn as usize)));
+        let rn_val = cpu.arm.load_register(rn as usize);
+        cpu.arm.store_register(rd, res + rn_val);
     } else {
         cpu.arm.store_register(
             rd,
             ((rm as i64 * rs as i64 + rn as i64) & 0xFFFF_FFFF) as i32,
         );
     }
-    arm_set_flags_neutral(cpu, cpu.arm.clone().load_register(rd) as i64);
+    let rd = cpu.arm.load_register(rd) as i64;
+    arm_set_flags_neutral(cpu, rd);
 }
 
 pub fn signed_multiply(cpu: &mut CPU) {
@@ -221,10 +218,10 @@ pub fn signed_multiply_accumulate(cpu: &mut CPU) {
 
     cpu.arm
         .store_register(rd_low, ((r + rd_low as i64) & 0xFFFF_FFFF) as i32);
-    cpu.arm.store_register(
-        rd_hi,
-        (cpu.arm.clone().load_register(rd_hi) + (r >> 32) as i32) as i32,
-    );
+
+    let rd_hi_val = cpu.arm.load_register(rd_hi);
+    cpu.arm
+        .store_register(rd_hi, (rd_hi_val + (r >> 32) as i32) as i32);
 }
 
 pub fn unsigned_multiply_accumulate(cpu: &mut CPU) {
@@ -252,10 +249,11 @@ pub fn unsigned_multiply_accumulate(cpu: &mut CPU) {
 
     cpu.arm
         .store_register(rd_low, ((r + rd_low as u64) & 0xFFFF_FFFF) as i32);
-    cpu.arm.store_register(
-        rd_hi,
-        (cpu.arm.clone().load_register(rd_hi) as u32 + (r >> 32) as u32) as i32,
-    );
+
+    let rd_hi_val = cpu.arm.load_register(rd_hi) as u32;
+
+    cpu.arm
+        .store_register(rd_hi, (rd_hi_val + (r >> 32) as u32) as i32);
 }
 
 // End multiply micro operations
@@ -280,30 +278,12 @@ pub fn load_register(cpu: &mut CPU) {
                 if imm {
                     offset = decoded.offset.unwrap() as u32;
                 } else {
-                    let shift_type = decoded.shift_type.unwrap();
-                    let shift_amount = decoded.val2.unwrap();
-                    let rm = cpu.arm.load_register(decoded.rm.unwrap() as usize) as u32;
-
-                    offset = match shift_type {
-                        ShiftType::LSL => {
-                            if shift_amount > 0 {
-                                cpu.arm.shifter_carry |= ((rm << (shift_amount - 1)) & 1) as u32;
-                            }
-                            rm << shift_amount
-                        }
-
-                        ShiftType::LSR => rm >> shift_amount,
-
-                        ShiftType::ASR => {
-                            // force arithmetic shift using signed int
-                            let x: i32 = (rm as i32 >> shift_amount) as i32;
-                            x as u32
-                        }
-
-                        ShiftType::ROR => {
-                            arm_ror(cpu, rm as u32, shift_amount as u32, false) as u32
-                        }
-                    };
+                    let shift_type = decoded.shift_type.clone().unwrap();
+                    let shift_amount = decoded.val2.unwrap() as i32;
+                    let rm = decoded.rm.unwrap();
+                    let rm_val = cpu.arm.load_register(rm as usize) as i32;
+                    offset =
+                        arm_barrelshifter(cpu, shift_type, false, rm_val, shift_amount, rm) as u32;
                 }
 
                 let flags = decoded.val1.unwrap() as u32;
@@ -387,20 +367,6 @@ pub fn msr(cpu: &mut CPU) {
         }
     }
 
-    let unpacked_psr = if psr == 0 {
-        cpu.arm.cpsr.unpack()
-    } else {
-        match cpu.arm.cpsr.mode {
-            // no spsr in user/system mode
-            ProcessorMode::User | ProcessorMode::System => return,
-            ProcessorMode::FIQ => cpu.arm.spsr_fiq.unpack(),
-            ProcessorMode::IRQ => cpu.arm.spsr_irq.unpack(),
-            ProcessorMode::Supervisor => cpu.arm.spsr_svc.unpack(),
-            ProcessorMode::Abort => cpu.arm.spsr_abt.unpack(),
-            ProcessorMode::Undefined => cpu.arm.spsr_und.unpack(),
-        }
-    };
-
     let mut flag_mask = 0;
 
     if get_bit_at(flags as u32, 3) {
@@ -467,7 +433,7 @@ pub fn alu_master(cpu: &mut CPU) {
                     let rm = decoded.rm.unwrap();
                     let to_shift = cpu.arm.load_register(rm as usize);
 
-                    let shift_type = decoded.shift_type.as_ref().unwrap();
+                    let shift_type = decoded.shift_type.clone().unwrap();
 
                     let shift_amount;
 
@@ -478,66 +444,7 @@ pub fn alu_master(cpu: &mut CPU) {
                         shift_amount = decoded.val1.unwrap() as i32;
                     }
 
-                    match shift_type {
-                        ShiftType::LSL => {
-                            if set_cond && shift_amount > 0 {
-                                cpu.arm.shifter_carry |=
-                                    ((to_shift << (shift_amount - 1)) & 1) as u32;
-                            }
-                            // force logical shift
-                            let x: u32 = (to_shift >> shift_amount) as u32;
-                            op2 = x as i32;
-                        }
-
-                        ShiftType::LSR => {
-                            if shift_amount == 0 {
-                                op2 = 0;
-
-                                let carry = cpu.arm.cpsr.carry as i32;
-                                cpu.arm.store_register(
-                                    rm as usize,
-                                    cpu.arm.clone().load_register(rm as usize)
-                                        | (carry << 31) as i32,
-                                );
-                            } else {
-                                if set_cond {
-                                    cpu.arm.shifter_carry |=
-                                        ((to_shift << (shift_amount - 1)) & 1) as u32;
-                                }
-
-                                // force logical shift
-                                let x: u32 = (to_shift >> shift_amount) as u32;
-                                op2 = x as i32;
-                            }
-                        }
-
-                        ShiftType::ASR => {
-                            if shift_amount == 0 {
-                                let bit = cpu.arm.load_register(rm as usize) >> 31;
-                                if bit == 0 {
-                                    op2 = 0;
-                                    if set_cond {
-                                        cpu.arm.cpsr.carry = false;
-                                    }
-                                } else {
-                                    // fill op2 with 1s
-                                    op2 = std::i32::MAX;
-
-                                    if set_cond {
-                                        // set carry bit
-                                        cpu.arm.cpsr.carry = true;
-                                    }
-                                }
-                            } else {
-                                op2 = to_shift >> shift_amount;
-                            }
-                        }
-
-                        ShiftType::ROR => {
-                            op2 =
-                                arm_ror(cpu, to_shift as u32, shift_amount as u32, set_cond) as i32
-                        }
-                    }
+                    op2 = arm_barrelshifter(cpu, shift_type, set_cond, to_shift, shift_amount, rm);
                 }
             } else {
                 eprintln!("Expected decoded instruction at multiply accumulate instruction");
@@ -556,54 +463,57 @@ pub fn alu_master(cpu: &mut CPU) {
         EOR => {
             cpu.arm.store_register(rd, rn ^ op2);
             if set_cond {
-                arm_set_flags_neutral(&mut cpu.clone(), cpu.arm.load_register(rd) as i64);
+                let rd = cpu.arm.load_register(rd) as i64;
+                arm_set_flags_neutral(cpu, rd);
             }
         }
         ORR => {
             cpu.arm.store_register(rd, rn | op2);
             if set_cond {
-                arm_set_flags_neutral(&mut cpu.clone(), cpu.arm.load_register(rd) as i64);
+                let rd = cpu.arm.load_register(rd) as i64;
+                arm_set_flags_neutral(cpu, rd);
             }
         }
         BIC => {
             cpu.arm.store_register(rd, rn & !op2);
             if set_cond {
-                arm_set_flags_neutral(&mut cpu.clone(), cpu.arm.load_register(rd) as i64);
+                let rd = cpu.arm.load_register(rd) as i64;
+                arm_set_flags_neutral(cpu, rd);
             }
         }
 
         // addition ops
-        ADD => cpu.arm.store_register(
-            rd,
-            arm_addition(&mut cpu.clone(), rn as u32, op2 as u32, set_cond) as i32,
-        ),
-        ADC => cpu.arm.store_register(
-            rd,
-            arm_addition(&mut cpu.clone(), rn as u32, op2 as u32, set_cond) as i32
-                + cpu.arm.cpsr.carry as i32,
-        ),
+        ADD => {
+            let val = arm_addition(cpu, rn as u32, op2 as u32, set_cond) as i32;
+            cpu.arm.store_register(rd, val);
+        }
+        ADC => {
+            let val = arm_addition(cpu, rn as u32, op2 as u32, set_cond) as i32
+                + cpu.arm.cpsr.carry as i32;
+            cpu.arm.store_register(rd, val);
+        }
 
         // subtraction ops
-        SUB => cpu.arm.store_register(
-            rd,
-            arm_subtract(&mut cpu.clone(), rn as u32, op2 as u32, set_cond) as i32,
-        ),
-        RSB => cpu.arm.store_register(
-            rd,
-            arm_subtract(&mut cpu.clone(), op2 as u32, rn as u32, set_cond) as i32,
-        ),
-        SBC => cpu.arm.store_register(
-            rd,
-            arm_subtract(&mut cpu.clone(), rn as u32, op2 as u32, set_cond) as i32
+        SUB => {
+            let val = arm_subtract(cpu, rn as u32, op2 as u32, set_cond) as i32;
+            cpu.arm.store_register(rd, val);
+        }
+        RSB => {
+            let val = arm_subtract(cpu, op2 as u32, rn as u32, set_cond) as i32;
+            cpu.arm.store_register(rd, val);
+        }
+        SBC => {
+            let val = arm_subtract(cpu, rn as u32, op2 as u32, set_cond) as i32
                 + cpu.arm.cpsr.carry as i32
-                - 1,
-        ),
-        RSC => cpu.arm.store_register(
-            rd,
-            arm_subtract(&mut cpu.clone(), op2 as u32, rn as u32, set_cond) as i32
+                - 1;
+            cpu.arm.store_register(rd, val);
+        }
+        RSC => {
+            let val = arm_subtract(cpu, op2 as u32, rn as u32, set_cond) as i32
                 + cpu.arm.cpsr.carry as i32
-                - 1,
-        ),
+                - 1;
+            cpu.arm.store_register(rd, val);
+        }
 
         // move ops
         MOV => cpu.arm.store_register(rd, op2),
@@ -691,6 +601,67 @@ fn arm_ror(cpu: &mut CPU, val: u32, to_shift: u32, set_cond: bool) -> u32 {
     }
 }
 
+fn arm_barrelshifter(
+    cpu: &mut CPU,
+    shift_type: ShiftType,
+    set_cond: bool,
+    to_shift: i32,
+    shift_amount: i32,
+    rm: u8,
+) -> i32 {
+    match shift_type {
+        ShiftType::LSL => {
+            if set_cond && shift_amount > 0 {
+                cpu.arm.shifter_carry |= ((to_shift << (shift_amount - 1)) & 1) as u32;
+            }
+            // force logical shift
+            let x = (to_shift >> shift_amount) as u32;
+            x as i32
+        }
+
+        ShiftType::LSR => {
+            if shift_amount == 0 {
+                let carry = cpu.arm.cpsr.carry as i32;
+                let rm_val = cpu.arm.load_register(rm as usize);
+                cpu.arm
+                    .store_register(rm as usize, rm_val | (carry << 31) as i32);
+                0
+            } else {
+                if set_cond {
+                    cpu.arm.shifter_carry |= ((to_shift << (shift_amount - 1)) & 1) as u32;
+                }
+
+                // force logical shift
+                let x = (to_shift >> shift_amount) as u32;
+                x as i32
+            }
+        }
+
+        ShiftType::ASR => {
+            if shift_amount == 0 {
+                let bit = cpu.arm.load_register(rm as usize) >> 31;
+                if bit == 0 {
+                    if set_cond {
+                        cpu.arm.cpsr.carry = false;
+                    }
+                    0
+                } else {
+                    if set_cond {
+                        // set carry bit
+                        cpu.arm.cpsr.carry = true;
+                    }
+
+                    std::i32::MAX
+                }
+            } else {
+                to_shift >> shift_amount
+            }
+        }
+
+        ShiftType::ROR => arm_ror(cpu, to_shift as u32, shift_amount as u32, set_cond) as i32,
+    }
+}
+
 // End ALU micro operations
 // -------------------------
 // Start misc operations
@@ -699,10 +670,9 @@ pub fn switch_to_svc(cpu: &mut CPU) {
     cpu.arm.cpsr.mode = ProcessorMode::Supervisor;
     cpu.arm.cpsr.disable_irq = true;
     cpu.arm.cpsr.thumb_mode = false;
-    cpu.arm.store_register(
-        registers::LINK_REGISTER,
-        cpu.arm.clone().load_register(registers::PROGRAM_COUNTER) + 4,
-    );
+
+    let pc = cpu.arm.load_register(registers::PROGRAM_COUNTER);
+    cpu.arm.store_register(registers::LINK_REGISTER, pc + 4);
 
     // jump to SWI/PrefetchAbort vector address
     cpu.arm
