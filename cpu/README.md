@@ -11,9 +11,7 @@ These are the goals and to do's for this module
 - **thumb** module execution
 
 - [ ] Finish micro operations
-
 - [X] Use `as` to cast to u8 from bool
-- [ ] Implement data transfer instructions (LDR, STR, ...) the right way (supporting addressing)
 - [X] Change val2 and val3 to offset
 - [X] Support shifting in ARM
 - [ ] Remove all `unimplemented!` from the code
@@ -23,12 +21,13 @@ These are the goals and to do's for this module
 - [X] Privilege modes
 - [X] Exceptions
 - [X] Interrupts
-- [ ] Load/Store instructions
+- [X] Load/Store instructions
 - [X] Correct arm master decode instruction
 - [ ] Implement DMA
 - [ ] Implement Thumb versions of instructions
 - [ ] Break down big micro ops into smaller ones (lol)
 - [ ] Implement micro ops deque creator w/ pc extra-cycle handling
+- [ ] Multiply extra cycles handling
 - [ ] Add micro ops testing
 
 ### Middle term:
