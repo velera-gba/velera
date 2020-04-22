@@ -454,6 +454,3 @@ fn put_temp_register_thumb(register: &mut i32, register_bitmask: u16, instructio
     *register = ((register_bitmask & instruction) >> shift_modifier) as i32;
 }
 */
-// TESTS //
-
-pub mod tests;
