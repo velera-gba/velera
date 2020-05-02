@@ -23,18 +23,15 @@ These are the goals and to do's for this module
 - [X] Interrupts
 - [X] Load/Store instructions
 - [X] Correct arm master decode instruction
-- [ ] Implement DMA
+- [X] Implement all arm (32-bit) micro operations
+- [ ] Implement Thumb decoding
 - [ ] Implement Thumb versions of instructions
 - [ ] Break down big micro ops into smaller ones (lol)
 - [ ] Implement micro ops deque creator w/ pc extra-cycle handling
 - [ ] Multiply extra cycles handling
 - [ ] Add micro ops testing
 
-### Middle term:
-
-- user stack access
-
-- cycle emulation and interface
+- [ ] Implement DMA
 
 # Long term:
 
