@@ -1,36 +1,8 @@
-use crate::{arm::DecodedInstruction, enums::MnemonicARM, enums::ShiftType};
-
-/// Get bit in a certain position
-#[inline]
-fn get_bit_at(input: u32, n: u8) -> bool {
-    if n < 32 {
-        return input & (1 << n) != 0;
-    }
-    false
-}
-
-/// Gets n last bits
-#[inline]
-pub fn get_last_bits(input: u32, n: u8) -> u32 {
-    if n < 32 {
-        return input & ((1 << n) - 1);
-    }
-    0
-}
-
-/// Transforms a number into its equivalent ShiftType variant.
-fn get_shift_type(shift_type: u32) -> ShiftType {
-    match shift_type {
-        0 => ShiftType::LSL,
-        1 => ShiftType::LSR,
-        2 => ShiftType::ASR,
-        3 => ShiftType::ROR,
-        x => {
-            eprintln!("unexpected shift type while decoding: {:?}", x);
-            ShiftType::LSL
-        }
-    }
-}
+use crate::{
+    arm::DecodedInstruction,
+    enums::MnemonicARM,
+    utils::{get_bit_at, get_last_bits, get_shift_type},
+};
 
 pub fn data_processing(instruction: u32, cond: u8) -> DecodedInstruction {
     use crate::constants::dp_opcodes::*;

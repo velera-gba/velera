@@ -3,20 +3,12 @@ use crate::{
     constants::registers,
     cpu::CPU,
     enums::{InstructionType, MnemonicARM, ProcessorMode, ShiftType},
+    utils::{get_bit_at, count_set_bits},
 };
-
-#[inline]
-fn get_bit_at(input: u32, n: u8) -> bool {
-    if n < 32 {
-        return input & (1 << n) != 0;
-    }
-    false
-}
 
 // Start branch micro operations
 
 /// Stores the program counter value in the link register
-#[inline]
 pub fn store_pc_to_lr(cpu: &mut CPU) {
     let pc = cpu.arm.load_register(registers::PROGRAM_COUNTER);
     cpu.arm.store_register(registers::LINK_REGISTER, pc);
@@ -1011,16 +1003,4 @@ pub fn switch_to_svc(cpu: &mut CPU) {
     // jump to SWI/PrefetchAbort vector address
     cpu.arm
         .store_register(registers::PROGRAM_COUNTER, 0x0000_0008);
-}
-
-fn count_set_bits(n: u32) -> u32 {
-    let mut n = n;
-    let mut ret = 0;
-
-    while n > 0 {
-        ret += (n & 1) as u32;
-        n >>= 1;
-    }
-
-    ret
 }
