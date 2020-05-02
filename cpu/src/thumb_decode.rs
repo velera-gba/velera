@@ -1,6 +1,6 @@
 use crate::constants::{cond_arm, registers, thumb_bitmasks};
 use crate::cpu::CPU;
-use crate::instructionset::dummy_cycle;
+use crate::instructionset::idle;
 use std::collections::VecDeque;
 
 // WARNING!
@@ -25,13 +25,13 @@ pub fn decode_thumb(cpu: &mut CPU, instruction: u16) -> VecDeque<fn(&mut CPU)> {
         queue,
         thumb_bitmasks::MOVE_SHIFTED_REG_OFFSET_MASK,
         thumb_bitmasks::LSR => {
-            dummy_cycle
+            idle
         },
         thumb_bitmasks::LSL => {
-            dummy_cycle
+            idle
         },
         thumb_bitmasks::ASR => {
-            dummy_cycle
+            idle
         }
     );
 
@@ -42,16 +42,16 @@ pub fn decode_thumb(cpu: &mut CPU, instruction: u16) -> VecDeque<fn(&mut CPU)> {
         queue,
         thumb_bitmasks::ADDSUB_OP_MASK,
         thumb_bitmasks::ADD => {
-            dummy_cycle
+            idle
         },
         thumb_bitmasks::SUB => {
-            dummy_cycle
+            idle
         },
         thumb_bitmasks::ADDI => {
-            dummy_cycle
+            idle
         },
         thumb_bitmasks::SUBI => {
-            dummy_cycle
+            idle
         }
     );
 
@@ -62,16 +62,16 @@ pub fn decode_thumb(cpu: &mut CPU, instruction: u16) -> VecDeque<fn(&mut CPU)> {
         queue,
         thumb_bitmasks::IMMEDIATE_OP_MASK,
         thumb_bitmasks::MOV => {
-            dummy_cycle
+            idle
         },
         thumb_bitmasks::CMP => {
-            dummy_cycle
+            idle
         },
         thumb_bitmasks::ADDRI => {
-            dummy_cycle
+            idle
         },
         thumb_bitmasks::SUBRI => {
-            dummy_cycle
+            idle
         }
     );
 
@@ -82,52 +82,52 @@ pub fn decode_thumb(cpu: &mut CPU, instruction: u16) -> VecDeque<fn(&mut CPU)> {
         queue,
         thumb_bitmasks::ALU_OP_MASK,
         thumb_bitmasks::ALU_AND => {
-            dummy_cycle
+            idle
         },
         thumb_bitmasks::ALU_EOR => {
-            dummy_cycle
+            idle
         },
         thumb_bitmasks::ALU_LSL => {
-            dummy_cycle
+            idle
         },
         thumb_bitmasks::ALU_LSR => {
-            dummy_cycle
+            idle
         },
         thumb_bitmasks::ALU_ASR => {
-            dummy_cycle
+            idle
         },
         thumb_bitmasks::ALU_ADC => {
-            dummy_cycle
+            idle
         },
         thumb_bitmasks::ALU_SBC => {
-            dummy_cycle
+            idle
         },
         thumb_bitmasks::ALU_ROR => {
-            dummy_cycle
+            idle
         },
         thumb_bitmasks::ALU_TST => {
-            dummy_cycle
+            idle
         },
         thumb_bitmasks::ALU_NEG => {
-            dummy_cycle
+            idle
         },
         thumb_bitmasks::ALU_CMP => {
-            dummy_cycle
+            idle
         },
         thumb_bitmasks::ALU_CMN => {
-            dummy_cycle
+            idle
         },
         thumb_bitmasks::ALU_ORR => {
-            dummy_cycle
+            idle
         },
         thumb_bitmasks::ALU_MUL => {
-            dummy_cycle
+            idle
         },
         thumb_bitmasks::ALU_BIC => {
-            dummy_cycle
+            idle
         },
         thumb_bitmasks::ALU_MVN => {
-            dummy_cycle
+            idle
         }
     );
 
@@ -138,22 +138,22 @@ pub fn decode_thumb(cpu: &mut CPU, instruction: u16) -> VecDeque<fn(&mut CPU)> {
         queue,
         thumb_bitmasks::HI_OP_MASK,
         thumb_bitmasks::HI_ADD => {
-            dummy_cycle
+            idle
         },
         thumb_bitmasks::HI_CMP => {
-            dummy_cycle
+            idle
         },
         thumb_bitmasks::HI_MOV => {
-            dummy_cycle
+            idle
         },
         thumb_bitmasks::HI_NOP => {
-            dummy_cycle
+            idle
         },
         thumb_bitmasks::BX => {
-            dummy_cycle
+            idle
         },
         thumb_bitmasks::BLX => {
-            dummy_cycle
+            idle
         }
     );
 
@@ -164,7 +164,7 @@ pub fn decode_thumb(cpu: &mut CPU, instruction: u16) -> VecDeque<fn(&mut CPU)> {
         queue,
         thumb_bitmasks::LDPCR_MASK,
         thumb_bitmasks::LDPCR => {
-            dummy_cycle
+            idle
         }
     );
 
@@ -177,16 +177,16 @@ pub fn decode_thumb(cpu: &mut CPU, instruction: u16) -> VecDeque<fn(&mut CPU)> {
         queue,
         thumb_bitmasks::LS_REG_OFFSET_OPCODE_MASK,
         thumb_bitmasks::STR => {
-            dummy_cycle
+            idle
         },
         thumb_bitmasks::STRB => {
-            dummy_cycle
+            idle
         },
         thumb_bitmasks::LDR => {
-            dummy_cycle
+            idle
         },
         thumb_bitmasks::LDRB => {
-            dummy_cycle
+            idle
         }
     );
 
@@ -197,16 +197,16 @@ pub fn decode_thumb(cpu: &mut CPU, instruction: u16) -> VecDeque<fn(&mut CPU)> {
         queue,
         thumb_bitmasks::LS_EBH_OP_MASK,
         thumb_bitmasks::STRH => {
-            dummy_cycle
+            idle
         },
         thumb_bitmasks::LDSB => {
-            dummy_cycle
+            idle
         },
         thumb_bitmasks::LDRH => {
-            dummy_cycle
+            idle
         },
         thumb_bitmasks::LDSH => {
-            dummy_cycle
+            idle
         }
     );
 
@@ -217,16 +217,16 @@ pub fn decode_thumb(cpu: &mut CPU, instruction: u16) -> VecDeque<fn(&mut CPU)> {
         queue,
         thumb_bitmasks::LS_NN_OFFSET_OP_MASK,
         thumb_bitmasks::STRI => {
-            dummy_cycle
+            idle
         },
         thumb_bitmasks::LDRI => {
-            dummy_cycle
+            idle
         },
         thumb_bitmasks::STRBI => {
-            dummy_cycle
+            idle
         },
         thumb_bitmasks::LDRBI => {
-            dummy_cycle
+            idle
         }
     );
 
@@ -237,10 +237,10 @@ pub fn decode_thumb(cpu: &mut CPU, instruction: u16) -> VecDeque<fn(&mut CPU)> {
         queue,
         thumb_bitmasks::LS_HW_OP_MASK,
         thumb_bitmasks::STRHW => {
-            dummy_cycle
+            idle
         },
         thumb_bitmasks::LDRHW => {
-            dummy_cycle
+            idle
         }
     );
 
@@ -251,10 +251,10 @@ pub fn decode_thumb(cpu: &mut CPU, instruction: u16) -> VecDeque<fn(&mut CPU)> {
         queue,
         thumb_bitmasks::SP_LS_OP_MASK,
         thumb_bitmasks::SP_STR => {
-            dummy_cycle
+            idle
         },
         thumb_bitmasks::SP_LDR => {
-            dummy_cycle
+            idle
         }
     );
 
@@ -265,10 +265,10 @@ pub fn decode_thumb(cpu: &mut CPU, instruction: u16) -> VecDeque<fn(&mut CPU)> {
         queue,
         thumb_bitmasks::RELATIVE_ADDR_OP_MASK,
         thumb_bitmasks::ADD_PC => {
-            dummy_cycle
+            idle
         },
         thumb_bitmasks::ADD_SP => {
-            dummy_cycle
+            idle
         }
     );
 
@@ -279,10 +279,10 @@ pub fn decode_thumb(cpu: &mut CPU, instruction: u16) -> VecDeque<fn(&mut CPU)> {
         queue,
         thumb_bitmasks::SP_OFFSET_OP_MASK,
         thumb_bitmasks::ADD_SP_NN => {
-            dummy_cycle
+            idle
         },
         thumb_bitmasks::ADD_SP_MINUS_NN => {
-            dummy_cycle
+            idle
         }
     );
 
@@ -295,10 +295,10 @@ pub fn decode_thumb(cpu: &mut CPU, instruction: u16) -> VecDeque<fn(&mut CPU)> {
         queue,
         thumb_bitmasks::STACK_OPS_OP_MASK,
         thumb_bitmasks::PUSH => {
-            dummy_cycle
+            idle
         },
         thumb_bitmasks::POP => {
-            dummy_cycle
+            idle
         }
     );
 
@@ -310,10 +310,10 @@ pub fn decode_thumb(cpu: &mut CPU, instruction: u16) -> VecDeque<fn(&mut CPU)> {
         queue,
         thumb_bitmasks::LS_MIA_OP_MASK,
         thumb_bitmasks::STMIA => {
-            dummy_cycle
+            idle
         },
         thumb_bitmasks::LDMIA => {
-            dummy_cycle
+            idle
         }
     );
 
@@ -330,46 +330,46 @@ pub fn decode_thumb(cpu: &mut CPU, instruction: u16) -> VecDeque<fn(&mut CPU)> {
         queue,
         thumb_bitmasks::COND_FULL_OP_MASK,
         ((cond_arm::EQ as u16) << cond_branch_shift) & extra_opcode_mask => {
-            dummy_cycle
+            idle
         },
         ((cond_arm::NE as u16) << cond_branch_shift) & extra_opcode_mask => {
-            dummy_cycle
+            idle
         },
         ((cond_arm::CS as u16) << cond_branch_shift) & extra_opcode_mask => {
-            dummy_cycle
+            idle
         },
         ((cond_arm::CC as u16) << cond_branch_shift) & extra_opcode_mask => {
-            dummy_cycle
+            idle
         },
         ((cond_arm::MI as u16) << cond_branch_shift) & extra_opcode_mask => {
-            dummy_cycle
+            idle
         },
         ((cond_arm::PL as u16) << cond_branch_shift) & extra_opcode_mask => {
-            dummy_cycle
+            idle
         },
         ((cond_arm::VS as u16) << cond_branch_shift) & extra_opcode_mask => {
-            dummy_cycle
+            idle
         },
         ((cond_arm::VC as u16) << cond_branch_shift) & extra_opcode_mask => {
-            dummy_cycle
+            idle
         },
         ((cond_arm::HI as u16) << cond_branch_shift) & extra_opcode_mask => {
-            dummy_cycle
+            idle
         },
         ((cond_arm::LS as u16) << cond_branch_shift) & extra_opcode_mask => {
-            dummy_cycle
+            idle
         },
         ((cond_arm::GE as u16) << cond_branch_shift) & extra_opcode_mask => {
-            dummy_cycle
+            idle
         },
         ((cond_arm::LT as u16) << cond_branch_shift) & extra_opcode_mask => {
-            dummy_cycle
+            idle
         },
         ((cond_arm::GT as u16) << cond_branch_shift) & extra_opcode_mask => {
-            dummy_cycle
+            idle
         },
         ((cond_arm::LE as u16) << cond_branch_shift) & extra_opcode_mask => {
-            dummy_cycle
+            idle
         }
     );
 
@@ -380,10 +380,10 @@ pub fn decode_thumb(cpu: &mut CPU, instruction: u16) -> VecDeque<fn(&mut CPU)> {
         queue,
         thumb_bitmasks::SWI_BK_OP_MASK,
         thumb_bitmasks::SWI => {
-            dummy_cycle
+            idle
         },
         thumb_bitmasks::BKPT => {
-            dummy_cycle
+            idle
         }
     );
 
@@ -394,7 +394,7 @@ pub fn decode_thumb(cpu: &mut CPU, instruction: u16) -> VecDeque<fn(&mut CPU)> {
         queue,
         thumb_bitmasks::B_OP_MASK,
         thumb_bitmasks::B => {
-            dummy_cycle
+            idle
         }
     );
 
@@ -407,13 +407,13 @@ pub fn decode_thumb(cpu: &mut CPU, instruction: u16) -> VecDeque<fn(&mut CPU)> {
         queue,
         thumb_bitmasks::LONG_BRANCH_OP_MASK,
         thumb_bitmasks::LONG_BRANCH_FIRST_OP => {
-            dummy_cycle
+            idle
         },
         thumb_bitmasks::BL => {
-            dummy_cycle
+            idle
         },
         thumb_bitmasks::BLLX => {
-            dummy_cycle
+            idle
         }
     );
 

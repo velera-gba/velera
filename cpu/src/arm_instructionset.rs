@@ -2,7 +2,7 @@ use crate::{
     constants,
     constants::registers,
     cpu::CPU,
-    enums::{InstructionType, ProcessorMode, ShiftType},
+    enums::{InstructionType, MnemonicARM, ProcessorMode, ShiftType},
 };
 
 #[inline]
@@ -25,15 +25,20 @@ pub fn store_pc_to_lr(cpu: &mut CPU) {
 /// Increases the program counter
 pub fn increase_pc_by_offset(cpu: &mut CPU) {
     if let InstructionType::ARM(instr) = &cpu.decoded_instruction {
-        if let Some(decoded) = &instr.decoded_instruction {
-            if let Some(offset) = decoded.offset {
+        if instr.decoded_instruction.is_none() {
+            eprintln!("Expected decoded instruction at arm increase_pc_by_offset instruction");
+            return;
+        }
+
+        let decoded = instr.decoded_instruction.as_ref().unwrap();
+        match decoded.offset {
+            Some(offset) => {
                 let offset = cpu.arm.load_register(registers::PROGRAM_COUNTER) + offset;
                 cpu.arm.store_register(registers::PROGRAM_COUNTER, offset);
-            } else {
+            }
+            _ => {
                 eprintln!("Expected offset in branch instruction");
             }
-        } else {
-            eprintln!("Expected decoded instruction at arm increase pc by offset");
         }
     }
 }
@@ -41,15 +46,21 @@ pub fn increase_pc_by_offset(cpu: &mut CPU) {
 /// Switches from arm mode to thumb or vice versa (Branch eXchange)
 pub fn switch_mode(cpu: &mut CPU) {
     if let InstructionType::ARM(instr) = &cpu.decoded_instruction {
-        if let Some(decoded) = &instr.decoded_instruction {
-            if let Some(rn) = decoded.rn {
+        if instr.decoded_instruction.is_none() {
+            eprintln!("Expected decoded instruction at arm blx instruction");
+            return;
+        }
+
+        let decoded = instr.decoded_instruction.as_ref().unwrap();
+
+        match decoded.rn {
+            Some(rn) => {
                 let is_thumb = cpu.arm.load_register(rn as usize) & 1;
                 cpu.arm.cpsr.thumb_mode = is_thumb != 0;
-            } else {
+            }
+            _ => {
                 eprintln!("Expected to find rn");
             }
-        } else {
-            eprintln!("Expected decoded instruction at arm blx");
         }
     }
 }
@@ -65,22 +76,26 @@ pub fn switch_mode(cpu: &mut CPU) {
 // rd = rm * rs
 pub fn multiply(cpu: &mut CPU) {
     if let InstructionType::ARM(instr) = &cpu.decoded_instruction {
-        let (rd, rm, rs, set_cond);
-        if let Some(decoded) = &instr.decoded_instruction {
-            rd = decoded.rd.unwrap() as usize;
-            rm = cpu.arm.load_register(decoded.rm.unwrap() as usize);
-            rs = cpu.arm.load_register(decoded.rs.unwrap() as usize);
-            set_cond = decoded.set_cond.unwrap();
-        } else {
+        if instr.decoded_instruction.is_none() {
             eprintln!("Expected decoded instruction at arm multiply instruction");
             return;
         }
 
-        if let Some(res) = rm.checked_mul(rs) {
-            cpu.arm.store_register(rd, res);
-        } else {
-            cpu.arm
-                .store_register(rd, ((rm as i64 * rs as i64) & 0xFFFF_FFFF) as i32);
+        let decoded = instr.decoded_instruction.as_ref().unwrap();
+
+        let rd = decoded.rd.unwrap() as usize;
+        let rm = cpu.arm.load_register(decoded.rm.unwrap() as usize);
+        let rs = cpu.arm.load_register(decoded.rs.unwrap() as usize);
+        let set_cond = decoded.set_cond.unwrap();
+
+        match rm.checked_mul(rs) {
+            Some(res) => {
+                cpu.arm.store_register(rd, res);
+            }
+            _ => {
+                cpu.arm
+                    .store_register(rd, ((rm as i64 * rs as i64) & 0xFFFF_FFFF) as i32);
+            }
         }
 
         if set_cond {
@@ -94,16 +109,17 @@ pub fn multiply(cpu: &mut CPU) {
 // rd = rm * rs + rn
 pub fn multiply_accumulate(cpu: &mut CPU) {
     if let InstructionType::ARM(instr) = &cpu.decoded_instruction {
-        let (rd, rm, rs, rn);
-        if let Some(decoded) = &instr.decoded_instruction {
-            rd = decoded.rd.unwrap() as usize;
-            rm = cpu.arm.load_register(decoded.rm.unwrap() as usize);
-            rs = cpu.arm.load_register(decoded.rs.unwrap() as usize);
-            rn = cpu.arm.load_register(decoded.rn.unwrap() as usize);
-        } else {
+        if instr.decoded_instruction.is_none() {
             eprintln!("Expected decoded instruction at arm multiply accumulate instruction");
             return;
         }
+
+        let decoded = instr.decoded_instruction.as_ref().unwrap();
+
+        let rd = decoded.rd.unwrap() as usize;
+        let rm = cpu.arm.load_register(decoded.rm.unwrap() as usize);
+        let rs = cpu.arm.load_register(decoded.rs.unwrap() as usize);
+        let rn = cpu.arm.load_register(decoded.rn.unwrap() as usize);
 
         if let Some(res) = rm.checked_mul(rs) {
             let rn_val = cpu.arm.load_register(rn as usize);
@@ -121,16 +137,17 @@ pub fn multiply_accumulate(cpu: &mut CPU) {
 
 pub fn signed_multiply(cpu: &mut CPU) {
     if let InstructionType::ARM(instr) = &cpu.decoded_instruction {
-        let (rm, rs, rd_low, rd_hi);
-        if let Some(decoded) = &instr.decoded_instruction {
-            rm = cpu.arm.load_register(decoded.rm.unwrap() as usize);
-            rs = cpu.arm.load_register(decoded.rs.unwrap() as usize);
-            rd_low = decoded.rn.unwrap() as usize;
-            rd_hi = decoded.rd.unwrap() as usize;
-        } else {
-            eprintln!("Expected decoded instruction at arm signed multiply accumulate instruction");
+        if instr.decoded_instruction.is_none() {
+            eprintln!("Expected decoded instruction at arm signed multiply instruction");
             return;
         }
+
+        let decoded = instr.decoded_instruction.as_ref().unwrap();
+
+        let rm = cpu.arm.load_register(decoded.rm.unwrap() as usize);
+        let rs = cpu.arm.load_register(decoded.rs.unwrap() as usize);
+        let rd_low = decoded.rn.unwrap() as usize;
+        let rd_hi = decoded.rd.unwrap() as usize;
 
         let r = rm as i64 * rs as i64;
         arm_set_flags_neutral(cpu, r);
@@ -142,16 +159,17 @@ pub fn signed_multiply(cpu: &mut CPU) {
 
 pub fn unsigned_multiply(cpu: &mut CPU) {
     if let InstructionType::ARM(instr) = &cpu.decoded_instruction {
-        let (rm, rs, rd_low, rd_hi);
-        if let Some(decoded) = &instr.decoded_instruction {
-            rm = decoded.rm.unwrap() as usize;
-            rs = decoded.rs.unwrap() as usize;
-            rd_low = decoded.rn.unwrap() as usize;
-            rd_hi = decoded.rd.unwrap() as usize;
-        } else {
+        if instr.decoded_instruction.is_none() {
             eprintln!("Expected decoded instruction at arm unsigned multiply instruction");
             return;
         }
+
+        let decoded = instr.decoded_instruction.as_ref().unwrap();
+        let rm = decoded.rm.unwrap() as usize;
+        let rs = decoded.rs.unwrap() as usize;
+
+        let rd_low = decoded.rn.unwrap() as usize;
+        let rd_hi = decoded.rd.unwrap() as usize;
 
         let r = cpu.arm.load_register(rm) as u64 * cpu.arm.load_register(rs) as u64;
 
@@ -163,16 +181,18 @@ pub fn unsigned_multiply(cpu: &mut CPU) {
 
 pub fn signed_multiply_accumulate(cpu: &mut CPU) {
     if let InstructionType::ARM(instr) = &cpu.decoded_instruction {
-        let (rd_hi, rd_low, rm, rs);
-        if let Some(decoded) = &instr.decoded_instruction {
-            rm = decoded.rm.unwrap() as usize;
-            rs = decoded.rs.unwrap() as usize;
-            rd_hi = decoded.rd.unwrap() as usize;
-            rd_low = decoded.rn.unwrap() as usize;
-        } else {
+        if instr.decoded_instruction.is_none() {
             eprintln!("Expected decoded instruction at arm signed multiply accumulate instruction");
             return;
         }
+
+        let decoded = instr.decoded_instruction.as_ref().unwrap();
+
+        let rm = decoded.rm.unwrap() as usize;
+        let rs = decoded.rs.unwrap() as usize;
+
+        let rd_hi = decoded.rd.unwrap() as usize;
+        let rd_low = decoded.rn.unwrap() as usize;
 
         let r = cpu.arm.load_register(rm) as i64 * cpu.arm.load_register(rs) as i64;
 
@@ -189,18 +209,18 @@ pub fn signed_multiply_accumulate(cpu: &mut CPU) {
 
 pub fn unsigned_multiply_accumulate(cpu: &mut CPU) {
     if let InstructionType::ARM(instr) = &cpu.decoded_instruction {
-        let (rd_hi, rd_low, rm, rs);
-        if let Some(decoded) = &instr.decoded_instruction {
-            rm = decoded.rm.unwrap() as usize;
-            rs = decoded.rs.unwrap() as usize;
-            rd_hi = decoded.rd.unwrap() as usize;
-            rd_low = decoded.rn.unwrap() as usize;
-        } else {
+        if instr.decoded_instruction.is_none() {
             eprintln!(
                 "Expected decoded instruction at arm unsigned multiply accumulate instruction"
             );
             return;
         }
+
+        let decoded = instr.decoded_instruction.as_ref().unwrap();
+        let rm = decoded.rm.unwrap() as usize;
+        let rs = decoded.rs.unwrap() as usize;
+        let rd_hi = decoded.rd.unwrap() as usize;
+        let rd_low = decoded.rn.unwrap() as usize;
 
         let r = cpu.arm.load_register(rm) as u64 * cpu.arm.load_register(rs) as u64;
 
@@ -220,45 +240,46 @@ pub fn unsigned_multiply_accumulate(cpu: &mut CPU) {
 // -----------------------------
 // Start Load/Store micro operations
 
-pub fn load_register(cpu: &mut CPU) {
+// TODO (Alice Micheloni): Should support user access when post-indexing
+pub fn single_load_register(cpu: &mut CPU) {
     if let InstructionType::ARM(instr) = cpu.decoded_instruction.clone() {
-        let (rn, mut rn_val, rd, imm);
-        let (pre, up, half, writeback);
-        let offset: i32;
-        if let Some(decoded) = &instr.decoded_instruction {
-            rd = decoded.rd.unwrap() as usize;
-            rn = decoded.rn.unwrap() as usize;
-            rn_val = cpu.arm.load_register(rn as usize) as i32;
-            imm = decoded.imm.unwrap();
-
-            if imm {
-                offset = decoded.offset.unwrap() as i32;
-            } else {
-                let shift_type = decoded.shift_type.clone().unwrap();
-                let shift_amount = decoded.val2.unwrap() as i32;
-                let rm = decoded.rm.unwrap();
-                let rm_val = cpu.arm.load_register(rm as usize) as i32;
-                offset = arm_barrelshifter(cpu, shift_type, false, rm_val, shift_amount, rm) as i32;
-            }
-
-            let flags = decoded.val1.unwrap() as u32;
-            pre = get_bit_at(flags, 3);
-            up = get_bit_at(flags, 2);
-            half = get_bit_at(flags, 1);
-            writeback = get_bit_at(flags, 0);
-        } else {
-            eprintln!("Expected decoded instruction at arm LDR instruction");
+        if instr.decoded_instruction.is_none() {
+            eprintln!("Expected decoded instruction at arm single load instruction");
             return;
         }
+
+        let decoded = instr.decoded_instruction.unwrap();
+        let rd = decoded.rd.unwrap() as usize;
+
+        let rn = decoded.rn.unwrap() as usize;
+        let mut rn_val = cpu.arm.load_register(rn as usize) as i32;
+
+        let imm = decoded.imm.unwrap();
+
+        let offset = if imm {
+            decoded.offset.unwrap() as i32
+        } else {
+            let shift_type = decoded.shift_type.clone().unwrap();
+            let shift_amount = decoded.val2.unwrap() as i32;
+            let rm = decoded.rm.unwrap();
+            let rm_val = cpu.arm.load_register(rm as usize) as i32;
+            arm_barrelshifter(cpu, shift_type, false, rm_val, shift_amount, rm) as i32
+        };
+
+        let flags = decoded.val1.unwrap() as u32;
+        let pre = get_bit_at(flags, 3);
+        let up = get_bit_at(flags, 2);
+        let byte = get_bit_at(flags, 1);
+        let writeback = get_bit_at(flags, 0);
 
         if pre {
             rn_val = if up { rn_val + offset } else { rn_val - offset }
         }
 
-        let val = if half {
-            cpu.mmu.load16(rn_val as u32) as i32
-        } else {
+        let val = if byte {
             cpu.mmu.load8(rn_val as u32) as i32
+        } else {
+            cpu.mmu.load32_rotated(rn_val as u32) as i32
         };
 
         if !pre {
@@ -273,45 +294,46 @@ pub fn load_register(cpu: &mut CPU) {
     }
 }
 
-pub fn store_register(cpu: &mut CPU) {
+pub fn single_store_register(cpu: &mut CPU) {
     if let InstructionType::ARM(instr) = cpu.decoded_instruction.clone() {
-        let (rn, mut rn_val, rd, imm);
-        let (pre, up, half, writeback);
-        let offset: i32;
-        if let Some(decoded) = &instr.decoded_instruction {
-            rd = cpu.arm.load_register(decoded.rd.unwrap() as usize);
-            rn = decoded.rn.unwrap() as usize;
-            rn_val = cpu.arm.load_register(rn);
-            imm = decoded.imm.unwrap();
-
-            if imm {
-                offset = decoded.offset.unwrap() as i32;
-            } else {
-                let shift_type = decoded.shift_type.clone().unwrap();
-                let shift_amount = decoded.val2.unwrap() as i32;
-                let rm = decoded.rm.unwrap();
-                let rm_val = cpu.arm.load_register(rm as usize) as i32;
-                offset = arm_barrelshifter(cpu, shift_type, false, rm_val, shift_amount, rm) as i32;
-            }
-
-            let flags = decoded.val1.unwrap() as u32;
-            pre = get_bit_at(flags, 3);
-            up = get_bit_at(flags, 2);
-            half = get_bit_at(flags, 1);
-            writeback = get_bit_at(flags, 0);
-        } else {
-            eprintln!("Expected decoded instruction at arm LDR instruction");
+        if instr.decoded_instruction.is_none() {
+            eprintln!("Expected decoded instruction at arm single store instruction");
             return;
         }
+
+        let decoded = instr.decoded_instruction.unwrap();
+        let rd = cpu.arm.load_register(decoded.rd.unwrap() as usize);
+
+        let rn = decoded.rn.unwrap() as usize;
+        let mut rn_val = cpu.arm.load_register(rn);
+
+        let imm = decoded.imm.unwrap();
+
+        let offset = if imm {
+            decoded.offset.unwrap() as i32
+        } else {
+            let shift_type = decoded.shift_type.clone().unwrap();
+            let shift_amount = decoded.val2.unwrap() as i32;
+            let rm = decoded.rm.unwrap();
+            let rm_val = cpu.arm.load_register(rm as usize) as i32;
+
+            arm_barrelshifter(cpu, shift_type, false, rm_val, shift_amount, rm) as i32
+        };
+
+        let flags = decoded.val1.unwrap() as u32;
+        let pre = get_bit_at(flags, 3);
+        let up = get_bit_at(flags, 2);
+        let byte = get_bit_at(flags, 1);
+        let writeback = get_bit_at(flags, 0);
 
         if pre {
             rn_val = if up { rn_val + offset } else { rn_val - offset }
         }
 
-        if half {
-            cpu.mmu.store16(rn_val as u32, rd as u16)
-        } else {
+        if byte {
             cpu.mmu.store8(rn_val as u32, rd as u8)
+        } else {
+            cpu.mmu.store32(rn_val as u32, rd as u32)
         };
 
         if !pre {
@@ -324,21 +346,118 @@ pub fn store_register(cpu: &mut CPU) {
     }
 }
 
+/// Executes half-word or signed load
+pub fn half_signed_load_register(cpu: &mut CPU) {
+    if let InstructionType::ARM(instr) = cpu.decoded_instruction.clone() {
+        if instr.decoded_instruction.is_none() {
+            eprintln!("Expected decoded instruction at arm half signed load instruction");
+            return;
+        }
+
+        let decoded = instr.decoded_instruction.unwrap();
+
+        let dec = &decoded.instr;
+        let rd = cpu.arm.load_register(decoded.rd.unwrap() as usize);
+
+        let rn = decoded.rn.unwrap() as usize;
+        let mut rn_val = cpu.arm.load_register(rn);
+
+        let imm = decoded.imm.unwrap();
+
+        let offset = if imm {
+            decoded.offset.unwrap() as i32
+        } else {
+            let rm = decoded.rm.unwrap();
+            cpu.arm.load_register(rm as usize) as i32
+        };
+
+        let flags = decoded.val1.unwrap() as u32;
+        let pre = get_bit_at(flags, 3);
+        let up = get_bit_at(flags, 2);
+        let writeback = get_bit_at(flags, 0);
+
+        if pre {
+            rn_val = if up { rn_val + offset } else { rn_val - offset }
+        }
+
+        let val = match dec {
+            MnemonicARM::LDRH => cpu.mmu.load16_rotated(rn_val as u32) as i32,
+            MnemonicARM::LDRSB => cpu.mmu.load8_signed(rn_val as u32) as i32,
+            MnemonicARM::LDRSH => cpu.mmu.load16_signed(rn_val as u32) as i32,
+            _ => unreachable!(),
+        };
+
+        if !pre {
+            rn_val = if up { rn_val + offset } else { rn_val - offset }
+        }
+
+        if !pre || writeback {
+            cpu.arm.store_register(rn as usize, rn_val);
+        }
+
+        cpu.arm.store_register(rd as usize, val);
+    }
+}
+
+/// Stores half-word
+pub fn store_half_word(cpu: &mut CPU) {
+    if let InstructionType::ARM(instr) = cpu.decoded_instruction.clone() {
+        if instr.decoded_instruction.is_none() {
+            eprintln!("Expected decoded instruction at arm store half word instruction");
+            return;
+        }
+
+        let decoded = instr.decoded_instruction.unwrap();
+        let rd = cpu.arm.load_register(decoded.rd.unwrap() as usize);
+
+        let rn = decoded.rn.unwrap() as usize;
+        let mut rn_val = cpu.arm.load_register(rn);
+
+        let imm = decoded.imm.unwrap();
+
+        let offset = if imm {
+            decoded.offset.unwrap() as i32
+        } else {
+            let rm = decoded.rm.unwrap();
+            cpu.arm.load_register(rm as usize) as i32
+        };
+
+        let flags = decoded.val1.unwrap() as u32;
+        let pre = get_bit_at(flags, 3);
+        let up = get_bit_at(flags, 2);
+        let writeback = get_bit_at(flags, 0);
+
+        if pre {
+            rn_val = if up { rn_val + offset } else { rn_val - offset }
+        }
+
+        cpu.mmu.store16(rn_val as u32, rd as u16);
+
+        if !pre {
+            rn_val = if up { rn_val + offset } else { rn_val - offset }
+        }
+
+        if !pre || writeback {
+            cpu.arm.store_register(rn as usize, rn_val);
+        }
+    }
+}
+
 // SWP R0,R1,[R2] ; Load R0 with the word addressed by R2, and store R1 at R2.
 // R0 = [R2]
 // [R2] = R1
 fn swap(cpu: &mut CPU) {
     if let InstructionType::ARM(instr) = &cpu.decoded_instruction {
-        let (rn, rd, rm, is_byte);
-        if let Some(decoded) = &instr.decoded_instruction {
-            rn = cpu.arm.load_register(decoded.rn.unwrap() as usize) as u32;
-            rd = decoded.rd.unwrap() as usize;
-            rm = cpu.arm.load_register(decoded.rm.unwrap() as usize) as u32;
-            is_byte = decoded.val1.unwrap() != 0;
-        } else {
+        if instr.decoded_instruction.is_none() {
             eprintln!("Expected decoded instruction at arm swap instruction");
             return;
         }
+
+        let decoded = instr.decoded_instruction.as_ref().unwrap();
+        let rn = cpu.arm.load_register(decoded.rn.unwrap() as usize) as u32;
+        let rd = decoded.rd.unwrap() as usize;
+        let rm = cpu.arm.load_register(decoded.rm.unwrap() as usize) as u32;
+        let is_byte = decoded.val1.unwrap() != 0;
 
         if is_byte {
             let byte = cpu.mmu.load8(rn) as i32;
@@ -353,59 +472,239 @@ fn swap(cpu: &mut CPU) {
 }
 // End Load/Store micro operations
 // -----------------------------
+// Start Block Data Transfer micro operations
+
+pub fn load_multiple(cpu: &mut CPU) {
+    if let InstructionType::ARM(instr) = &cpu.decoded_instruction {
+        if instr.decoded_instruction.is_none() {
+            eprintln!("Expected decoded instruction at arm LDM instruction");
+            return;
+        }
+
+        let decoded = instr.decoded_instruction.as_ref().unwrap();
+
+        let reglist = decoded.offset.unwrap() as u32;
+        let rn = decoded.rn.unwrap() as usize;
+        let flags = decoded.val1.unwrap() as u32;
+
+        let mut writeback = get_bit_at(flags, 0);
+        let force_mode = get_bit_at(flags, 1);
+        let increment = get_bit_at(flags, 2);
+        let mut before = get_bit_at(flags, 3);
+
+        let mode = cpu.arm.cpsr.mode.clone();
+        if force_mode {
+            cpu.arm.cpsr.mode = ProcessorMode::User;
+        }
+
+        let mut addr = cpu.arm.load_register(rn) as u32;
+
+        if reglist != 0 {
+            if !increment {
+                addr -= 4 * count_set_bits(reglist);
+                before ^= true;
+
+                if writeback {
+                    cpu.arm.store_register(rn, addr as i32);
+                    writeback = false;
+                }
+            }
+
+            if reglist & (1 << rn) != 0 {
+                writeback = false;
+            }
+
+            let mut count = 0;
+            while count < 16 {
+                if ((reglist >> count) & 1) != 0 {
+                    if before {
+                        addr += 4;
+                    }
+
+                    let val = cpu.mmu.load32(addr) as i32;
+                    cpu.arm.store_register(count, val);
+
+                    if !before {
+                        addr += 4;
+                    }
+                }
+                count += 1;
+            }
+        } else {
+            let val = cpu.mmu.load32(addr) as i32;
+            cpu.arm
+                .store_register(constants::registers::PROGRAM_COUNTER, val);
+        }
+        if writeback {
+            cpu.arm.store_register(rn, addr as i32);
+        }
+
+        if force_mode {
+            cpu.arm.cpsr.mode = mode;
+        }
+    }
+}
+
+pub fn store_multiple(cpu: &mut CPU) {
+    if let InstructionType::ARM(instr) = &cpu.decoded_instruction {
+        if instr.decoded_instruction.is_none() {
+            eprintln!("Expected decoded instruction at arm STM instruction");
+            return;
+        }
+
+        let decoded = instr.decoded_instruction.as_ref().unwrap();
+
+        let reglist = decoded.offset.unwrap() as u32;
+        let rn = decoded.rn.unwrap() as usize;
+        let flags = decoded.val1.unwrap() as u32;
+
+        let mut writeback = get_bit_at(flags, 0);
+        let force_mode = get_bit_at(flags, 1);
+        let increment = get_bit_at(flags, 2);
+        let mut before = get_bit_at(flags, 3);
+
+        let mode = cpu.arm.cpsr.mode.clone();
+        if force_mode {
+            cpu.arm.cpsr.mode = ProcessorMode::User;
+        }
+
+        let mut addr = cpu.arm.load_register(rn) as u32;
+        let base = addr;
+
+        if reglist != 0 {
+            if !increment {
+                addr -= 4 * count_set_bits(reglist);
+                before ^= true;
+
+                if writeback {
+                    cpu.arm.store_register(rn, addr as i32);
+                    writeback = false;
+                }
+            }
+
+            let mut count = 0;
+
+            let mut begin: bool = true;
+            while count < 16 {
+                if ((reglist >> count) & 1) != 0 {
+                    if before {
+                        addr += 4;
+                    }
+
+                    cpu.mmu.store32(
+                        addr,
+                        if count != rn {
+                            if count != 15 {
+                                (cpu.arm.load_register(count) + 0) as u32
+                            } else {
+                                (cpu.arm.load_register(count) + 4) as u32
+                            }
+                        } else {
+                            if begin {
+                                base
+                            } else {
+                                (base as i32
+                                    + if increment { 4 } else { -4 }
+                                        * count_set_bits(reglist) as i32)
+                                    as u32
+                            }
+                        },
+                    );
+
+                    if !before {
+                        addr += 4;
+                    }
+
+                    begin = false;
+                }
+
+                count += 1;
+            }
+        } else {
+            let pc = (cpu.arm.load_register(constants::registers::PROGRAM_COUNTER) + 4) as u32;
+            match (increment, before) {
+                (false, false) => cpu.mmu.store32(addr - 0x3C, pc),
+                (true, false) => cpu.mmu.store32(addr - 0x40, pc),
+                (false, true) => cpu.mmu.store32(addr + 0x00, pc),
+                (true, true) => cpu.mmu.store32(addr + 0x04, pc),
+            }
+
+            if increment {
+                addr += 0x40;
+            } else {
+                addr -= 0x40;
+            }
+        }
+
+        if writeback {
+            cpu.arm.store_register(rn, addr as i32);
+        }
+
+        if force_mode {
+            cpu.arm.cpsr.mode = mode;
+        }
+    }
+}
+
+// End Block Data Transfer micro operations
+// -----------------------------
 // Start PSR transfer micro operations
 
 /// Save PSR in rd
 pub fn mrs(cpu: &mut CPU) {
     if let InstructionType::ARM(instr) = &cpu.decoded_instruction {
-        let (rd, psr);
-        if let Some(decoded) = &instr.decoded_instruction {
-            rd = decoded.rd.unwrap() as usize;
-            psr = decoded.val1.unwrap();
-        } else {
-            eprintln!("Expected decoded instruction at arm mrs instruction");
+        if instr.decoded_instruction.is_none() {
+            eprintln!("Expected decoded instruction at arm MRS instruction");
             return;
         }
 
-        let unpacked_psr = if psr == 0 {
-            cpu.arm.cpsr.unpack()
-        } else {
-            match cpu.arm.cpsr.mode {
-                // no spsr in user/system mode
-                ProcessorMode::User | ProcessorMode::System => return,
-                ProcessorMode::FIQ => cpu.arm.spsr_fiq.unpack(),
-                ProcessorMode::IRQ => cpu.arm.spsr_irq.unpack(),
-                ProcessorMode::Supervisor => cpu.arm.spsr_svc.unpack(),
-                ProcessorMode::Abort => cpu.arm.spsr_abt.unpack(),
-                ProcessorMode::Undefined => cpu.arm.spsr_und.unpack(),
-            }
-        };
+        let decoded = instr.decoded_instruction.as_ref().unwrap();
 
-        cpu.arm.store_register(rd, unpacked_psr);
+        let rd = decoded.rd.unwrap() as usize;
+        let psr = decoded.val1.unwrap();
+
+        cpu.arm.store_register(
+            rd,
+            if psr == 0 {
+                cpu.arm.cpsr.unpack()
+            } else {
+                match cpu.arm.cpsr.mode {
+                    // no spsr in user/system mode
+                    ProcessorMode::User | ProcessorMode::System => return,
+                    ProcessorMode::FIQ => cpu.arm.spsr_fiq.unpack(),
+                    ProcessorMode::IRQ => cpu.arm.spsr_irq.unpack(),
+                    ProcessorMode::Supervisor => cpu.arm.spsr_svc.unpack(),
+                    ProcessorMode::Abort => cpu.arm.spsr_abt.unpack(),
+                    ProcessorMode::Undefined => cpu.arm.spsr_und.unpack(),
+                }
+            },
+        );
     }
 }
 
 /// Save rd in PSR
 pub fn msr(cpu: &mut CPU) {
     if let InstructionType::ARM(instr) = &cpu.decoded_instruction {
-        let (flags, rm, psr, imm);
+        if instr.decoded_instruction.is_none() {
+            eprintln!("Expected decoded instruction at arm MSR instruction");
+            return;
+        }
+
+        let decoded = instr.decoded_instruction.as_ref().unwrap();
+
         let mut shifted_imm = 0;
 
-        if let Some(decoded) = &instr.decoded_instruction {
-            rm = decoded.rd.unwrap() as usize;
-            psr = decoded.val1.unwrap();
-            imm = decoded.imm.unwrap();
-            flags = decoded.offset.unwrap();
-            if imm {
-                let imm_val = decoded.val2.unwrap() as u32;
-                // ror in steps of two (0-30)
-                let imm_shift = decoded.val3.unwrap() as u32 * 2;
+        let rm = decoded.rd.unwrap() as usize;
+        let psr = decoded.val1.unwrap();
+        let imm = decoded.imm.unwrap();
+        let flags = decoded.offset.unwrap();
 
-                shifted_imm = arm_ror(cpu, imm_val, imm_shift, false);
-            }
-        } else {
-            eprintln!("Expected decoded instruction at arm msr instruction");
-            return;
+        if imm {
+            let imm_val = decoded.val2.unwrap() as u32;
+            // ror in steps of two (0-30)
+            let imm_shift = decoded.val3.unwrap() as u32 * 2;
+
+            shifted_imm = arm_ror(cpu, imm_val, imm_shift, false);
         }
 
         let mut flag_mask = 0;
@@ -450,43 +749,41 @@ pub fn alu_master(cpu: &mut CPU) {
     if let InstructionType::ARM(instr) = &cpu.decoded_instruction {
         use crate::enums::MnemonicARM::*;
 
-        let (rn, rd, set_cond);
-        let op2: i32;
-        let mnemonic: crate::enums::MnemonicARM;
-
-        if let Some(decoded) = &instr.decoded_instruction {
-            rn = cpu.arm.load_register(decoded.rn.unwrap() as usize) as i32;
-            set_cond = decoded.set_cond.unwrap();
-            rd = decoded.rn.unwrap() as usize;
-            mnemonic = decoded.instr.clone();
-
-            // implement the barrel shifter
-            if decoded.imm.unwrap() {
-                // the immediate shift can only represent even numbers, so we multiply it by 2.
-                let shift = decoded.val1.unwrap() as u32 * 2;
-                let imm_value = decoded.val2.unwrap() as u32;
-                op2 = imm_value.rotate_right(shift) as i32;
-            } else {
-                let rm = decoded.rm.unwrap();
-                let to_shift = cpu.arm.load_register(rm as usize);
-
-                let shift_type = decoded.shift_type.clone().unwrap();
-
-                let shift_amount;
-
-                // if rs is defined, we have to shift by register
-                if let Some(rs) = decoded.rs {
-                    shift_amount = cpu.arm.load_register(rs as usize);
-                } else {
-                    shift_amount = decoded.val1.unwrap() as i32;
-                }
-
-                op2 = arm_barrelshifter(cpu, shift_type, set_cond, to_shift, shift_amount, rm);
-            }
-        } else {
-            eprintln!("Expected decoded instruction at arm ALU");
+        if instr.decoded_instruction.is_none() {
+            eprintln!("Expected decoded instruction at arm ALU instruction");
             return;
         }
+
+        let decoded = instr.decoded_instruction.as_ref().unwrap();
+
+        let rn = cpu.arm.load_register(decoded.rn.unwrap() as usize) as i32;
+        let set_cond = decoded.set_cond.unwrap();
+        let rd = decoded.rn.unwrap() as usize;
+        let mnemonic = decoded.instr.clone();
+
+        // implement the barrel shifter
+        let op2 = if decoded.imm.unwrap() {
+            // the immediate shift can only represent even numbers, so we multiply it by 2.
+            let shift = decoded.val1.unwrap() as u32 * 2;
+            let imm_value = decoded.val2.unwrap() as u32;
+            imm_value.rotate_right(shift) as i32
+        } else {
+            let rm = decoded.rm.unwrap();
+            let to_shift = cpu.arm.load_register(rm as usize);
+
+            let shift_type = decoded.shift_type.clone().unwrap();
+
+            let shift_amount;
+
+            // if rs is defined, we have to shift by register
+            if let Some(rs) = decoded.rs {
+                shift_amount = cpu.arm.load_register(rs as usize);
+            } else {
+                shift_amount = decoded.val1.unwrap() as i32;
+            }
+
+            arm_barrelshifter(cpu, shift_type, set_cond, to_shift, shift_amount, rm)
+        };
 
         match mnemonic {
             // logical ops
@@ -714,4 +1011,16 @@ pub fn switch_to_svc(cpu: &mut CPU) {
     // jump to SWI/PrefetchAbort vector address
     cpu.arm
         .store_register(registers::PROGRAM_COUNTER, 0x0000_0008);
+}
+
+fn count_set_bits(n: u32) -> u32 {
+    let mut n = n;
+    let mut ret = 0;
+
+    while n > 0 {
+        ret += (n & 1) as u32;
+        n >>= 1;
+    }
+
+    ret
 }

@@ -16,8 +16,8 @@ pub enum MnemonicARM {
     AND,
     ASR,
     B,
-    BIC,
     BKPT,
+    BIC,
     BL,
     BX,
     CMN,
@@ -54,7 +54,6 @@ pub enum MnemonicARM {
     TST,
     UMLAL,
     UMULL,
-    MAX,
     Undefined,
 }
 

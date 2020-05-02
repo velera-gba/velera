@@ -223,16 +223,16 @@ pub fn data_transfer(instruction: u32, cond: u8) -> DecodedInstruction {
     // bitmasks
     let imm = get_bit_at(instruction, 25);
 
-    let index = (get_bit_at(instruction, 24) as u8) << 3;
+    let pre = (get_bit_at(instruction, 24) as u8) << 3;
     let up_down = (get_bit_at(instruction, 23) as u8) << 2;
-    let half = (get_bit_at(instruction, 22) as u8) << 1;
+    let byte = (get_bit_at(instruction, 22) as u8) << 1;
     let writeback = get_bit_at(instruction, 21) as u8;
 
     let load = get_bit_at(instruction, 20);
 
     let rn = Some(get_last_bits(instruction >> 16, 4) as u8);
 
-    let val1 = Some(index | up_down | half | writeback);
+    let val1 = Some(pre | up_down | byte | writeback);
 
     let is_block_data = get_bit_at(instruction, 27);
     if is_block_data {
@@ -247,9 +247,9 @@ pub fn data_transfer(instruction: u32, cond: u8) -> DecodedInstruction {
         return DecodedInstruction {
             cond,
             instr,
-            rn,
             val1,
             offset,
+            rn,
             ..Default::default()
         };
     }
@@ -268,8 +268,8 @@ pub fn data_transfer(instruction: u32, cond: u8) -> DecodedInstruction {
             return DecodedInstruction {
                 cond,
                 instr,
-                rn,
                 rd,
+                rn,
                 val1,
                 offset,
                 imm: Some(true),
@@ -298,7 +298,6 @@ pub fn data_transfer(instruction: u32, cond: u8) -> DecodedInstruction {
         };
     }
 
-    let instr;
     let signed = get_bit_at(instruction, 6);
     let halfword = get_bit_at(instruction, 5);
 
@@ -306,21 +305,13 @@ pub fn data_transfer(instruction: u32, cond: u8) -> DecodedInstruction {
         return swap(instruction, cond);
     }
 
-    if load {
-        instr = if signed {
-            if halfword {
-                MnemonicARM::LDRSH
-            } else {
-                MnemonicARM::LDRSB
-            }
-        } else if halfword {
-            MnemonicARM::LDRH
-        } else {
-            unreachable!()
-        }
-    } else {
-        instr = MnemonicARM::STRH;
-    }
+    let instr = match (load, signed, halfword) {
+        (false, _, _) => MnemonicARM::STRH,
+        (true, true, true) => MnemonicARM::LDRSH,
+        (true, false, true) => MnemonicARM::LDRH,
+        (true, true, false) => MnemonicARM::LDRSB,
+        _ => unreachable!(),
+    };
 
     // if not immediate
     if !get_bit_at(instruction, 22) {
