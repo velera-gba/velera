@@ -1,7 +1,7 @@
 use memory;
 
-mod backend;
-use backend::*;
+mod frontend;
+use frontend::*;
 
 /// Indicates when an interrupt is fired
 pub struct Interrupt {
@@ -56,7 +56,7 @@ pub enum State {
 /// The memory struct contains boxed slices of the displays memory segments.
 /// The registers module contains convenience constants and a local function for getting the memory address relative to the boxed slice
 pub struct Display {
-    backend: Backend,
+    frontend: Frontend,
 
     // There is no register for this so count here
     hcount: usize,
@@ -64,9 +64,9 @@ pub struct Display {
 
 impl Display {
     pub fn init(scale: u32) -> Result<Self, String> {
-        let backend = backend::Backend::setup(scale)?;
+        let frontend = frontend::Frontend::setup(scale)?;
 
-        Ok(Self { backend, hcount: 0 })
+        Ok(Self { frontend, hcount: 0 })
     }
 
     /// A graphics cycle is done every 4 cpu cycles
@@ -74,7 +74,7 @@ impl Display {
         let mut interrupts = Interrupt::none();
 
         // Get user input
-        let input = self.backend.get_input();
+        let input = self.frontend.get_input();
 
         // Only bits 0-7 are used of this register
         let mut vcount = memory.load8(registers::VCOUNT) as usize;
@@ -95,7 +95,7 @@ impl Display {
                 _ => unreachable!(),
             };
 
-            self.backend.draw_pixel((self.hcount, vcount), pixel.into())
+            self.frontend.draw_pixel((self.hcount, vcount), pixel.into())
         }
 
         // Increment the hcount

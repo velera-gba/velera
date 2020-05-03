@@ -1,12 +1,12 @@
 #[cfg(not(feature = "fbdev"))]
 mod sdl2;
 #[cfg(not(feature = "fbdev"))]
-pub type Backend = sdl2::Backend;
+pub type Frontend = sdl2::Frontend;
 
 #[cfg(feature = "fbdev")]
 mod linux_framebuffer;
 #[cfg(feature = "fbdev")]
-pub type Backend = linux_framebuffer::Backend;
+pub type Frontend = linux_framebuffer::Frontend;
 
 /// A BGR555 colour
 #[derive(Clone, Copy, Debug, PartialEq)]
