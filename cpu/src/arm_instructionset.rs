@@ -993,12 +993,16 @@ fn arm_barrelshifter(
 // Start misc operations
 
 pub fn switch_to_svc(cpu: &mut CPU) {
+    let psr = cpu.arm.cpsr;
+    cpu.arm.spsr_svc = psr;
+
     cpu.arm.cpsr.mode = ProcessorMode::Supervisor;
     cpu.arm.cpsr.disable_irq = true;
     cpu.arm.cpsr.thumb_mode = false;
 
     let pc = cpu.arm.load_register(registers::PROGRAM_COUNTER);
     cpu.arm.store_register(registers::LINK_REGISTER, pc + 4);
+
 
     // jump to SWI/PrefetchAbort vector address
     cpu.arm

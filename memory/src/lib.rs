@@ -110,6 +110,49 @@ impl MMU {
         x
     }
 
+
+    /// Reads a sign-extended byte
+    pub fn load8_signed(&self, addr: u32) -> u32 {
+        let value = self.load8(addr) as u32;
+        let sign = (value >> 7) != 0;
+
+        // I'm sorry, if I don't do this Emacs fucks formatting up.
+        let x = std::u32::MAX;
+        let num = if sign { x << 8 } else { 0 };
+
+        num | value
+    }
+
+    /// Reads a sign-extended half-word
+    pub fn load16_signed(&self, addr: u32) -> u32 {
+        if (addr & 0x1) != 0 {
+            let value = self.load8(addr) as u32;
+            let sign = (value >> 7) != 0;
+
+            // I'm sorry, if I don't do this Emacs fucks formatting up.
+            let x = std::u32::MAX;
+            let num = if sign { x << 8 } else { 0 };
+
+            num | value
+        } else {
+            let value = self.load16(addr) as u32;
+            let sign = (value >> 15) != 0;
+            let x = std::u32::MAX;
+            let num = if sign { x << 16 } else { 0 };
+            num | value
+        }
+    }
+
+    pub fn load16_rotated(&self, addr: u32) -> u32 {
+        let value = self.load16(addr) as u32;
+        value.rotate_right((addr & 0x1) << 3)
+    }
+
+    pub fn load32_rotated(&self, addr: u32) -> u32 {
+        let value = self.load32(addr);
+        value.rotate_right((addr & 0x3) << 3)
+    }
+
     /// Write a byte into memory
     pub fn store8(&mut self, addr: u32, val: u8) {
         match addr as usize {

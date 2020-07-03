@@ -1,13 +1,12 @@
 #[allow(non_upper_case_globals)]
 #[cfg(test)]
-mod tests { 
+mod tests {
     use cpu::{
+        arm::DecodedInstruction,
         arm_decode::{
-            branch as decode_branch, data_processing, data_transfer as decode_data_transfer, interrupt as decode_interrupt, multiply as decode_mult, psr_transfer as decode_psr_transfer, swap,
-            BaseInstruction,
-        },
-        arm::{
-            DecodedInstruction,
+            base_to_decoded, branch as decode_branch, data_processing,
+            data_transfer as decode_data_transfer, interrupt as decode_interrupt,
+            multiply as decode_mult, psr_transfer as decode_psr_transfer, swap,
         },
         enums::{MnemonicARM, ShiftType},
     };
@@ -74,7 +73,8 @@ mod tests {
     #[test]
     fn data_transfer() {
         let instruction_simple_load_register = 0b0000_0111_0011_0001_0100_0010_0100_1000;
-        let result_simple_load_register = decode_data_transfer(instruction_simple_load_register, cond);
+        let result_simple_load_register =
+            decode_data_transfer(instruction_simple_load_register, cond);
 
         assert_eq!(
             result_simple_load_register,
@@ -113,7 +113,8 @@ mod tests {
     #[test]
     fn data_half() {
         let instruction_store_half_register = 0b0000_0001_1010_0111_1100_0000_1011_1110;
-        let result_store_half_register = decode_data_transfer(instruction_store_half_register, cond);
+        let result_store_half_register =
+            decode_data_transfer(instruction_store_half_register, cond);
         assert_eq!(
             result_store_half_register,
             DecodedInstruction {
@@ -129,7 +130,8 @@ mod tests {
         );
 
         let instruction_load_signed_half_imm = 0b0000_0001_0111_1011_1001_1001_1111_0110;
-        let result_load_signed_half_imm = decode_data_transfer(instruction_load_signed_half_imm, cond);
+        let result_load_signed_half_imm =
+            decode_data_transfer(instruction_load_signed_half_imm, cond);
         assert_eq!(
             result_load_signed_half_imm,
             DecodedInstruction {

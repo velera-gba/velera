@@ -1,6 +1,7 @@
 use crate::{constants::default_cpu, cpu::CPU, arm_decode};
 
 use crate::enums::{InstructionType, MnemonicARM, ProcessorMode, ShiftType};
+use crate::utils::get_bit_at;
 use std::{collections::VecDeque, default::Default};
 
 #[derive(Clone)]
@@ -104,11 +105,6 @@ impl PSR {
             mode,
         }
     }
-}
-
-#[inline]
-fn get_bit_at(v: u32, pos: u8) -> bool {
-    ((v << pos) & 1) != 0
 }
 
 impl ARM7TDMI {
@@ -218,7 +214,7 @@ impl Default for ARM7TDMI {
 
 /// Holds a temporary instruction to be executed
 #[derive(Debug, Default, PartialEq, Clone)]
-pub struct DecodedInstruction {
+pub struct ARMDecodedInstruction {
     pub cond: u8,
     pub instr: MnemonicARM,
 
@@ -242,11 +238,11 @@ pub struct DecodedInstruction {
 #[derive(Clone)]
 pub struct ARMInstruction {
     pub fetched_instruction: Option<u32>,
-    pub decoded_instruction: Option<DecodedInstruction>,
+    pub decoded_instruction: Option<ARMDecodedInstruction>,
 }
 
 impl ARMInstruction {
-    pub fn new_decoded(decoded_instr: DecodedInstruction) -> Self {
+    pub fn new_decoded(decoded_instr: ARMDecodedInstruction) -> Self {
         Self {
             fetched_instruction: None,
             decoded_instruction: Some(decoded_instr),
@@ -264,7 +260,7 @@ impl ARMInstruction {
 /// Handles ARM decoding and execution.
 /// Finds out which instruction the numbers represent and separates its values
 pub fn decode_arm(cpu: &mut CPU, instruction: u32) -> VecDeque<fn(&mut CPU)> {
-    let decoded = arm_decode::BaseInstruction::base_to_decoded(instruction);
+    let decoded = arm_decode::base_to_decoded(instruction);
     cpu.decoded_instruction = InstructionType::ARM(ARMInstruction::new_decoded(decoded));
     // digest decoded into a series of single-cycle instructions...
     unimplemented!();

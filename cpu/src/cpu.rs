@@ -4,7 +4,7 @@ use std::collections::VecDeque;
 use std::default::Default;
 
 use crate::arm::decode_arm;
-use crate::thumb_decode::decode_thumb;
+use crate::thumb::decode_thumb;
 use crate::{arm, gb};
 
 use crate::constants;

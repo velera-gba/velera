@@ -15,6 +15,7 @@ pub mod instructionset;
 pub mod thumb_instructionset;
 
 pub mod thumb_decode;
+pub mod thumb;
 
 pub mod arm;
 pub mod arm_decode;
